@@ -1,0 +1,22 @@
+@import './tailwind.css';
+
+/* Global styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&display=swap');
+
+/* Custom font for Americana BT - you'll need to provide the actual font files */
+@font-face {
+  font-family: 'Americana BT';
+  src: url('/fonts/AmericanaBT.woff2') format('woff2'),
+       url('/fonts/AmericanaBT.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+

@@ -1,0 +1,68 @@
+@import "tailwindcss/preflight";
+@tailwind utilities;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary-background: #f9f9f9;
+    --primary-foreground: #2a2a2a;
+    
+    /* Secondary Colors */
+    --secondary-background: #c3dee1;
+    --secondary-foreground: #000000;
+    
+    /* Accent Colors */
+    --accent-color: #92c9cf;
+    --accent-foreground: #ffffff;
+    
+    /* Background Colors */
+    --page-background: #ebdccb;
+    
+    /* Border Colors */
+    --border-primary: #2a2a2a;
+    --border-secondary: #92c9cf;
+  }
+  
+}
+
+@layer utilities {
+  /* Background Color Utilities */
+  .bg-primary {
+    background-color: var(--primary-background);
+  }
+  
+  .bg-secondary {
+    background-color: var(--secondary-background);
+  }
+  
+  .bg-accent {
+    background-color: var(--accent-color);
+  }
+  
+  .bg-page {
+    background-color: var(--page-background);
+  }
+  
+  /* Text Color Utilities */
+  .text-primary {
+    color: var(--primary-foreground);
+  }
+  
+  .text-secondary {
+    color: var(--secondary-foreground);
+  }
+  
+  .text-accent {
+    color: var(--accent-foreground);
+  }
+  
+  /* Border Color Utilities */
+  .border-primary {
+    border-color: var(--border-primary);
+  }
+  
+  .border-secondary {
+    border-color: var(--border-secondary);
+  }
+}
