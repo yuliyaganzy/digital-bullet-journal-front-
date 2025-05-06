@@ -1,43 +1,60 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 
 const SignInPage = () => {
     const [formData, setFormData] = useState({
         username: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
+        password: ''
     });
 
+    const [error, setError] = useState(''); // <-- стан для помилок
+
+    const navigate = useNavigate(); // <-- инициализация хука
+
+    const [showPassword, setShowPassword] = useState(false);
+
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Form validation logic
-        if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match');
-            return;
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // Вимикає перезавантаження сторінки
+        setError(''); // очищення старої помилки
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/login`,
+                {
+                email: formData.username,
+                password: formData.password,
+            }, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            // Токен з серверу
+            const token = response.data.token;
+
+            // Зберігаєм токен
+            localStorage.setItem('token', token);
+
+            // Перехід післе успішного входу
+            navigate('/homepage');
+        } catch (error) {
+            console.error('Login error:', error.response?.data || error.message);
+            setError('Unfortunately, you entered an incorrect login or password. Try again.'); // <-- зберігаємо помилку
         }
-
-        // Submit form data
-        console.log('Form submitted:', formData);
-        // Here you would typically call an API to register the user
     };
+
 
     const handleGoogleSignUp = () => {
         console.log('Sign up with Google');
         // Implement Google OAuth logic here
     };
-
-    const navigate = useNavigate(); // <-- инициализация хука
 
     return (
         <div className="min-h-screen w-full bg-[#ebdccb] flex items-center justify-center p-4">
@@ -53,43 +70,53 @@ const SignInPage = () => {
                 </div>
 
                 {/* Right Panel with Sign Up Form */}
-                <div className="relative w-[640px] h-[864px] p-10 flex flex-col items-center rounded-r-[20px] bg-[#f9f9f9]"
-                    style={{ boxShadow: "-6px 0px 20px rgba(0, 0, 0, 0.25), 4px 4px 12px 4px rgba(0, 0, 0, 0.3), inset 4px 0px 4px rgba(0, 0, 0, 0.25)", }}>
+                <div className="relative w-[640px] h-[864px] p-[80px] flex flex-col items-center rounded-r-[20px] bg-[#f9f9f9]"
+                    style={{ boxShadow: "-6px 0px 20px rgba(0, 0, 0, 0.25), 4px 4px 12px 4px rgba(0, 0, 0, 0.3), inset 4px 0px 4px rgba(0, 0, 0, 0.25)" }}>
 
-                    <div className="absolute flex flex-col items-center top-[160px] gap-y-[160px]" >
+                    <div className="flex flex-col items-center mt-[80px]">
                         <div className="w-full max-w-[320px] mx-auto flex flex-col gap-y-[40px]">
                             <h2 className="text-[32px] font-normal font-['Americana_BT'] text-black mb-10 text-center">Sign In</h2>
 
                             <form onSubmit={handleSubmit} className="flex flex-col gap-y-[40px]">
                                 <div className="flex flex-col gap-y-[40px]">
-                                    <div className="border-b border-[#2a2a2a] pb-1">
+                                    <div className="border-b border-[#2a2a2a] pb-1 text-[#2a2a2a] font-[300] font-montserrat">
                                         <input
                                             type="text"
                                             name="username"
                                             placeholder="User name (email)"
                                             value={formData.username}
                                             onChange={handleChange}
-                                            className="w-full bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:font-[200] placeholder:font-montserrat focus:placeholder-transparent"
+                                            className="w-full pl-[4px] bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30"
                                             required
                                         />
                                     </div>
 
-                                    <div className="border-b border-[#2a2a2a] pb-1">
+                                    <div className="relative border-b border-[#2a2a2a] pb-1 text-[#2a2a2a] font-[300] font-montserrat">
                                         <input
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             name="password"
                                             placeholder="Password"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className="w-full bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:font-[200] placeholder:font-montserrat focus:placeholder-transparent"
+                                            className="w-full pl-[4px] bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30"
                                             required
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            className="absolute right-[4px] top-[8px] transform -translate-y-1/2"
+                                        >
+                                            <img
+                                                src={showPassword ? '/images/img_eye_open.svg' : '/images/img_eye_close.svg'}
+                                                alt="Toggle visibility"
+                                                className="border-[#93C9CF] cursor-pointer"
+                                            />
+                                        </button>
                                     </div>
                                 </div>
 
                                 <button
                                     type="submit"
-                                    onClick={() => navigate('/homepage')} // <-- переход по нажатию
                                     className="w-full h-[56px] border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
                                 >
                                     <span className="text-[20px] font-normal font-montserrat text-[#2a2a2a]">Sign In</span>
@@ -111,18 +138,25 @@ const SignInPage = () => {
                                         <img src="/images/img_group_1.svg" alt="Google sign in" className="w-[39px] h-[39px] cursor-pointer active:scale-95" />
                                     </button>
                                 </div>
+
+                                {error && (
+                                    <div className="text-[#F15050] font-montserrat text-sm text-center">
+                                        {error}
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center flex-col gap-y-[40px]">
-                            <div className="flex text-center">
-                                <Link to="/forgotpassword" className="text-[20px] text-[#92c9cf] font-[600] hover:underline">Forgot Password?</Link>
-                            </div>
+                    </div>
 
-                            <div className="flex text-center">
-                                <p className="text-[20px] font-[300] font-montserrat text-[#2a2a2a]">
-                                    Don't have an account? <Link to="/signup" className="text-[#92c9cf] font-[600] hover:underline">Sign up</Link>
-                                </p>
-                            </div>
+                    <div className="absolute bottom-[72px] flex items-center flex-col gap-y-[20px]">
+                        <div className="flex text-center">
+                            <Link to="/forgotpassword" className="text-[20px] text-[#92c9cf] font-[600] hover:underline">Forgot Password?</Link>
+                        </div>
+
+                        <div className="flex text-center">
+                            <p className="text-[20px] font-[300] font-montserrat text-[#2a2a2a]">
+                                Don't have an account? <Link to="/signup" className="text-[#92c9cf] font-[600] hover:underline">Sign up</Link>
+                            </p>
                         </div>
                     </div>
                 </div>

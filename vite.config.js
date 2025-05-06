@@ -20,4 +20,5 @@ export default defineConfig({
       '@styles': path.resolve('./src/styles'),
     },
   },
+  
 })
