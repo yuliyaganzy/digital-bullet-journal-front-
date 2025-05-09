@@ -13,8 +13,8 @@ html, body {
 /* Custom font for Americana BT - you'll need to provide the actual font files */
 @font-face {
   font-family: 'Americana BT';
-  src: url('/fonts/AmericanaBT.woff2') format('woff2'),
-       url('/fonts/AmericanaBT.woff') format('woff');
+  src: url('/fonts/AmericanaBT-Regular.woff2') format('woff2'),
+       url('/fonts/AmericanaBT-Regular.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;

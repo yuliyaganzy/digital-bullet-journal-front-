@@ -27,7 +27,7 @@ const SignInPage = () => {
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/login`,
                 {
-                email: formData.username,
+                login: formData.username,
                 password: formData.password,
             }, {
                 headers: {
