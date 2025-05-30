@@ -8,13 +8,15 @@ function getShadowColor(hex) {
   const b = lighten(bigint & 255);
   return `#${[r, g, b].map(x => x.toString(16).padStart(2, "0")).join("")}`;
 }
+const booksPerShelf = 19;
+const shelvesPerPage = 3;
+const shelfTops = [371, 72, 670];
+const emptyShelf = () => [];
+const emptyPage = () => [emptyShelf(), emptyShelf(), emptyShelf()];
 
 export const HomePage = () => {
-  const booksPerShelf = 19;
-  const shelvesPerPage = 3;
-  const booksPerPage = booksPerShelf * shelvesPerPage;
-  const shelfTops = [371, 72, 670]; // средняя, верхняя, нижняя
-
+  const [pages, setPages] = useState([emptyPage()]);
+  const [currentPage, setCurrentPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
@@ -24,7 +26,9 @@ export const HomePage = () => {
   const [showNoBooksAlert, setShowNoBooksAlert] = useState(false);
   const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
-  const [editBook, setEditBook] = useState(null); // книга, яку редагуємо
+  const [editBook, setEditBook] = useState(null);
+  const [showGoToAvailablePageModal, setShowGoToAvailablePageModal] = useState(false);
+  const [availablePageIndex, setAvailablePageIndex] = useState(null);
 
   // Налаштування параметрів щоденника
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -32,7 +36,8 @@ export const HomePage = () => {
   const [coverColor, setCoverColor] = useState("#FAF1B8");
   const [textColor, setTextColor] = useState("#d3a243");
   const [pageCount, setPageCount] = useState("");
-  const [layoutType, setLayoutType] = useState(""); // dots, lines, grid, blank
+  const [layoutType, setLayoutType] = useState("");
+  const [pendingBook, setPendingBook] = useState(null);
 
   const resetForm = () => {
     setNewBookTitle("");
@@ -107,48 +112,43 @@ export const HomePage = () => {
     "Delete Object"
   ];
 
-  const [books, setBooks] = useState([]);
-
-  const [currentPage, setCurrentPage] = useState(0);
-
-  const currentBooks = books.slice(
-    currentPage * booksPerPage,
-    (currentPage + 1) * booksPerPage
-  );
-
   const handleAddBook = () => {
-    const currentPageBookCount = books.filter((_, index) =>
-      index >= currentPage * booksPerPage && index < (currentPage + 1) * booksPerPage
-    ).length;
-
-    const newBook = {
-      id: books.length + 1,
-      title: newBookTitle || `Book ${books.length + 1}`,
+    const book = {
+      id: Date.now(),
+      title: newBookTitle || `Book ${Date.now()}`,
       coverColor,
       textColor,
       shadowColor: getShadowColor(coverColor),
       pageCount: parseInt(pageCount, 10) || 0,
-      layoutType
+      layoutType,
     };
 
-    if (currentPageBookCount < booksPerPage) {
-      setBooks([...books, newBook]);
+    const updatedPages = [...pages];
+    const current = updatedPages[currentPage];
+    const shelfIndex = current.findIndex(shelf => shelf.length < booksPerShelf);
+
+    if (shelfIndex !== -1) {
+      current[shelfIndex].push(book);
+      setPages(updatedPages);
     } else {
+      setPendingBook(book);
       setShowCreatePageConfirm(true);
-      // Додамо книгу після підтвердження
-      setPendingBook(newBook);
     }
   };
 
   const handleConfirmDelete = () => {
-    if (confirmDeleteId === "multiple") {
-      setBooks(books.filter(book => !selectedBooks.includes(book.id)));
-      setSelectedBooks([]);
-    } else if (confirmDeleteId !== null) {
-      setBooks(books.filter(book => book.id !== confirmDeleteId));
-    }
+    const updatedPages = pages.map(page =>
+      page.map(shelf =>
+        confirmDeleteId === "multiple"
+          ? shelf.filter(book => !selectedBooks.includes(book.id))
+          : shelf.filter(book => book.id !== confirmDeleteId)
+      )
+    );
+
+    setPages(updatedPages);
+    setSelectedBooks([]);
     setConfirmDeleteId(null);
-    setDeleteMode(false); // ⬅ вимикаємо режим видалення
+    setDeleteMode(false);
   };
 
   const handleCancelDelete = () => {
@@ -156,9 +156,11 @@ export const HomePage = () => {
   };
 
   const handleConfirmCreatePage = () => {
-    setBooks([...books, pendingBook]);
+    const newPage = emptyPage();
+    newPage[0].push(pendingBook);
+    setPages(prev => [...prev, newPage]);
+    setCurrentPage(pages.length);
     setPendingBook(null);
-    setCurrentPage(currentPage + 1);
     setShowCreatePageConfirm(false);
   };
 
@@ -167,15 +169,15 @@ export const HomePage = () => {
   };
 
   const handleMenuAction = (action) => {
-    const hasBooks = books.length > 0;
+    const hasBooks = pages.some(page => page.some(shelf => shelf.length > 0));
 
     switch (action) {
       case "New Journal":
         setShowCreateModal(true);
-        console.log("Створення нового журналу");
         break;
       case "New Shelf":
-        console.log("Створення нової полки");
+        setPages(prev => [...prev, emptyPage()]);
+        setCurrentPage(pages.length);
         break;
       case "Edit Object":
         if (!hasBooks) {
@@ -185,7 +187,6 @@ export const HomePage = () => {
         setEditMode(true);
         setDeleteMode(false);
         setSelectMode(false);
-        console.log("Редагування об'єктів");
         break;
       case "Select Object":
         if (!hasBooks) {
@@ -194,7 +195,6 @@ export const HomePage = () => {
         }
         setSelectMode(true);
         setDeleteMode(false);
-        console.log("Вибір об'єкту");
         break;
       case "Delete Object":
         if (!hasBooks) {
@@ -203,7 +203,6 @@ export const HomePage = () => {
         }
         setDeleteMode(true);
         setSelectMode(false);
-        console.log("Видалення об'єкту");
         break;
       default:
         console.log(`${action} не реалізовано`);
@@ -212,7 +211,8 @@ export const HomePage = () => {
     setMenuOpen(false);
   };
 
-  const totalPages = Math.ceil(books.length / booksPerPage);
+  const currentShelves = pages[currentPage] || [];
+  const totalPages = pages.length;
 
   const shelvesToRender = [...Array(shelvesPerPage)].map((_, index) => {
     const shelfGlobalIndex = index;
@@ -229,31 +229,39 @@ export const HomePage = () => {
   });
 
   const handleBookClick = (bookId) => {
+    let bookToEdit = null;
+    let shelfIndex = null;
+    let pageIndex = currentPage;
+    // Знаходимо книгу по id на поточній сторінці
+    pages[pageIndex].forEach((shelf, sIndex) => {
+      shelf.forEach(book => {
+        if (book.id === bookId) {
+          bookToEdit = book;
+          shelfIndex = sIndex;
+        }
+      });
+    });
+    if (!bookToEdit) return; // не знайшли
     if (deleteMode) {
       setConfirmDeleteId(bookId);
       return;
     }
-
-    // Якщо Select Mode ще не активовано — активуємо
     if (!selectMode && !editMode) {
       setSelectMode(true);
     }
-
-    // Тепер — додати або прибрати книгу зі списку обраних
     setSelectedBooks(prev =>
-      prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId]
+      prev.includes(bookId)
+        ? prev.filter(id => id !== bookId)
+        : [...prev, bookId]
     );
-
     if (editMode) {
-      const bookToEdit = books.find(book => book.id === bookId);
       setEditBook(bookToEdit);
       setNewBookTitle(bookToEdit.title);
       setCoverColor(bookToEdit.coverColor);
       setTextColor(bookToEdit.textColor);
       setPageCount(bookToEdit.pageCount.toString());
       setLayoutType(bookToEdit.layoutType);
-      setShowCreateModal(true); // використовуємо ту ж форму
-      return;
+      setShowCreateModal(true);
     }
   };
 
@@ -285,10 +293,11 @@ export const HomePage = () => {
   }, [deleteMode, editMode]);
 
   useEffect(() => {
-    if (selectMode && books.length === 0) {
+    const hasBooks = pages.some(page => page.some(shelf => shelf.length > 0));
+    if (selectMode && !hasBooks) {
       setSelectMode(false);
     }
-  }, [books, selectMode]);
+  }, [pages, selectMode]);
 
 
   const [animateDoneIn, setAnimateDoneIn] = useState(false);
@@ -325,7 +334,9 @@ export const HomePage = () => {
           <div className="relative flex flex-col gap-y-[40px] bg-[#f9f9f9] rounded-[10px] z-[200] px-[32px] py-[20px] max-w-[90%]"
             style={{ boxShadow: "-10px 10px 30px 4px rgba(0, 0, 0, 0.4)" }}
           >
-            <h2 className="text-[32px] font-normal font-['Americana_BT'] text-black mb-10 text-center">Create New Journal</h2>
+            <h2 className="text-[32px] font-normal font-['Americana_BT'] text-black mb-10 text-center">
+              {editBook ? "Edit Selected Journal" : "Create New Journal"}
+            </h2>
             <div className="flex flex-col gap-y-[60px]">
               <div className="flex flex-col gap-y-[20px]">
                 <div className="flex flex-row items-center gap-x-[12px]">
@@ -551,6 +562,40 @@ export const HomePage = () => {
         </div>
       )}
 
+      {showGoToAvailablePageModal && (
+        <div className="absolute w-full h-full flex justify-center items-center z-[200]">
+          <div className="absolute top-0 left-0 w-full h-full bg-[#2a2a2a] opacity-40 pointer-events-none z-[190]" />
+          <div className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] p-4 max-w-[90%] shadow-xl">
+            <div className="text-center text-[#2a2a2a] font-montserrat">
+              <p className="text-[20px] font-[600] px-[12px] py-[4px] max-w-[300px] mx-auto">
+                There is free space on another shelf. Would you like to go there?
+              </p>
+              <hr className="border-[#2a2a2a] w-full mx-auto my-2" />
+              <div className="flex w-full text-[#2a2a2a] text-[20px] font-[300]">
+                <button
+                  className="w-1/2 py-[12px] hover:bg-[#a9d1d4] hover:rounded-bl-[10px] cursor-pointer"
+                  onClick={() => {
+                    setCurrentPage(availablePageIndex);
+                    setShowGoToAvailablePageModal(false);
+                    setAvailablePageIndex(null);
+                  }}
+                >
+                  Yes
+                </button>
+                <button
+                  className="w-1/2 py-[12px] hover:bg-[#a9d1d4] hover:rounded-br-[10px] cursor-pointer"
+                  onClick={() => {
+                    setShowGoToAvailablePageModal(false);
+                    setAvailablePageIndex(null);
+                  }}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="w-[1440px] h-[1024px]">
         <div className="absolute w-[1440px] h-[1024px] flex flex-row justify-center items-center">
@@ -601,22 +646,45 @@ export const HomePage = () => {
                 <div
                   className="relative flex w-[18px] h-[18px] cursor-pointer group"
                   onClick={() => {
-                    if (selectMode && selectedBooks.length === 0 || deleteMode) return;
+                    if ((selectMode && selectedBooks.length === 0) || deleteMode || editMode) return;
                     if (selectMode) {
                       setConfirmDeleteId("multiple");
-                    } else {
+                      return;
+                    }
+                    const currentShelves = pages[currentPage];
+                    const hasFreeSlot = currentShelves.some(shelf => shelf.length < booksPerShelf);
+                    if (hasFreeSlot) {
                       setShowCreateModal(true);
+                    } else {
+                      // шукаємо іншу сторінку з вільним місцем
+                      const otherPageIndex = pages.findIndex((page, idx) =>
+                        idx !== currentPage && page.some(shelf => shelf.length < booksPerShelf)
+                      );
+                      if (otherPageIndex !== -1) {
+                        // Є інша сторінка з вільним місцем
+                        setAvailablePageIndex(otherPageIndex);
+                        setShowGoToAvailablePageModal(true);
+                      } else {
+                        // Немає вільного місця — пропонуємо створити нову
+                        setShowCreatePageConfirm(true);
+                      }
                     }
                   }}
                 >
                   <img
                     src={selectMode ? "/images/img_delete_book.svg" : "/images/img_add_book.svg"}
                     alt="Action"
-                    className={`w-[18px] h-[18px] transition-transform duration-100 ${selectMode && selectedBooks.length === 0 || deleteMode ? 'opacity-30 cursor-not-allowed' : 'active:scale-90'}`}
+                    className={`w-[18px] h-[18px] transition-transform duration-100 ${(selectMode && selectedBooks.length === 0) || deleteMode || editMode ? 'opacity-30 cursor-not-allowed' : 'active:scale-90'}`}
                   />
-                  {selectMode && selectedBooks.length === 0 || deleteMode && (
+                  {((selectMode && selectedBooks.length === 0) || deleteMode || editMode) && (
                     <div className="absolute bottom-full mb-[4px] w-max px-[4px] bg-[#c3dee1] text-[#2a2a2a] text-[16px] font-[200] font-montserrat rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      {selectMode ? 'Select an object' : 'Complete the deletion'}
+                      {selectMode && selectedBooks.length === 0
+                        ? 'Select an object'
+                        : deleteMode
+                          ? 'Complete the deletion'
+                          : editMode
+                            ? 'Finish editing'
+                            : ''}
                     </div>
                   )}
                 </div>
@@ -625,21 +693,27 @@ export const HomePage = () => {
                 <div
                   className="relative flex w-[20px] h-[18px] cursor-pointer group"
                   onClick={() => {
-                    if (selectMode || deleteMode) return;
+                    if (selectMode || deleteMode || editMode) return;
                     toggleMenu();
                   }}
                 >
                   <img
                     src="/images/img_menu.svg"
                     alt="Menu"
-                    className={`w-[18px] h-[18px] ${selectMode || deleteMode
+                    className={`w-[18px] h-[18px] ${selectMode || deleteMode || editMode
                       ? 'opacity-30 cursor-not-allowed'
                       : 'cursor-pointer active:scale-90'
                       }`}
                   />
-                  {(selectMode || deleteMode) && (
+                  {(selectMode || deleteMode || editMode) && (
                     <div className="absolute bottom-full mb-[4px] w-max px-[4px] bg-[#c3dee1] text-[#2a2a2a] text-[16px] font-[200] font-montserrat rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      {selectMode ? 'Exit Selection mode' : 'Complete the deletion'}
+                      {selectMode
+                        ? 'Exit Selection mode'
+                        : deleteMode
+                          ? 'Complete the deletion'
+                          : editMode
+                            ? 'Finish editing'
+                            : ''}
                     </div>
                   )}
                 </div>
@@ -669,28 +743,32 @@ export const HomePage = () => {
           </div>
           {shelvesToRender}
 
-          {currentBooks.map((book, index) => {
-            const shelfIndex = Math.floor(index / booksPerShelf);
-            const positionInShelf = index % booksPerShelf;
-            const top = `${shelfTops[shelfIndex]}px`;
-            const left = `${196 + positionInShelf * 52}px`;
+          {currentShelves.map((shelf, shelfIndex) => {
+            const top = `${shelfTops[shelfIndex]}px`; // top для кожної полиці
 
-            return (
-              <div
-                key={book.id}
-                onClick={() => handleBookClick(book.id)}
-                className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer ${selectedBooks.includes(book.id) ? 'filter saturate-[1] brightness-[0.8] contrast-[1.8]' : ''
-                  }`}
-                style={{ top, left }}
-              >
-                <BookVisual
-                  title={book.title}
-                  titleColor={book.textColor}
-                  spineColor={book.coverColor}
-                />
-              </div>
-            );
+            return shelf.map((book, bookIndex) => {
+              const left = `${196 + bookIndex * 52}px`; // позиція книжки на полиці
+
+              return (
+                <div
+                  key={book.id}
+                  onClick={() => handleBookClick(book.id)}
+                  className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer ${selectedBooks.includes(book.id)
+                    ? 'filter saturate-[1] brightness-[0.8] contrast-[1.8]'
+                    : ''
+                    }`}
+                  style={{ top, left }}
+                >
+                  <BookVisual
+                    title={book.title}
+                    titleColor={book.textColor}
+                    spineColor={book.coverColor}
+                  />
+                </div>
+              );
+            });
           })}
+
 
           {currentPage > 0 && (
             <button
@@ -711,7 +789,7 @@ export const HomePage = () => {
           )}
         </div>
       </div>
-    </main>
+    </main >
   );
 };
 

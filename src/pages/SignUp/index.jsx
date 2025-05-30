@@ -28,7 +28,7 @@ const SignUpPage = () => {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Паролі не співпадають');
+      setError('Passwords do not match');
       return;
     }
 
@@ -54,7 +54,7 @@ const SignUpPage = () => {
       if (error.response && error.response.data && error.response.data.message) {
         setError(error.response.data.message); // ✅ текст із Laravel
       } else {
-        setError('Сталася помилка при реєстрації');
+        setError('An error occurred during registration');
       }
     }
   };
