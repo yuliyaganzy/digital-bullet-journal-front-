@@ -425,22 +425,27 @@ export const HomePage = () => {
                     setError("");
 
                     if (editBook) {
-                      // Оновлюємо існуючу книжку
-                      setBooks(prevBooks =>
-                        prevBooks.map(book =>
-                          book.id === editBook.id
-                            ? {
-                              ...book,
-                              title: newBookTitle,
-                              coverColor,
-                              textColor,
-                              shadowColor: getShadowColor(coverColor),
-                              pageCount: parseInt(pageCount, 10),
-                              layoutType
-                            }
-                            : book
+                      const updatedPages = pages.map((page, pIndex) =>
+                        page.map(shelf =>
+                          shelf.map(book =>
+                            book.id === editBook.id
+                              ? {
+                                ...book,
+                                title: newBookTitle,
+                                coverColor,
+                                textColor,
+                                shadowColor: getShadowColor(coverColor),
+                                pageCount: parseInt(pageCount, 10),
+                                layoutType
+                              }
+                              : book
+                          )
                         )
                       );
+                      setPages(updatedPages);
+                      setSelectedBooks([]); // очищаємо виділення
+                      setEditBook(null);     // очищаємо об'єкт редагування
+                      setEditMode(false);    // виходимо з режиму редагування
                     } else {
                       handleAddBook(); // додавання нової
                     }
@@ -598,7 +603,7 @@ export const HomePage = () => {
       )}
 
       <div className="w-[1440px] h-[1024px]">
-        <div className="absolute w-[1440px] h-[1024px] flex flex-row justify-center items-center">
+        <div className="absolute w-[1440px] h-[1024px] flex flex-row items-center">
           <div className="absolute w-full h-full top-0 left-0">
             <header className="absolute flex items-center justify-center w-full h-[72px] top-0 left-0 bg-transparent z-[160]">
               <h1 className="font-['Americana_BT'] font-[400] text-[#2a2a2a] text-[36px]">My Shelf</h1>
@@ -753,7 +758,7 @@ export const HomePage = () => {
                 <div
                   key={book.id}
                   onClick={() => handleBookClick(book.id)}
-                  className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer ${selectedBooks.includes(book.id)
+                  className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer ${selectMode && selectedBooks.includes(book.id)
                     ? 'filter saturate-[1] brightness-[0.8] contrast-[1.8]'
                     : ''
                     }`}
@@ -771,21 +776,29 @@ export const HomePage = () => {
 
 
           {currentPage > 0 && (
-            <button
-              className="absolute top-[950px] left-[50px] text-3xl font-bold"
+            <div
+              className="absolute ml-[20px]"
               onClick={() => setCurrentPage(currentPage - 1)}
             >
-              {"<"}
-            </button>
+              <img
+                src="/images/img_prev_shelf.svg"
+                alt="Prev Shelf"
+                className="w-[18px] h-[33px] cursor-pointer hover:translate-x-[2px] transition-transform duration-300 hover:scale-110 active:scale-90"
+              />
+            </div>
           )}
 
           {currentPage < totalPages - 1 && (
-            <button
-              className="absolute top-[950px] left-[1350px] text-3xl font-bold"
+            <div
+              className="absolute ml-[1420px]"
               onClick={() => setCurrentPage(currentPage + 1)}
             >
-              {">"}
-            </button>
+              <img
+                src="/images/img_next_shelf.svg"
+                alt="Next Shelf"
+                className="w-[18px] h-[33px] cursor-pointer hover:translate-x-[2px] transition-transform duration-300 hover:scale-110 active:scale-90"
+              />
+            </div>
           )}
         </div>
       </div>
