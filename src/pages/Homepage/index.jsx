@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function getShadowColor(hex) {
   const lighten = (value) => Math.max(0, Math.min(255, Math.round(value * 0.75)));
@@ -15,6 +16,9 @@ const emptyShelf = () => [];
 const emptyPage = () => [emptyShelf(), emptyShelf(), emptyShelf()];
 
 export const HomePage = () => {
+  const clickTimeoutRef = useRef(null);
+  const navigate = useNavigate(); // <-- инициализация хука
+
   const [pages, setPages] = useState([emptyPage()]);
   const [currentPage, setCurrentPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,6 +33,9 @@ export const HomePage = () => {
   const [editBook, setEditBook] = useState(null);
   const [showGoToAvailablePageModal, setShowGoToAvailablePageModal] = useState(false);
   const [availablePageIndex, setAvailablePageIndex] = useState(null);
+
+  const [openingBookId, setOpeningBookId] = useState(null);
+  const [openingBookPosition, setOpeningBookPosition] = useState(null);
 
   // Налаштування параметрів щоденника
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -324,6 +331,7 @@ export const HomePage = () => {
 
     return () => clearTimeout(timeoutId);
   }, [selectMode, deleteMode, editMode]);
+
 
   return (
     <main className="relative bg-[#EBDCCB] flex flex-row justify-center w-full h-full">
@@ -757,12 +765,42 @@ export const HomePage = () => {
               return (
                 <div
                   key={book.id}
-                  onClick={() => handleBookClick(book.id)}
-                  className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer ${selectMode && selectedBooks.includes(book.id)
-                    ? 'filter saturate-[1] brightness-[0.8] contrast-[1.8]'
-                    : ''
-                    }`}
-                  style={{ top, left }}
+                  onClick={() => {
+                    if (clickTimeoutRef.current) {
+                      clearTimeout(clickTimeoutRef.current);
+                      clickTimeoutRef.current = null;
+
+                      if (!selectMode && !deleteMode && !editMode) {
+                        // Отримати top і left з inline-стилю
+                        const topValue = parseInt(top);   // наприклад "371px" → 371
+                        const leftValue = parseInt(left); // наприклад "249px" → 249
+
+                        setOpeningBookId(book.id);
+                        setOpeningBookPosition({ top: topValue, left: leftValue });
+                        setTimeout(() => {
+                          navigate(`/journal/${book.id}`, { state: { book } });
+                        }, 1000);
+                      }
+                    } else {
+                      clickTimeoutRef.current = setTimeout(() => {
+                        handleBookClick(book.id);
+                        clickTimeoutRef.current = null;
+                      }, 250);
+                    }
+                  }}
+                  className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer transition-all duration-1000 ease-in-out
+                    ${selectMode && selectedBooks.includes(book.id)
+                      ? 'filter saturate-[1] brightness-[0.8] contrast-[1.8]'
+                      : ''}
+                    ${openingBookId === book.id ? 'pointer-events-none' : ''}`}
+                  style={{
+                    top: openingBookId === book.id
+                      ? `${(openingBookPosition?.top || 0) + 40}px`
+                      : top,
+                    left: openingBookId === book.id
+                      ? `${(openingBookPosition?.left || 0) - 39}px`
+                      : left,
+                  }}
                 >
                   <BookVisual
                     title={book.title}

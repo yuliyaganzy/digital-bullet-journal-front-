@@ -151,3 +151,12 @@
     border-color: var(--border-secondary);
   }
 }
+
+@keyframes pulse-arrow {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-10px); }
+}
+
+.animate-pulse-arrow {
+  animation: pulse-arrow 3s infinite;
+}
