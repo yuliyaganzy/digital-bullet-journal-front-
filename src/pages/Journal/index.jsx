@@ -15,9 +15,30 @@ const Journal = () => {
     const [currentSpread, setCurrentSpread] = useState(0); // Поточний розворот (індекс)
     const [scale, setScale] = useState(1);
     const [activeTool, setActiveTool] = useState("move");
+    // Додамо стан для збереження обраного варіанту move tool
+    const [selectedMoveTool, setSelectedMoveTool] = useState('move');
     const [activeToolMenu, setActiveToolMenu] = useState(null); // Відкрите меню
     const [recentColors, setRecentColors] = useState(["#F9F9F9", "#85544D", "#EFB8C8", "#84A285", "#782746", "#2A2A2A"]);
     const [currentColor, setCurrentColor] = useState("#000000");
+
+    // Обробка подій миші
+    const [isDragging, setIsDragging] = useState(false);
+    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+    const [scrollPos, setScrollPos] = useState({ left: 0, top: 0 });
+    const editorRef = useRef(null);
+
+    // Додавання тексту
+    const [textMode, setTextMode] = useState(false);
+    const [textElements, setTextElements] = useState([]);
+    const [activeTextElement, setActiveTextElement] = useState(null);
+    const [showTextSettings, setShowTextSettings] = useState(false);
+    const [textSettingsPosition, setTextSettingsPosition] = useState({ x: 0, y: 0 });
+
+    // Переміщення і розтягування тексту
+    const [isDraggingText, setIsDraggingText] = useState(false);
+    const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+    const [isResizing, setIsResizing] = useState(false);
+    const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
 
     const tools = [
         { icon: "img_move_tool.svg", name: "move" },
@@ -31,8 +52,22 @@ const Journal = () => {
 
     const toolMenus = {
         move: [
-            { icon: 'img_move_tool.svg', text: 'Move' },
-            { icon: 'img_hand_tool.svg', text: 'Hand tool' },
+            {
+                icon: 'img_move_tool.svg',
+                text: 'Move',
+                onClick: () => {
+                    setSelectedMoveTool('move');
+                    document.body.style.cursor = 'default';
+                }
+            },
+            {
+                icon: 'img_hand_tool.svg',
+                text: 'Hand tool',
+                onClick: () => {
+                    setSelectedMoveTool('hand');
+                    document.body.style.cursor = 'grab';
+                }
+            },
         ],
         calendar: [
             { icon: 'img_plus_tool.svg', text: 'Create calendar' },
@@ -62,6 +97,192 @@ const Journal = () => {
             { icon: 'img_image_video.svg', text: 'Image / video' },
         ]
     };
+
+    // Обробка подій миші
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        const handleMouseDown = (e) => {
+            if (activeTool === 'move' && selectedMoveTool === 'hand' && e.button === 0) {
+                setIsDragging(true);
+                setStartPos({
+                    x: e.clientX,
+                    y: e.clientY
+                });
+                setScrollPos({
+                    left: editor.scrollLeft,
+                    top: editor.scrollTop
+                });
+                document.body.style.cursor = 'grabbing';
+            }
+        };
+        const handleMouseMove = (e) => {
+            if (isDragging) {
+                const dx = e.clientX - startPos.x;
+                const dy = e.clientY - startPos.y;
+                editor.scrollLeft = scrollPos.left - dx;
+                editor.scrollTop = scrollPos.top - dy;
+            }
+        };
+        const handleMouseUp = () => {
+            if (isDragging) {
+                setIsDragging(false);
+                document.body.style.cursor = 'grab';
+            }
+        };
+        editor.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            editor.removeEventListener('mousedown', handleMouseDown);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, startPos, scrollPos, activeTool, selectedMoveTool]);
+
+    useEffect(() => {
+        return () => {
+            // Скидаємо курсор при виході з компоненту
+            document.body.style.cursor = 'default';
+        };
+    }, []);
+
+    // Додавання тексту
+    useEffect(() => {
+        const handlePageClick = (e) => {
+            // Додаємо перевірку, чи клік був на книзі або її сторінках
+            const isEditorClick = e.target.closest('.flip-book-container') ||
+                e.target.closest('.page-wrapper') ||
+                e.target.closest('.page');
+
+            if (textMode && isEditorClick && !e.target.closest('.text-element') && !e.target.closest('.text-settings')) {
+                const editorRect = editorRef.current.getBoundingClientRect();
+                const scrollLeft = editorRef.current.scrollLeft;
+                const scrollTop = editorRef.current.scrollTop;
+
+                const newTextElement = {
+                    id: Date.now(),
+                    x: e.clientX - editorRect.left + scrollLeft,
+                    y: e.clientY - editorRect.top + scrollTop,
+                    text: 'Текст',
+                    fontSize: 16,
+                    color: currentColor,
+                    rotation: 0,
+                    width: 200,
+                    height: 50
+                };
+
+                setTextElements([...textElements, newTextElement]);
+                setActiveTextElement(newTextElement.id);
+                setShowTextSettings(true);
+                setTextSettingsPosition({
+                    x: e.clientX + 220,
+                    y: e.clientY
+                });
+                setTextMode(false);
+                setActiveTool("move");
+                document.body.style.cursor = "default";
+                console.log("OHHHHHHHH")
+            } else if (!e.target.closest('.text-element') && !e.target.closest('.text-settings')) {
+                setActiveTextElement(null);
+                setShowTextSettings(false);
+            }
+        };
+
+        const handleDoubleClick = (e) => {
+            if (e.target.closest('.text-element')) {
+                const textId = parseInt(e.target.closest('.text-element').dataset.id);
+                setActiveTextElement(textId);
+                setShowTextSettings(true);
+
+                const element = textElements.find(el => el.id === textId);
+                if (element) {
+                    setTextSettingsPosition({
+                        x: element.x + element.width + 20,
+                        y: element.y
+                    });
+                }
+            }
+        };
+
+        if (textMode) {
+            document.addEventListener('click', handlePageClick);
+            document.addEventListener('dblclick', handleDoubleClick);
+        }
+
+        return () => {
+            document.removeEventListener('click', handlePageClick);
+            document.removeEventListener('dblclick', handleDoubleClick);
+        };
+    }, [textMode, textElements, currentColor]);
+
+    // Переміщення і розтягування тексту
+    const handleMouseDownOnText = (e, element) => {
+        if (e.target.classList.contains('resize-handle')) {
+            setIsResizing(true);
+            setResizeStartSize({
+                width: element.width,
+                height: element.height
+            });
+            setDragStartPos({ x: e.clientX, y: e.clientY });
+        } else {
+            setIsDraggingText(true);
+            setDragStartPos({ x: e.clientX, y: e.clientY });
+        }
+        e.stopPropagation();
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (isDraggingText && activeTextElement) {
+                const dx = e.clientX - dragStartPos.x;
+                const dy = e.clientY - dragStartPos.y;
+                setTextElements(textElements.map(el => {
+                    if (el.id === activeTextElement) {
+                        return {
+                            ...el,
+                            x: el.x + dx,
+                            y: el.y + dy
+                        };
+                    }
+                    return el;
+                }));
+                setDragStartPos({ x: e.clientX, y: e.clientY });
+                setTextSettingsPosition(prev => ({
+                    x: prev.x + dx,
+                    y: prev.y + dy
+                }));
+            }
+            if (isResizing && activeTextElement) {
+                const dx = e.clientX - dragStartPos.x;
+                const dy = e.clientY - dragStartPos.y;
+
+                setTextElements(textElements.map(el => {
+                    if (el.id === activeTextElement) {
+                        return {
+                            ...el,
+                            width: Math.max(50, resizeStartSize.width + dx),
+                            height: Math.max(20, resizeStartSize.height + dy)
+                        };
+                    }
+                    return el;
+                }));
+                setDragStartPos({ x: e.clientX, y: e.clientY });
+            }
+        };
+        const handleMouseUp = () => {
+            setIsDraggingText(false);
+            setIsResizing(false);
+        };
+        if (isDraggingText || isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDraggingText, isResizing, dragStartPos, activeTextElement, textElements]);
 
     if (!book) {
         return <div className="p-10 text-red-500 text-xl">Book not found or no data passed.</div>;
@@ -106,12 +327,10 @@ const Journal = () => {
     const renderPages = () => {
         const pages = [];
 
-        // Додаємо розвороти
         for (let i = 0; i < book.pageCount; i++) {
-            // Ліва сторінка розвороту
             pages.push(
-                <div key={`left-${i}`} className="h-full w-full bg-[#f9f9f9]">
-                    <div className="w-full h-full flex flex-col items-center justify-center"
+                <div key={`left-${i}`} className="page h-full w-full bg-[#f9f9f9]">
+                    <div className="page-wrapper w-full h-full flex flex-col items-center justify-center"
                         style={{
                             boxShadow: "inset -6px 0px 12px rgba(0, 0, 0, 0.25)",
                         }}>
@@ -120,10 +339,9 @@ const Journal = () => {
                 </div>
             );
 
-            // Права сторінка розвороту
             pages.push(
-                <div key={`right-${i}`} className="h-full w-full  bg-[#f9f9f9]">
-                    <div className="w-full h-full flex flex-col items-center justify-center"
+                <div key={`right-${i}`} className="page h-full w-full bg-[#f9f9f9]">
+                    <div className="page-wrapper w-full h-full flex flex-col items-center justify-center"
                         style={{
                             boxShadow: "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
                         }}>
@@ -209,59 +427,68 @@ const Journal = () => {
                 <>
                     {/* Панель інструментів */}
                     <div className="fixed right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
-                        {tools.map((tool) => (
-                            <div key={tool.name} className="relative">
-                                <button
-                                    ref={el => buttonRefs.current[tool.name] = el}
-                                    onClick={() => {
-                                        setActiveTool(tool.name);
+                        {tools.map((tool) => {
+                            // Для move tool використовуємо обрану іконку
+                            const icon = tool.name === 'move' ? `img_${selectedMoveTool}_tool.svg` : tool.icon;
 
-                                        if (toolMenus[tool.name]) {
-                                            // Для інструментів з меню — відкрити/закрити ToolMenu
-                                            setActiveToolMenu(activeToolMenu === tool.name ? null : tool.name);
-                                        } else {
-                                            // Для інструментів без ToolMenu, наприклад text
-                                            setActiveToolMenu(null);
+                            return (
+                                <div key={tool.name} className="relative">
+                                    <button
+                                        ref={el => buttonRefs.current[tool.name] = el}
+                                        onClick={() => {
+                                            setActiveTool(tool.name);
+                                            // Додамо зміну курсора при активації hand tool
+                                            if (tool.name === 'move' && selectedMoveTool === 'hand') {
+                                                document.body.style.cursor = 'grab';
+                                            } else {
+                                                document.body.style.cursor = 'default';
+                                            }
+                                            if (tool.name === 'text') {
+                                                setTextMode(true);
+                                                document.body.style.cursor = "url('/images/img_plus_tool.svg'), text";
+                                                setActiveToolMenu(null);
+                                            } else {
+                                                setTextMode(false);
+                                                document.body.style.cursor = 'default';
+                                            }
 
-                                            if (tool.name === "text") {
-                                                console.log("Text tool activated");
+                                            if (toolMenus[tool.name]) {
+                                                setActiveToolMenu(activeToolMenu === tool.name ? null : tool.name);
+                                            } else {
+                                                setActiveToolMenu(null);
                                             }
-                                            if (tool.name === "template") {
-                                                console.log("Template tool activated");
-                                            }
-                                        }
-                                    }}
-                                    className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer        
-                                            ${activeTool === tool.name
-                                            ? "bg-[#93C9CF]"
-                                            : "hover:bg-[#AED0D4]"
-                                        }`}
-                                    style={{ width: "46px", height: "46px", padding: "10px" }}
-                                >
-                                    <img
-                                        src={`/images/${tool.icon}`}
-                                        alt={tool.name}
-                                        style={{ width: "100%", height: "100%" }}
+                                        }}
+                                        className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer        
+                        ${activeTool === tool.name
+                                                ? "bg-[#93C9CF]"
+                                                : "hover:bg-[#AED0D4]"
+                                            }`}
+                                        style={{ width: "46px", height: "46px", padding: "10px" }}
+                                    >
+                                        <img
+                                            src={`/images/${icon}`}
+                                            alt={tool.name}
+                                            style={{ width: "100%", height: "100%" }}
+                                        />
+                                    </button>
+                                    <ToolMenu
+                                        items={toolMenus[tool.name] || []}
+                                        isOpen={activeToolMenu === tool.name}
+                                        onClose={() => setActiveToolMenu(null)}
+                                        triggerRef={{ current: buttonRefs.current[tool.name] }}
+                                        isAdvanced={["draw", "form"].includes(tool.name)}
+                                        recentColors={recentColors}
+                                        currentColor={currentColor}
+                                        onColorChange={(color) => {
+                                            setCurrentColor(color);
+                                            setRecentColors((prev) =>
+                                                [color, ...prev.filter((c) => c !== color)].slice(0, 6)
+                                            );
+                                        }}
                                     />
-                                </button>
-
-                                <ToolMenu
-                                    items={toolMenus[tool.name] || []}
-                                    isOpen={activeToolMenu === tool.name}
-                                    onClose={() => setActiveToolMenu(null)}
-                                    triggerRef={{ current: buttonRefs.current[tool.name] }}
-                                    isAdvanced={["draw", "form"].includes(tool.name)}
-                                    recentColors={recentColors}
-                                    currentColor={currentColor}
-                                    onColorChange={(color) => {
-                                        setCurrentColor(color);
-                                        setRecentColors((prev) =>
-                                            [color, ...prev.filter((c) => c !== color)].slice(0, 6)
-                                        );
-                                    }}
-                                />
-                            </div>
-                        ))}
+                                </div>
+                            );
+                        })}
                     </div>
 
                     {/* Підпис сторінки */}
@@ -306,11 +533,14 @@ const Journal = () => {
                     </div>
 
                     {/* Контейнер редактора */}
-                    <div className="w-full h-full overflow-auto bg-[#ebdccb]">
+                    <div className="w-full h-full overflow-auto bg-[#ebdccb]"
+                        ref={editorRef}
+                    >
                         {/* Wrapper з padding */}
                         <div
                             style={{
                                 padding: "60px",
+                                overflow: "hidden",
                                 boxSizing: "border-box",
                                 minWidth: `${1280 * scale + 120}px`,
                                 minHeight: `${864 * scale + 120}px`,
@@ -334,7 +564,7 @@ const Journal = () => {
                                 clickEventForward={false}
                                 useMouseEvents={false}
                                 onFlip={handlePageChange}
-                                className="shadow-lg"
+                                className="flip-book-container shadow-lg"
                                 style={{
                                     borderRadius: "20px",
                                     overflow: "hidden",
@@ -347,7 +577,102 @@ const Journal = () => {
                             >
                                 {renderPages()}
                             </HTMLFlipBook>
+
+                            {/* Text element (label) */}
+                            {textElements.map((element) => (
+                                <div
+                                    key={element.id}
+                                    data-id={element.id}
+                                    className="text-element absolute cursor-move"
+                                    style={{
+                                        left: `${element.x}px`,
+                                        top: `${element.y}px`,
+                                        width: `${element.width}px`,
+                                        height: `${element.height}px`,
+                                        transform: `rotate(${element.rotation}deg)`,
+                                        color: element.color,
+                                        fontSize: `${element.fontSize}px`,
+                                        border: activeTextElement === element.id ? '1px dashed #2A2A2A' : 'none'
+                                    }}
+                                    contentEditable={activeTextElement === element.id}
+                                    suppressContentEditableWarning={true}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveTextElement(element.id);
+                                        setShowTextSettings(false);
+                                    }}
+                                    onMouseDown={(e) => handleMouseDownOnText(e, element)}
+                                >
+                                    {element.text}
+                                    {activeTextElement === element.id && (
+                                        <div
+                                            className="resize-handle absolute bottom-0 right-0 w-3 h-3 bg-[#2A2A2A] cursor-se-resize"
+                                            onMouseDown={(e) => {
+                                                e.stopPropagation();
+                                                handleMouseDownOnText(e, element);
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            ))}
                         </div>
+                        {/* Label Settings */}
+                        {showTextSettings && activeTextElement && (
+                            <div
+                                className="fixed z-50 text-settings"
+                                style={{
+                                    left: `${textSettingsPosition.x}px`,
+                                    top: `${textSettingsPosition.y}px`
+                                }}
+                            >
+                                <div className="bg-[#C3DEE1] rounded-lg p-4 shadow-lg">
+                                    <div className="mt-4 flex flex-col gap-2">
+                                        <label>
+                                            Розмір шрифту:
+                                            <input
+                                                type="range"
+                                                min="8"
+                                                max="72"
+                                                value={textElements.find(el => el.id === activeTextElement)?.fontSize || 16}
+                                                onChange={(e) => {
+                                                    const newSize = parseInt(e.target.value);
+                                                    setTextElements(textElements.map(el =>
+                                                        el.id === activeTextElement ? { ...el, fontSize: newSize } : el
+                                                    ));
+                                                }}
+                                            />
+                                        </label>
+                                        <label>
+                                            Колір:
+                                            <input
+                                                type="color"
+                                                value={textElements.find(el => el.id === activeTextElement)?.color || currentColor}
+                                                onChange={(e) => {
+                                                    setTextElements(textElements.map(el =>
+                                                        el.id === activeTextElement ? { ...el, color: e.target.value } : el
+                                                    ));
+                                                }}
+                                            />
+                                        </label>
+                                        <label>
+                                            Поворот:
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="360"
+                                                value={textElements.find(el => el.id === activeTextElement)?.rotation || 0}
+                                                onChange={(e) => {
+                                                    const newRotation = parseInt(e.target.value);
+                                                    setTextElements(textElements.map(el =>
+                                                        el.id === activeTextElement ? { ...el, rotation: newRotation } : el
+                                                    ));
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </>
             )
