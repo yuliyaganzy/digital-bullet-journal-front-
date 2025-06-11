@@ -160,3 +160,24 @@
 .animate-pulse-arrow {
   animation: pulse-arrow 3s infinite;
 }
+
+.custom-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-left: 2px solid #93C9CF;
+    transform: rotate(90deg);
+    border-radius: 4px;
+}
+
+/* Firefox підтримка */
+.custom-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #93C9CF transparent;
+}

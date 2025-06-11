@@ -1,16 +1,23 @@
 import { useParams, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import HTMLFlipBook from "react-pageflip";
+import ToolMenu from "@/components/ui/ToolMenu";
 
 const Journal = () => {
     const { id } = useParams();
     const location = useLocation();
     const book = location.state?.book;
+    const flipBook = useRef(null);
+    const buttonRefs = useRef({});
 
     const [isOpened, setIsOpened] = useState(false);
     const [isOpening, setIsOpening] = useState(false);
-    const [page, setPage] = useState(1);
+    const [currentSpread, setCurrentSpread] = useState(0); // Поточний розворот (індекс)
     const [scale, setScale] = useState(1);
     const [activeTool, setActiveTool] = useState("move");
+    const [activeToolMenu, setActiveToolMenu] = useState(null); // Відкрите меню
+    const [recentColors, setRecentColors] = useState(["#F9F9F9", "#85544D", "#EFB8C8", "#84A285", "#782746", "#2A2A2A"]);
+    const [currentColor, setCurrentColor] = useState("#000000");
 
     const tools = [
         { icon: "img_move_tool.svg", name: "move" },
@@ -18,9 +25,43 @@ const Journal = () => {
         { icon: "img_draw_tool.svg", name: "draw" },
         { icon: "img_form_tool.svg", name: "form" },
         { icon: "img_calendar_tool.svg", name: "calendar" },
-        { icon: "img_bookmark_tool.svg", name: "tracker" },
+        { icon: "img_bookmark_tool.svg", name: "bookmark" },
         { icon: "img_template_tool.svg", name: "template" },
     ];
+
+    const toolMenus = {
+        move: [
+            { icon: 'img_move_tool.svg', text: 'Move' },
+            { icon: 'img_hand_tool.svg', text: 'Hand tool' },
+        ],
+        calendar: [
+            { icon: 'img_plus_tool.svg', text: 'Create calendar' },
+            { icon: 'img_key_tool.svg', text: 'Add keys' },
+            { icon: 'img_event_tool.svg', text: 'Create event' },
+        ],
+        bookmark: [
+            { icon: 'img_plus_tool.svg', text: 'Add bookmark' },
+        ],
+        draw: [
+            { icon: 'img_plus_tool.svg', text: 'Eraser' },
+            { icon: 'img_plus_tool.svg', text: 'Pen' },
+            { icon: 'img_plus_tool.svg', text: 'Pencil' },
+            { icon: 'img_plus_tool.svg', text: 'Graphic pen' },
+            { icon: 'img_plus_tool.svg', text: 'Marker' },
+            { icon: 'img_plus_tool.svg', text: 'Brush pen' },
+            { icon: 'img_plus_tool.svg', text: 'Air Brush' },
+            { icon: 'img_plus_tool.svg', text: 'Watercolor' },
+        ],
+        form: [
+            { icon: 'img_rectangle.svg', text: 'Rectangle' },
+            { icon: 'img_line.svg', text: 'Line' },
+            { icon: 'img_arrow.svg', text: 'Arrow' },
+            { icon: 'img_ellipse.svg', text: 'Ellipse' },
+            { icon: 'img_polygon.svg', text: 'Polygon' },
+            { icon: 'img_star.svg', text: 'Star' },
+            { icon: 'img_image_video.svg', text: 'Image / video' },
+        ]
+    };
 
     if (!book) {
         return <div className="p-10 text-red-500 text-xl">Book not found or no data passed.</div>;
@@ -32,7 +73,7 @@ const Journal = () => {
                 e.preventDefault();
                 setScale((prev) => {
                     let newScale = prev - e.deltaY * 0.001;
-                    newScale = Math.min(Math.max(newScale, 0.2), 3); // Межі масштабу
+                    newScale = Math.min(Math.max(newScale, 0.2), 3);
                     return newScale;
                 });
             }
@@ -41,6 +82,59 @@ const Journal = () => {
         window.addEventListener("wheel", handleWheel, { passive: false });
         return () => window.removeEventListener("wheel", handleWheel);
     }, []);
+
+    const handlePageChange = (e) => {
+        // Оновлюємо поточний розворот (ділимо на 2, тому що кожен розворот = 2 сторінки)
+        setCurrentSpread(Math.floor(e.data / 2));
+    };
+
+    const goToPrevSpread = () => {
+        if (flipBook.current && currentSpread > 0) {
+            const targetPage = 1 + (currentSpread - 1) * 2;
+            flipBook.current.pageFlip().flip(targetPage);
+        }
+    };
+
+    const goToNextSpread = () => {
+        if (flipBook.current && currentSpread < book.pageCount - 1) {
+            const targetPage = 1 + (currentSpread + 1) * 2;
+            flipBook.current.pageFlip().flip(targetPage);
+        }
+    };
+
+    // Створюємо сторінки для щоденника (враховуючи, що кожен розворот = 2 сторінки)
+    const renderPages = () => {
+        const pages = [];
+
+        // Додаємо розвороти
+        for (let i = 0; i < book.pageCount; i++) {
+            // Ліва сторінка розвороту
+            pages.push(
+                <div key={`left-${i}`} className="h-full w-full bg-[#f9f9f9]">
+                    <div className="w-full h-full flex flex-col items-center justify-center"
+                        style={{
+                            boxShadow: "inset -6px 0px 12px rgba(0, 0, 0, 0.25)",
+                        }}>
+                        <div className="text-xl text-gray-600">{`Розворот ${i + 1} — Left`}</div>
+                    </div>
+                </div>
+            );
+
+            // Права сторінка розвороту
+            pages.push(
+                <div key={`right-${i}`} className="h-full w-full  bg-[#f9f9f9]">
+                    <div className="w-full h-full flex flex-col items-center justify-center"
+                        style={{
+                            boxShadow: "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
+                        }}>
+                        <div className="text-xl text-gray-600">{`Розворот ${i + 1} — Right`}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        return pages;
+    };
 
     return (
         <div className="relative w-full h-screen overflow-hidden bg-[#EBDCCB] flex items-center">
@@ -62,19 +156,12 @@ const Journal = () => {
 
                     {/* Обкладинка */}
                     <div
-                        className={`relative w-full h-full flex items-center justify-center text-center transition-transform duration-700 ease-in-out
-                                  ${isOpening ? 'rotate-y-90 -translate-x-[300px] opacity-0' : ''}
-                                  `}
+                        className={`relative w-full h-full flex items-center justify-center text-center transition-transform duration-700 ease-in-out`}
                         style={{
                             backgroundColor: book.coverColor,
                             boxShadow:
                                 "6px 0px 12px 4px rgba(0, 0, 0, 0.3), inset -4px 0px 4px rgba(0, 0, 0, 0.25), 0px 12px 12px rgba(0, 0, 0, 0.25), inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
                             borderRadius: "0px 20px 20px 0px",
-                            transform: isOpening
-                                ? "perspective(1000px) rotateY(-90deg) translateX(-300px)"
-                                : "none",
-                            opacity: isOpening ? 0 : 1,
-                            transition: "transform 0.7s ease-in-out, opacity 0.5s ease-in-out",
                         }}
                     >
                         <span
@@ -93,11 +180,11 @@ const Journal = () => {
                         {/* Кнопка для відкриття */}
                         <button
                             onClick={() => {
-                                setIsOpening(true); // запустити анімацію
+                                setIsOpening(true);
                                 setTimeout(() => {
-                                    setIsOpened(true); // після анімації — відкрити щоденник
-                                    setIsOpening(false); // (не обов’язково, тільки якщо залишаємо обкладинку для іншого переходу)
-                                }, 1000); // тривалість має відповідати CSS transition
+                                    setIsOpened(true);
+                                    setIsOpening(false);
+                                }, 1000);
                             }}
                             className="absolute flex right-[0px] bottom-[0px] w-[100px] h-[100px] z-10"
                         >
@@ -123,26 +210,57 @@ const Journal = () => {
                     {/* Панель інструментів */}
                     <div className="fixed right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
                         {tools.map((tool) => (
-                            <button
-                                key={tool.name}
-                                onClick={() => setActiveTool(tool.name)}
-                                className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer        
-                                    ${activeTool === tool.name
-                                        ? "bg-[#93C9CF]"
-                                        : "hover:bg-[#AED0D4]"
-                                    }`}
-                                style={{
-                                    width: "46px",
-                                    height: "46px",
-                                    padding: "10px",
-                                }}
-                            >
-                                <img
-                                    src={`/images/${tool.icon}`}
-                                    alt={tool.name}
-                                    style={{ width: "100%", height: "100%" }}
+                            <div key={tool.name} className="relative">
+                                <button
+                                    ref={el => buttonRefs.current[tool.name] = el}
+                                    onClick={() => {
+                                        setActiveTool(tool.name);
+
+                                        if (toolMenus[tool.name]) {
+                                            // Для інструментів з меню — відкрити/закрити ToolMenu
+                                            setActiveToolMenu(activeToolMenu === tool.name ? null : tool.name);
+                                        } else {
+                                            // Для інструментів без ToolMenu, наприклад text
+                                            setActiveToolMenu(null);
+
+                                            if (tool.name === "text") {
+                                                console.log("Text tool activated");
+                                            }
+                                            if (tool.name === "template") {
+                                                console.log("Template tool activated");
+                                            }
+                                        }
+                                    }}
+                                    className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer        
+                                            ${activeTool === tool.name
+                                            ? "bg-[#93C9CF]"
+                                            : "hover:bg-[#AED0D4]"
+                                        }`}
+                                    style={{ width: "46px", height: "46px", padding: "10px" }}
+                                >
+                                    <img
+                                        src={`/images/${tool.icon}`}
+                                        alt={tool.name}
+                                        style={{ width: "100%", height: "100%" }}
+                                    />
+                                </button>
+
+                                <ToolMenu
+                                    items={toolMenus[tool.name] || []}
+                                    isOpen={activeToolMenu === tool.name}
+                                    onClose={() => setActiveToolMenu(null)}
+                                    triggerRef={{ current: buttonRefs.current[tool.name] }}
+                                    isAdvanced={["draw", "form"].includes(tool.name)}
+                                    recentColors={recentColors}
+                                    currentColor={currentColor}
+                                    onColorChange={(color) => {
+                                        setCurrentColor(color);
+                                        setRecentColors((prev) =>
+                                            [color, ...prev.filter((c) => c !== color)].slice(0, 6)
+                                        );
+                                    }}
                                 />
-                            </button>
+                            </div>
                         ))}
                     </div>
 
@@ -157,15 +275,15 @@ const Journal = () => {
                             lineHeight: '24px',
                             color: '#2A2A2A'
                         }}>
-                        {page}/{book.pageCount}
+                        {currentSpread + 1}/{book.pageCount}
                     </div>
 
                     {/* Пагінація з іконками */}
                     <div className="fixed bottom-[20px] left-1/2 -translate-x-1/2 z-50 flex gap-[32px]">
                         <button
-                            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                            disabled={page === 1}
-                            className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full disabled:opacity-40"
+                            onClick={goToPrevSpread}
+                            disabled={currentSpread === 0}
+                            className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <img
                                 src="/images/img_prev_shelf.svg"
@@ -175,9 +293,9 @@ const Journal = () => {
                         </button>
 
                         <button
-                            onClick={() => setPage((prev) => Math.min(book.pageCount, prev + 1))}
-                            disabled={page === book.pageCount}
-                            className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full disabled:opacity-40"
+                            onClick={goToNextSpread}
+                            disabled={currentSpread === book.pageCount - 1}
+                            className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <img
                                 src="/images/img_next_shelf.svg"
@@ -187,54 +305,54 @@ const Journal = () => {
                         </button>
                     </div>
 
-
                     {/* Контейнер редактора */}
                     <div className="w-full h-full overflow-auto bg-[#ebdccb]">
-                        {/* Wrapper з padding — створює простір з усіх боків */}
+                        {/* Wrapper з padding */}
                         <div
                             style={{
-                                padding: "60px", // рівномірний padding з усіх боків
+                                padding: "60px",
                                 boxSizing: "border-box",
-                                minWidth: `${1280 * scale + 120}px`, // + padding left + right
-                                minHeight: `${864 * scale + 120}px`, // + padding top + bottom
+                                minWidth: `${1280 * scale + 120}px`,
+                                minHeight: `${864 * scale + 120}px`,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                             }}
                         >
-                            <div
+                            <HTMLFlipBook
+                                ref={flipBook}
+                                width={640}
+                                height={864}
+                                size="stretch"
+                                minWidth={640}
+                                maxWidth={640}
+                                minHeight={864}
+                                maxHeight={864}
+                                maxShadowOpacity={0.5}
+                                showCover={false}
+                                mobileScrollSupport={false}
+                                clickEventForward={false}
+                                useMouseEvents={false}
+                                onFlip={handlePageChange}
+                                className="shadow-lg"
                                 style={{
-                                    width: "1280px",
-                                    height: "864px",
+                                    borderRadius: "20px",
+                                    overflow: "hidden",
+                                    boxShadow: "-1px 4px 12px 4px rgba(0, 0, 0, 0.3), 4px 0px 12px 4px rgba(0, 0, 0, 0.3)", // Стіл / обʼєм
                                     transform: `scale(${scale})`,
                                     transformOrigin: "center center",
                                     transition: "transform 0.2s ease-out",
-                                    display: "flex",
                                 }}
+                                startPage={0}
                             >
-                                {/* Left Page */}
-                                <div className="relative w-[640px] h-[864px] flex flex-col items-center justify-center rounded-l-[20px] overflow-hidden bg-[#f9f9f9]"
-                                    style={{
-                                        boxShadow: "-1px 4px 12px 4px rgba(0, 0, 0, 0.3)",
-                                    }}>
-                                    <div className="p-4">{`Розворот ${page} — Left`}</div>
-                                </div>
-
-                                {/* Right Page */}
-                                <div className="relative w-[640px] h-[864px] flex flex-col items-center justify-center rounded-r-[20px] bg-[#f9f9f9]"
-                                    style={{
-                                        boxShadow:
-                                            "-6px 0px 20px rgba(0, 0, 0, 0.25), 4px 4px 12px 4px rgba(0, 0, 0, 0.3), inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
-                                    }}>
-                                    <div className="p-4 text-xl text-gray-600">{`Розворот ${page} — Right`}</div>
-                                </div>
-                            </div>
+                                {renderPages()}
+                            </HTMLFlipBook>
                         </div>
                     </div>
-
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 
