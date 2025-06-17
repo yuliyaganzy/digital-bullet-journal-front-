@@ -198,18 +198,9 @@ const Journal = () => {
         !e.target.closest(".text-element") &&
         !e.target.closest(".text-settings")
       ) {
-        const bookElement = document.querySelector(".flip-book-container");
-        const bookBounds = bookElement.getBoundingClientRect();
-
-        // Calculate position relative to book
-        const x = Math.min(
-          Math.max(e.clientX - bookBounds.left, 0),
-          bookBounds.width - 200 // default width
-        );
-        const y = Math.min(
-          Math.max(e.clientY - bookBounds.top, 0),
-          bookBounds.height - 50 // default height
-        );
+        // Place top-left of text exactly at cursor position in book coordinates
+        const x = e.clientX / scale;
+        const y = e.clientY / scale;
 
         const newTextElement = {
           id: Date.now(),
@@ -226,10 +217,7 @@ const Journal = () => {
         setTextElements([...textElements, newTextElement]);
         setActiveTextElement(newTextElement.id);
         setShowTextSettings(true);
-        setTextSettingsPosition({
-          x: e.clientX + 30,
-          y: e.clientY,
-        });
+        // Settings position will be set in a useEffect below
         setTextMode(false);
         setActiveTool("move");
         document.body.style.cursor = "default";
@@ -265,6 +253,29 @@ const Journal = () => {
       document.removeEventListener("dblclick", handleDoubleClick);
     };
   }, [textMode, textElements, currentColor]);
+
+  // Place this after textElements, activeTextElement, showTextSettings are defined
+  useEffect(() => {
+    if (showTextSettings && activeTextElement) {
+      // Wait for DOM update
+      setTimeout(() => {
+        const el = document.querySelector(`.text-element[data-id='${activeTextElement}']`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          // Try to place settings to the right, but if near right edge, place to the left
+          const settingsWidth = 220; // Approximate width of settings panel
+          const padding = 12;
+          let x = rect.right + padding;
+          let y = rect.top;
+          if (x + settingsWidth > window.innerWidth) {
+            x = rect.left - settingsWidth - padding;
+          }
+          // Clamp y if needed (optional)
+          setTextSettingsPosition({ x, y });
+        }
+      }, 0);
+    }
+  }, [showTextSettings, activeTextElement, textElements]);
 
   // Переміщення і розтягування тексту
   const handleMouseDownOnText = (e, element) => {
@@ -353,10 +364,6 @@ const Journal = () => {
     };
   }, [isDraggingText, isResizing, dragStartPos, activeTextElement, textElements]);
 
-  if (!book) {
-    return <div className="p-10 text-xl text-red-500">Book not found or no data passed.</div>;
-  }
-
   useEffect(() => {
     const handleWheel = (e) => {
       if (e.ctrlKey) {
@@ -372,6 +379,10 @@ const Journal = () => {
     window.addEventListener("wheel", handleWheel, { passive: false });
     return () => window.removeEventListener("wheel", handleWheel);
   }, []);
+
+  if (!book) {
+    return <div className="p-10 text-xl text-red-500">Book not found or no data passed.</div>;
+  }
 
   const handlePageChange = (e) => {
     // Оновлюємо поточний розворот (ділимо на 2, тому що кожен розворот = 2 сторінки)
@@ -400,7 +411,7 @@ const Journal = () => {
       pages.push(
         <div key={`left-${i}`} className="page h-full w-full bg-[#f9f9f9]">
           <div
-            className="flex flex-col items-center justify-center w-full h-full page-wrapper"
+            className="flex flex-col justify-center items-center w-full h-full page-wrapper"
             style={{
               boxShadow: "inset -6px 0px 12px rgba(0, 0, 0, 0.25)",
             }}
@@ -413,7 +424,7 @@ const Journal = () => {
       pages.push(
         <div key={`right-${i}`} className="page h-full w-full bg-[#f9f9f9]">
           <div
-            className="flex flex-col items-center justify-center w-full h-full page-wrapper"
+            className="flex flex-col justify-center items-center w-full h-full page-wrapper"
             style={{
               boxShadow: "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
             }}
@@ -446,7 +457,7 @@ const Journal = () => {
 
           {/* Обкладинка */}
           <div
-            className={`relative w-full h-full flex items-center justify-center text-center transition-transform duration-700 ease-in-out`}
+            className={`flex relative justify-center items-center w-full h-full text-center transition-transform duration-700 ease-in-out`}
             style={{
               backgroundColor: book.coverColor,
               boxShadow:
@@ -650,7 +661,7 @@ const Journal = () => {
                 <div
                   key={element.id}
                   data-id={element.id}
-                  className="absolute outline-none cursor-move text-element"
+                  className="absolute cursor-move outline-none text-element"
                   style={{
                     left: `${element.x}px`,
                     top: `${element.y}px`,
