@@ -192,6 +192,7 @@ const Journal = () => {
         e.target.closest(".page-wrapper") ||
         e.target.closest(".page");
 
+      // If adding text
       if (
         textMode &&
         isEditorClick &&
@@ -221,9 +222,6 @@ const Journal = () => {
         setTextMode(false);
         setActiveTool("move");
         document.body.style.cursor = "default";
-      } else if (!e.target.closest(".text-element") && !e.target.closest(".text-settings")) {
-        setActiveTextElement(null);
-        setShowTextSettings(false);
       }
     };
 
@@ -253,6 +251,18 @@ const Journal = () => {
       document.removeEventListener("dblclick", handleDoubleClick);
     };
   }, [textMode, textElements, currentColor]);
+
+  useEffect(() => {
+    const handleClickPage = (e) => {
+      if (!e.target.closest(".text-element")) {
+        setShowTextSettings(false);
+        setActiveTextElement(null);
+      }
+    };
+
+    document.addEventListener("click", handleClickPage);
+    return () => document.removeEventListener("click", handleClickPage);
+  }, [textMode]);
 
   // Place this after textElements, activeTextElement, showTextSettings are defined
   useEffect(() => {
@@ -379,6 +389,20 @@ const Journal = () => {
     window.addEventListener("wheel", handleWheel, { passive: false });
     return () => window.removeEventListener("wheel", handleWheel);
   }, []);
+
+  // Remove active text element on Delete key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.key === "Delete" || e.key === "Backspace") && activeTextElement) {
+        setTextElements((prev) => prev.filter((el) => el.id !== activeTextElement));
+        setActiveTextElement(null);
+        setShowTextSettings(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [activeTextElement]);
 
   if (!book) {
     return <div className="p-10 text-xl text-red-500">Book not found or no data passed.</div>;
@@ -758,6 +782,15 @@ const Journal = () => {
                         }}
                       />
                     </label>
+                    <button
+                      onClick={() => {
+                        setTextElements(textElements.filter((el) => el.id !== activeTextElement));
+                        setActiveTextElement(null);
+                        setShowTextSettings(false);
+                      }}
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               </div>
