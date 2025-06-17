@@ -2,6 +2,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import HTMLFlipBook from "react-pageflip";
 import ToolMenu from "@/components/ui/ToolMenu";
+import { useClickAway } from "../../hooks/useClickAway";
 
 // TODO take https://github.com/omarseyam1729/SeyPaint/tree/main as a reference
 // TODO create a canvas component
@@ -18,6 +19,28 @@ const Journal = () => {
   const book = location.state?.book;
   const flipBook = useRef(null);
   const buttonRefs = useRef({});
+  const bookRef = useRef(null); // To track book boundaries
+
+  const textSettingsRef = useClickAway(() => setShowTextSettings(false));
+
+  // Add new function for handling text settings position
+  const updateTextSettingsPosition = (x, y) => {
+    // Get book boundaries
+    const bookElement = document.querySelector(".flip-book-container");
+    if (!bookElement) return { x, y };
+    const bookBounds = bookElement.getBoundingClientRect();
+
+    // Get settings menu dimensions
+    const settingsElement = document.querySelector(".text-settings");
+    if (!settingsElement) return { x, y };
+    const settingsBounds = settingsElement.getBoundingClientRect();
+
+    // Clamp the position within book boundaries
+    const clampedX = Math.min(Math.max(x, bookBounds.left), bookBounds.right - settingsBounds.width);
+    const clampedY = Math.min(Math.max(y, bookBounds.top), bookBounds.bottom - settingsBounds.height);
+
+    return { x: clampedX, y: clampedY };
+  };
 
   const [isOpened, setIsOpened] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
@@ -164,7 +187,6 @@ const Journal = () => {
   // Додавання тексту
   useEffect(() => {
     const handlePageClick = (e) => {
-      // Додаємо перевірку, чи клік був на книзі або її сторінках
       const isEditorClick =
         e.target.closest(".flip-book-container") ||
         e.target.closest(".page-wrapper") ||
@@ -176,14 +198,23 @@ const Journal = () => {
         !e.target.closest(".text-element") &&
         !e.target.closest(".text-settings")
       ) {
-        const editorRect = editorRef.current.getBoundingClientRect();
-        const scrollLeft = editorRef.current.scrollLeft;
-        const scrollTop = editorRef.current.scrollTop;
+        const bookElement = document.querySelector(".flip-book-container");
+        const bookBounds = bookElement.getBoundingClientRect();
+
+        // Calculate position relative to book
+        const x = Math.min(
+          Math.max(e.clientX - bookBounds.left, 0),
+          bookBounds.width - 200 // default width
+        );
+        const y = Math.min(
+          Math.max(e.clientY - bookBounds.top, 0),
+          bookBounds.height - 50 // default height
+        );
 
         const newTextElement = {
           id: Date.now(),
-          x: e.clientX - editorRect.left + scrollLeft,
-          y: e.clientY - editorRect.top + scrollTop,
+          x,
+          y,
           text: "Текст",
           fontSize: 16,
           color: currentColor,
@@ -196,13 +227,12 @@ const Journal = () => {
         setActiveTextElement(newTextElement.id);
         setShowTextSettings(true);
         setTextSettingsPosition({
-          x: e.clientX + 220,
+          x: e.clientX + 30,
           y: e.clientY,
         });
         setTextMode(false);
         setActiveTool("move");
         document.body.style.cursor = "default";
-        console.log("OHHHHHHHH");
       } else if (!e.target.closest(".text-element") && !e.target.closest(".text-settings")) {
         setActiveTextElement(null);
         setShowTextSettings(false);
@@ -257,23 +287,38 @@ const Journal = () => {
       if (isDraggingText && activeTextElement) {
         const dx = e.clientX - dragStartPos.x;
         const dy = e.clientY - dragStartPos.y;
+
+        // Get book boundaries - this is the key addition
+        const bookElement = document.querySelector(".flip-book-container");
+        const bookBounds = bookElement.getBoundingClientRect();
+
         setTextElements(
           textElements.map((el) => {
             if (el.id === activeTextElement) {
+              // Calculate new position
+              const newX = el.x + dx;
+              const newY = el.y + dy;
+
+              // Clamp the position within book boundaries
+              const clampedX = Math.min(Math.max(newX, bookBounds.left), bookBounds.right - el.width);
+              const clampedY = Math.min(Math.max(newY, bookBounds.top), bookBounds.bottom - el.height);
+
               return {
                 ...el,
-                x: el.x + dx,
-                y: el.y + dy,
+                x: clampedX,
+                y: clampedY,
               };
             }
             return el;
           })
         );
+
         setDragStartPos({ x: e.clientX, y: e.clientY });
-        setTextSettingsPosition((prev) => ({
-          x: prev.x + dx,
-          y: prev.y + dy,
-        }));
+        // Update settings position
+        setTextSettingsPosition((prev) => {
+          const newPos = updateTextSettingsPosition(prev.x + dx, prev.y + dy);
+          return newPos;
+        });
       }
       if (isResizing && activeTextElement) {
         const dx = e.clientX - dragStartPos.x;
@@ -605,12 +650,10 @@ const Journal = () => {
                 <div
                   key={element.id}
                   data-id={element.id}
-                  className="absolute cursor-move text-element"
+                  className="absolute outline-none cursor-move text-element"
                   style={{
                     left: `${element.x}px`,
                     top: `${element.y}px`,
-                    width: `${element.width}px`,
-                    height: `${element.height}px`,
                     transform: `rotate(${element.rotation}deg)`,
                     color: element.color,
                     fontSize: `${element.fontSize}px`,
@@ -621,7 +664,13 @@ const Journal = () => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveTextElement(element.id);
-                    setShowTextSettings(false);
+                    setShowTextSettings((prev) => !prev);
+
+                    const newPos = updateTextSettingsPosition(
+                      element.x + e.target.offsetWidth + 20,
+                      element.y
+                    );
+                    setTextSettingsPosition(newPos);
                   }}
                   onMouseDown={(e) => handleMouseDownOnText(e, element)}
                 >
@@ -641,6 +690,7 @@ const Journal = () => {
             {/* Label Settings */}
             {showTextSettings && activeTextElement && (
               <div
+                ref={textSettingsRef}
                 className="fixed z-50 text-settings"
                 style={{
                   left: `${textSettingsPosition.x}px`,
