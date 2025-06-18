@@ -194,8 +194,8 @@ const Journal = () => {
           textTransform: "none",
           color: currentColor,
           rotation: 0,
-          width: 200,
-          height: 50,
+          width: 50,
+          height: 30,
         };
 
         setTextElements([...textElements, newTextElement]);
@@ -257,13 +257,21 @@ const Journal = () => {
         setTextElements(
           textElements.map((el) => {
             if (el.id === activeTextElement) {
+              // Get current text element position
+              const textElement = document.querySelector(`.text-element[data-id='${el.id}']`);
+              const textBounds = textElement.getBoundingClientRect();
+
               // Calculate new position
-              const newX = el.x + dx;
-              const newY = el.y + dy;
+              const newX = textBounds.left + dx;
+              const newY = textBounds.top + dy;
+
+              // Calculate right and bottom boundaries accounting for scale
+              const rightBoundary = bookBounds.right - el.width * scale;
+              const bottomBoundary = bookBounds.bottom - el.height * scale;
 
               // Clamp the position within book boundaries
-              const clampedX = Math.min(Math.max(newX, bookBounds.left), bookBounds.right - el.width);
-              const clampedY = Math.min(Math.max(newY, bookBounds.top), bookBounds.bottom - el.height);
+              const clampedX = Math.min(Math.max(newX, bookBounds.left), rightBoundary);
+              const clampedY = Math.min(Math.max(newY, bookBounds.top), bottomBoundary);
 
               return {
                 ...el,
@@ -401,6 +409,13 @@ const Journal = () => {
   // Handle text element click
   const handleTextElementClick = (e, element) => {
     e.stopPropagation();
+    // Update text element dimensions based on click target
+    const updatedElement = {
+      ...element,
+      width: e.target.offsetWidth,
+      height: e.target.offsetHeight,
+    };
+    setTextElements(textElements.map((el) => (el.id === element.id ? updatedElement : el)));
     setActiveTextElement(element.id);
     setShowTextSettings((prev) => !prev);
     setActiveTool("text");
@@ -577,7 +592,7 @@ const Journal = () => {
           </div>
 
           {/* Контейнер редактора */}
-          <div className="w-full h-full overflow-auto bg-[#ebdccb]" ref={editorRef}>
+          <div className="w-screen h-screen overflow-hidden bg-[#ebdccb]" ref={editorRef}>
             {/* Wrapper з padding */}
             <div
               style={{
