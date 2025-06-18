@@ -1,8 +1,9 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import HTMLFlipBook from "react-pageflip";
 import ToolMenu from "@/components/ui/ToolMenu";
-import { useClickAway } from "../../hooks/useClickAway";
+import TextMenu from "@/components/TextMenu";
+import { useClickAway } from "@/hooks/useClickAway";
 
 // TODO take https://github.com/omarseyam1729/SeyPaint/tree/main as a reference
 // TODO create a canvas component
@@ -12,44 +13,20 @@ import { useClickAway } from "../../hooks/useClickAway";
 // TODO try to split up text layer and canvas layer
 // TODO limitate area with book only
 // TODO don't allow moving text out of book edges
+// TODO fix page scrolling, make it fixed
 
 const Journal = () => {
-  const { id } = useParams();
   const location = useLocation();
   const book = location.state?.book;
   const flipBook = useRef(null);
   const buttonRefs = useRef({});
-  const bookRef = useRef(null); // To track book boundaries
-
-  const textSettingsRef = useClickAway(() => setShowTextSettings(false));
-
-  // Add new function for handling text settings position
-  const updateTextSettingsPosition = (x, y) => {
-    // Get book boundaries
-    const bookElement = document.querySelector(".flip-book-container");
-    if (!bookElement) return { x, y };
-    const bookBounds = bookElement.getBoundingClientRect();
-
-    // Get settings menu dimensions
-    const settingsElement = document.querySelector(".text-settings");
-    if (!settingsElement) return { x, y };
-    const settingsBounds = settingsElement.getBoundingClientRect();
-
-    // Clamp the position within book boundaries
-    const clampedX = Math.min(Math.max(x, bookBounds.left), bookBounds.right - settingsBounds.width);
-    const clampedY = Math.min(Math.max(y, bookBounds.top), bookBounds.bottom - settingsBounds.height);
-
-    return { x: clampedX, y: clampedY };
-  };
 
   const [isOpened, setIsOpened] = useState(false);
-  const [isOpening, setIsOpening] = useState(false);
-  const [currentSpread, setCurrentSpread] = useState(0); // Поточний розворот (індекс)
+  const [currentSpread, setCurrentSpread] = useState(0);
   const [scale, setScale] = useState(1);
   const [activeTool, setActiveTool] = useState("move");
-  // Додамо стан для збереження обраного варіанту move tool
   const [selectedMoveTool, setSelectedMoveTool] = useState("move");
-  const [activeToolMenu, setActiveToolMenu] = useState(null); // Відкрите меню
+  const [activeToolMenu, setActiveToolMenu] = useState(null);
   const [recentColors, setRecentColors] = useState([
     "#F9F9F9",
     "#85544D",
@@ -71,7 +48,6 @@ const Journal = () => {
   const [textElements, setTextElements] = useState([]);
   const [activeTextElement, setActiveTextElement] = useState(null);
   const [showTextSettings, setShowTextSettings] = useState(false);
-  const [textSettingsPosition, setTextSettingsPosition] = useState({ x: 0, y: 0 });
 
   // Переміщення і розтягування тексту
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -79,6 +55,7 @@ const Journal = () => {
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
 
+  const textSettingsRef = useClickAway(() => setShowTextSettings(false));
   const tools = [
     { icon: "img_move_tool.svg", name: "move" },
     { icon: "img_text_tool.svg", name: "text" },
@@ -209,6 +186,12 @@ const Journal = () => {
           y,
           text: "Текст",
           fontSize: 16,
+          fontFamily: "Montserrat",
+          fontWeight: "400",
+          fontStyle: "normal",
+          letterSpacing: "0px",
+          lineHeight: 1.2,
+          textTransform: "none",
           color: currentColor,
           rotation: 0,
           width: 200,
@@ -218,74 +201,32 @@ const Journal = () => {
         setTextElements([...textElements, newTextElement]);
         setActiveTextElement(newTextElement.id);
         setShowTextSettings(true);
-        // Settings position will be set in a useEffect below
         setTextMode(false);
         setActiveTool("move");
         document.body.style.cursor = "default";
       }
     };
 
-    const handleDoubleClick = (e) => {
-      if (e.target.closest(".text-element")) {
-        const textId = parseInt(e.target.closest(".text-element").dataset.id);
-        setActiveTextElement(textId);
-        setShowTextSettings(true);
-
-        const element = textElements.find((el) => el.id === textId);
-        if (element) {
-          setTextSettingsPosition({
-            x: element.x + element.width + 20,
-            y: element.y,
-          });
-        }
-      }
-    };
-
     if (textMode) {
       document.addEventListener("click", handlePageClick);
-      document.addEventListener("dblclick", handleDoubleClick);
     }
 
     return () => {
       document.removeEventListener("click", handlePageClick);
-      document.removeEventListener("dblclick", handleDoubleClick);
     };
-  }, [textMode, textElements, currentColor]);
+  }, [textMode, textElements, currentColor, scale]);
 
-  useEffect(() => {
-    const handleClickPage = (e) => {
-      if (!e.target.closest(".text-element")) {
-        setShowTextSettings(false);
-        setActiveTextElement(null);
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickPage = (e) => {
+  //     if (!e.target.closest(".text-element") && !e.target.closest(".text-settings")) {
+  //       setShowTextSettings(false);
+  //       setActiveTextElement(null);
+  //     }
+  //   };
 
-    document.addEventListener("click", handleClickPage);
-    return () => document.removeEventListener("click", handleClickPage);
-  }, [textMode]);
-
-  // Place this after textElements, activeTextElement, showTextSettings are defined
-  useEffect(() => {
-    if (showTextSettings && activeTextElement) {
-      // Wait for DOM update
-      setTimeout(() => {
-        const el = document.querySelector(`.text-element[data-id='${activeTextElement}']`);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          // Try to place settings to the right, but if near right edge, place to the left
-          const settingsWidth = 220; // Approximate width of settings panel
-          const padding = 12;
-          let x = rect.right + padding;
-          let y = rect.top;
-          if (x + settingsWidth > window.innerWidth) {
-            x = rect.left - settingsWidth - padding;
-          }
-          // Clamp y if needed (optional)
-          setTextSettingsPosition({ x, y });
-        }
-      }, 0);
-    }
-  }, [showTextSettings, activeTextElement, textElements]);
+  //   document.addEventListener("click", handleClickPage);
+  //   return () => document.removeEventListener("click", handleClickPage);
+  // }, [textMode]);
 
   // Переміщення і розтягування тексту
   const handleMouseDownOnText = (e, element) => {
@@ -335,11 +276,6 @@ const Journal = () => {
         );
 
         setDragStartPos({ x: e.clientX, y: e.clientY });
-        // Update settings position
-        setTextSettingsPosition((prev) => {
-          const newPos = updateTextSettingsPosition(prev.x + dx, prev.y + dy);
-          return newPos;
-        });
       }
       if (isResizing && activeTextElement) {
         const dx = e.clientX - dragStartPos.x;
@@ -462,6 +398,14 @@ const Journal = () => {
     return pages;
   };
 
+  // Handle text element click
+  const handleTextElementClick = (e, element) => {
+    e.stopPropagation();
+    setActiveTextElement(element.id);
+    setShowTextSettings((prev) => !prev);
+    setActiveTool("text");
+  };
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#EBDCCB] flex items-center">
       {/* Закрита обкладинка */}
@@ -505,11 +449,7 @@ const Journal = () => {
             {/* Кнопка для відкриття */}
             <button
               onClick={() => {
-                setIsOpening(true);
-                setTimeout(() => {
-                  setIsOpened(true);
-                  setIsOpening(false);
-                }, 1000);
+                setIsOpened(true);
               }}
               className="absolute flex right-[0px] bottom-[0px] w-[100px] h-[100px] z-10"
             >
@@ -692,21 +632,17 @@ const Journal = () => {
                     transform: `rotate(${element.rotation}deg)`,
                     color: element.color,
                     fontSize: `${element.fontSize}px`,
+                    fontFamily: element.fontFamily,
+                    fontWeight: element.fontWeight,
+                    fontStyle: element.fontStyle,
+                    letterSpacing: element.letterSpacing,
+                    lineHeight: element.lineHeight,
+                    textTransform: element.textTransform,
                     border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
                   }}
                   contentEditable={activeTextElement === element.id}
                   suppressContentEditableWarning={true}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveTextElement(element.id);
-                    setShowTextSettings((prev) => !prev);
-
-                    const newPos = updateTextSettingsPosition(
-                      element.x + e.target.offsetWidth + 20,
-                      element.y
-                    );
-                    setTextSettingsPosition(newPos);
-                  }}
+                  onClick={(e) => handleTextElementClick(e, element)}
                   onMouseDown={(e) => handleMouseDownOnText(e, element)}
                 >
                   {element.text}
@@ -722,77 +658,17 @@ const Journal = () => {
                 </div>
               ))}
             </div>
-            {/* Label Settings */}
+            {/* TextMenu */}
             {showTextSettings && activeTextElement && (
-              <div
-                ref={textSettingsRef}
-                className="fixed z-50 text-settings"
-                style={{
-                  left: `${textSettingsPosition.x}px`,
-                  top: `${textSettingsPosition.y}px`,
-                }}
-              >
-                <div className="bg-[#C3DEE1] rounded-lg p-4 shadow-lg">
-                  <div className="flex flex-col gap-2 mt-4">
-                    <label>
-                      Розмір шрифту:
-                      <input
-                        type="range"
-                        min="8"
-                        max="72"
-                        value={textElements.find((el) => el.id === activeTextElement)?.fontSize || 16}
-                        onChange={(e) => {
-                          const newSize = parseInt(e.target.value);
-                          setTextElements(
-                            textElements.map((el) =>
-                              el.id === activeTextElement ? { ...el, fontSize: newSize } : el
-                            )
-                          );
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Колір:
-                      <input
-                        type="color"
-                        value={textElements.find((el) => el.id === activeTextElement)?.color || currentColor}
-                        onChange={(e) => {
-                          setTextElements(
-                            textElements.map((el) =>
-                              el.id === activeTextElement ? { ...el, color: e.target.value } : el
-                            )
-                          );
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Поворот:
-                      <input
-                        type="range"
-                        min="0"
-                        max="360"
-                        value={textElements.find((el) => el.id === activeTextElement)?.rotation || 0}
-                        onChange={(e) => {
-                          const newRotation = parseInt(e.target.value);
-                          setTextElements(
-                            textElements.map((el) =>
-                              el.id === activeTextElement ? { ...el, rotation: newRotation } : el
-                            )
-                          );
-                        }}
-                      />
-                    </label>
-                    <button
-                      onClick={() => {
-                        setTextElements(textElements.filter((el) => el.id !== activeTextElement));
-                        setActiveTextElement(null);
-                        setShowTextSettings(false);
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
+              <div ref={textSettingsRef} className="fixed z-50 right-[115px] top-[325px]">
+                <TextMenu
+                  textElement={textElements.find((el) => el.id === activeTextElement)}
+                  onTextElementChange={(updatedElement) => {
+                    setTextElements(
+                      textElements.map((el) => (el.id === activeTextElement ? updatedElement : el))
+                    );
+                  }}
+                />
               </div>
             )}
           </div>
