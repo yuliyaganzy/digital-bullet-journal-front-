@@ -2,6 +2,20 @@
 @tailwind utilities;
 @tailwind utilities;
 
+@import "tailwindcss";
+@theme {
+  --font-display: "Satoshi", "sans-serif";
+  --breakpoint-3xl: 1920px;
+  --color-avocado-100: oklch(0.99 0 0);
+  --color-avocado-200: oklch(0.98 0.04 113.22);
+  --color-avocado-300: oklch(0.94 0.11 115.03);
+  --color-avocado-400: oklch(0.92 0.19 114.08);
+  --color-avocado-500: oklch(0.84 0.18 117.33);
+  --color-avocado-600: oklch(0.53 0.12 118.34);
+  --ease-fluid: cubic-bezier(0.3, 0, 0, 1);
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+  /* ... */
+}
 
 :root {
   --black: rgba(42, 42, 42, 1);
@@ -14,18 +28,18 @@
     /* Primary Colors */
     --primary-background: #f9f9f9;
     --primary-foreground: #2a2a2a;
-    
+
     /* Secondary Colors */
     --secondary-background: #c3dee1;
     --secondary-foreground: #000000;
-    
+
     /* Accent Colors */
     --accent-color: #92c9cf;
     --accent-foreground: #ffffff;
-    
+
     /* Background Colors */
     --page-background: #ebdccb;
-    
+
     /* Border Colors */
     --border-primary: #2a2a2a;
     --border-secondary: #92c9cf;
@@ -61,7 +75,6 @@
     --ring: 215 20.2% 65.1%;
 
     --radius: 0.5rem;
-    
   }
   .dark {
     --background: 224 71% 4%;
@@ -94,7 +107,7 @@
     --ring: 216 34% 17%;
 
     --radius: 0.5rem;
-  }  
+  }
 
   .triangle {
     position: absolute;
@@ -109,52 +122,57 @@
   }
 }
 
-
-
 @layer utilities {
   /* Background Color Utilities */
   .bg-primary {
     background-color: var(--primary-background);
   }
-  
+
   .bg-secondary {
     background-color: var(--secondary-background);
   }
-  
+
   .bg-accent {
     background-color: var(--accent-color);
   }
-  
+
   .bg-page {
     background-color: var(--page-background);
   }
-  
+
   /* Text Color Utilities */
   .text-primary {
     color: var(--primary-foreground);
   }
-  
+
   .text-secondary {
     color: var(--secondary-foreground);
   }
-  
+
   .text-accent {
     color: var(--accent-foreground);
   }
-  
+
   /* Border Color Utilities */
   .border-primary {
     border-color: var(--border-primary);
   }
-  
+
   .border-secondary {
     border-color: var(--border-secondary);
   }
 }
 
 @keyframes pulse-arrow {
-  0%, 100% { opacity: 0; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(-10px); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-10px);
+  }
 }
 
 .animate-pulse-arrow {
@@ -162,22 +180,22 @@
 }
 
 .custom-scroll::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-left: 2px solid #93C9CF;
-    transform: rotate(90deg);
-    border-radius: 4px;
+  background-color: transparent;
+  border-left: 2px solid #93c9cf;
+  transform: rotate(90deg);
+  border-radius: 4px;
 }
 
 /* Firefox підтримка */
 .custom-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #93C9CF transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #93c9cf transparent;
 }

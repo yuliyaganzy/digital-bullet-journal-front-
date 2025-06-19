@@ -216,17 +216,17 @@ const Journal = () => {
     };
   }, [textMode, textElements, currentColor, scale]);
 
-  // useEffect(() => {
-  //   const handleClickPage = (e) => {
-  //     if (!e.target.closest(".text-element") && !e.target.closest(".text-settings")) {
-  //       setShowTextSettings(false);
-  //       setActiveTextElement(null);
-  //     }
-  //   };
+  useEffect(() => {
+    const handleClickPage = (e) => {
+      if (!e.target.closest(".text-element") && !e.target.closest(".text-settings")) {
+        setShowTextSettings(false);
+        setActiveTextElement(null);
+      }
+    };
 
-  //   document.addEventListener("click", handleClickPage);
-  //   return () => document.removeEventListener("click", handleClickPage);
-  // }, [textMode]);
+    document.addEventListener("click", handleClickPage);
+    return () => document.removeEventListener("click", handleClickPage);
+  }, [textMode]);
 
   // Переміщення і розтягування тексту
   const handleMouseDownOnText = (e, element) => {
@@ -653,6 +653,8 @@ const Journal = () => {
                     letterSpacing: element.letterSpacing,
                     lineHeight: element.lineHeight,
                     textTransform: element.textTransform,
+                    textDecoration: element.textDecoration,
+                    textAlign: element.textAlign,
                     border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
                   }}
                   contentEditable={activeTextElement === element.id}
@@ -661,21 +663,12 @@ const Journal = () => {
                   onMouseDown={(e) => handleMouseDownOnText(e, element)}
                 >
                   {element.text}
-                  {activeTextElement === element.id && (
-                    <div
-                      className="resize-handle absolute bottom-0 right-0 w-3 h-3 bg-[#2A2A2A] cursor-se-resize"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        handleMouseDownOnText(e, element);
-                      }}
-                    />
-                  )}
                 </div>
               ))}
             </div>
             {/* TextMenu */}
             {showTextSettings && activeTextElement && (
-              <div ref={textSettingsRef} className="fixed z-50 right-[115px] top-[325px]">
+              <div ref={textSettingsRef} className="fixed z-50 right-[115px] top-[380px] text-settings">
                 <TextMenu
                   textElement={textElements.find((el) => el.id === activeTextElement)}
                   onTextElementChange={(updatedElement) => {
