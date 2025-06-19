@@ -354,7 +354,7 @@ export const HomePage = () => {
   }, [selectMode, deleteMode, editMode]);
 
   return (
-    <main className="relative bg-[#EBDCCB] flex flex-row justify-center w-full h-full">
+    <main className="relative bg-[#EBDCCB] flex flex-row justify-center w-full h-screen">
       {/* Вікно-модалка налаштування параметрів щоденника */}
       {showCreateModal && (
         <div className="absolute w-full h-full flex justify-center items-center z-[200]">
