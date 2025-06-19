@@ -668,7 +668,7 @@ const Journal = () => {
             </div>
             {/* TextMenu */}
             {showTextSettings && activeTextElement && (
-              <div ref={textSettingsRef} className="fixed z-50 right-[115px] top-[380px] text-settings">
+              <div ref={textSettingsRef} className="fixed z-50 right-[115px] top-[330px] text-settings">
                 <TextMenu
                   textElement={textElements.find((el) => el.id === activeTextElement)}
                   onTextElementChange={(updatedElement) => {
