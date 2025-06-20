@@ -27,7 +27,7 @@ const Journal = () => {
   // Canvas - separate refs for left and right pages
   const canvasLeftRef = useRef(null);
   const canvasRightRef = useRef(null);
-  const [brushSize, setBrushSize] = useState(10);
+  const [brushSize] = useState(10); // Using state but not updating it for now
   const [brushType, setBrushType] = useState("default"); // State for brush type
 
   const _handleSave = () => {
@@ -226,9 +226,7 @@ const Journal = () => {
         !e.target.closest(".text-element") &&
         !e.target.closest(".text-settings")
       ) {
-        // Place top-left of text exactly at cursor position in book coordinates
-        const x = e.clientX / scale;
-        const y = e.clientY / scale;
+        // We'll calculate position relative to the page instead of using global coordinates
 
         // Determine which page was clicked based on position
         const bookElement = document.querySelector(".flip-book-container");
@@ -239,11 +237,24 @@ const Journal = () => {
         // Calculate page index based on current spread and left/right page
         const pageIndex = currentSpread * 2 + (isLeftPage ? 0 : 1);
 
+        // Get the page element to calculate position relative to the page
+        const pageElement = isLeftPage
+          ? document.querySelector(".page-left")
+          : document.querySelector(".page-right");
+
+        if (!pageElement) return;
+
+        const pageBounds = pageElement.getBoundingClientRect();
+
+        // Calculate position relative to the page
+        const relativeX = (e.clientX - pageBounds.left) / scale;
+        const relativeY = (e.clientY - pageBounds.top) / scale;
+
         const newTextElement = {
           id: Date.now(),
-          x,
-          y,
-          text: "Текст",
+          x: relativeX,
+          y: relativeY,
+          text: "Text",
           fontSize: 16,
           fontFamily: "Montserrat",
           fontWeight: "400",
@@ -253,7 +264,7 @@ const Journal = () => {
           textTransform: "none",
           color: currentColor,
           rotation: 0,
-          width: 50,
+          width: 100,
           height: 30,
           pageIndex: pageIndex, // Track which page the text belongs to
         };
@@ -327,21 +338,19 @@ const Journal = () => {
         setTextElements(
           textElements.map((el) => {
             if (el.id === activeTextElement) {
-              // Get current text element position
-              const textElement = document.querySelector(`.text-element[data-id='${el.id}']`);
-              const textBounds = textElement.getBoundingClientRect();
+              // Calculate new position relative to the page
+              const newX = el.x + dx / scale;
+              const newY = el.y + dy / scale;
 
-              // Calculate new position
-              const newX = textBounds.left + dx;
-              const newY = textBounds.top + dy;
-
-              // Calculate right and bottom boundaries accounting for scale
-              const rightBoundary = pageBounds.right - el.width * scale;
-              const bottomBoundary = pageBounds.bottom - el.height * scale;
+              // Calculate page boundaries in page coordinates
+              const pageWidth = pageBounds.width / scale;
+              const pageHeight = pageBounds.height / scale;
 
               // Clamp the position within page boundaries
-              const clampedX = Math.min(Math.max(newX, pageBounds.left), rightBoundary);
-              const clampedY = Math.min(Math.max(newY, pageBounds.top), bottomBoundary);
+              // Leave a small margin (5px) to ensure text is always visible
+              const margin = 5;
+              const clampedX = Math.min(Math.max(newX, margin), pageWidth - el.width - margin);
+              const clampedY = Math.min(Math.max(newY, margin), pageHeight - el.height - margin);
 
               return {
                 ...el,
@@ -359,13 +368,39 @@ const Journal = () => {
         const dx = e.clientX - dragStartPos.x;
         const dy = e.clientY - dragStartPos.y;
 
+        // Get current page boundaries based on active text element
+        const activeElement = textElements.find((el) => el.id === activeTextElement);
+        if (!activeElement) return;
+
+        // Determine which page the text belongs to within the current spread
+        const isLeftPage = activeElement.pageIndex % 2 === 0;
+        const pageElement = isLeftPage
+          ? document.querySelector(".page-left")
+          : document.querySelector(".page-right");
+
+        if (!pageElement) return;
+
+        const pageBounds = pageElement.getBoundingClientRect();
+
+        // Calculate page boundaries in page coordinates
+        const pageWidth = pageBounds.width / scale;
+        const pageHeight = pageBounds.height / scale;
+
         setTextElements(
           textElements.map((el) => {
             if (el.id === activeTextElement) {
+              // Calculate new width and height
+              const newWidth = Math.max(50, resizeStartSize.width + dx / scale);
+              const newHeight = Math.max(20, resizeStartSize.height + dy / scale);
+
+              // Ensure the element doesn't resize beyond page boundaries
+              const maxWidth = pageWidth - el.x - 5; // 5px margin
+              const maxHeight = pageHeight - el.y - 5; // 5px margin
+
               return {
                 ...el,
-                width: Math.max(50, resizeStartSize.width + dx),
-                height: Math.max(20, resizeStartSize.height + dy),
+                width: Math.min(newWidth, maxWidth),
+                height: Math.min(newHeight, maxHeight),
               };
             }
             return el;
@@ -449,8 +484,11 @@ const Journal = () => {
       const isLeftPage = i % 2 === 0;
       const pageClassName = isLeftPage ? "page-left" : "page-right";
 
+      // Filter text elements for this specific page
+      const pageTextElements = textElements.filter(element => element.pageIndex === i);
+
       pages.push(
-        <div key={`page-${i}`} className={`page h-full w-full bg-[#f9f9f9] ${pageClassName}`}>
+        <div key={`page-${i}`} className={`page h-full w-full bg-[#f9f9f9] ${pageClassName} relative`}>
           <Canvas
             ref={isLeftPage ? canvasLeftRef : canvasRightRef}
             color={brushType === "eraser" ? "#ffffff" : currentColor}
@@ -476,6 +514,62 @@ const Journal = () => {
               {`Розворот ${Math.floor(i / 2) + 1} — ${isLeftPage ? "Left" : "Right"}`}
             </div>
           </div>
+
+          {/* Text elements for this page */}
+          {pageTextElements.map((element) => (
+            <div
+              key={element.id}
+              data-id={element.id}
+              className="absolute cursor-move outline-none text-element"
+              style={{
+                left: `${element.x}px`,
+                top: `${element.y}px`,
+                transform: `rotate(${element.rotation}deg)`,
+                color: element.color,
+                fontSize: `${element.fontSize}px`,
+                fontFamily: element.fontFamily,
+                fontWeight: element.fontWeight,
+                fontStyle: element.fontStyle,
+                letterSpacing: element.letterSpacing,
+                lineHeight: element.lineHeight,
+                textTransform: element.textTransform,
+                textDecoration: element.textDecoration,
+                textAlign: element.textAlign,
+                border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
+                minWidth: "50px",
+                minHeight: "20px",
+                width: `${element.width}px`,
+                height: `${element.height}px`,
+                position: "absolute",
+              }}
+              contentEditable={activeTextElement === element.id}
+              suppressContentEditableWarning={true}
+              onClick={(e) => handleTextElementClick(e, element)}
+              onMouseDown={(e) => handleMouseDownOnText(e, element)}
+              onBlur={(e) => {
+                // Save the edited text back to the element's data
+                if (activeTextElement === element.id) {
+                  const updatedText = e.target.innerText;
+                  setTextElements(
+                    textElements.map((el) => 
+                      el.id === element.id ? { ...el, text: updatedText } : el
+                    )
+                  );
+                }
+              }}
+            >
+              {element.text}
+              {activeTextElement === element.id && (
+                <div 
+                  className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-[#2A2A2A] cursor-se-resize"
+                  style={{
+                    borderRadius: "2px",
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+            </div>
+          ))}
         </div>
       );
     }
@@ -711,42 +805,6 @@ const Journal = () => {
               >
                 {renderPages()}
               </HTMLFlipBook>
-
-              {/* Text element (label) - only show for current spread */}
-              {textElements
-                .filter((element) => {
-                  const elementSpread = Math.floor(element.pageIndex / 2);
-                  return elementSpread === currentSpread;
-                })
-                .map((element) => (
-                  <div
-                    key={element.id}
-                    data-id={element.id}
-                    className="absolute cursor-move outline-none text-element"
-                    style={{
-                      left: `${element.x}px`,
-                      top: `${element.y}px`,
-                      transform: `rotate(${element.rotation}deg)`,
-                      color: element.color,
-                      fontSize: `${element.fontSize}px`,
-                      fontFamily: element.fontFamily,
-                      fontWeight: element.fontWeight,
-                      fontStyle: element.fontStyle,
-                      letterSpacing: element.letterSpacing,
-                      lineHeight: element.lineHeight,
-                      textTransform: element.textTransform,
-                      textDecoration: element.textDecoration,
-                      textAlign: element.textAlign,
-                      border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
-                    }}
-                    contentEditable={activeTextElement === element.id}
-                    suppressContentEditableWarning={true}
-                    onClick={(e) => handleTextElementClick(e, element)}
-                    onMouseDown={(e) => handleMouseDownOnText(e, element)}
-                  >
-                    {element.text}
-                  </div>
-                ))}
             </div>
             {/* TextMenu */}
             {showTextSettings && activeTextElement && (
