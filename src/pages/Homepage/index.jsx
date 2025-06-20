@@ -354,7 +354,7 @@ export const HomePage = () => {
   }, [selectMode, deleteMode, editMode]);
 
   return (
-    <main className="relative bg-[#EBDCCB] flex flex-row justify-center w-full h-full">
+    <main className="relative bg-[#EBDCCB] flex flex-row justify-center w-full h-screen">
       {/* Вікно-модалка налаштування параметрів щоденника */}
       {showCreateModal && (
         <div className="absolute w-full h-full flex justify-center items-center z-[200]">
@@ -363,7 +363,7 @@ export const HomePage = () => {
             className="relative flex flex-col gap-y-[40px] bg-[#f9f9f9] rounded-[10px] z-[200] px-[32px] py-[20px] max-w-[90%]"
             style={{ boxShadow: "-10px 10px 30px 4px rgba(0, 0, 0, 0.4)" }}
           >
-            <h2 className="text-[32px] font-normal font-['Americana_BT'] text-black mb-10 text-center">
+            <h2 className="text-[32px] font-normal font-['Americana_BT'] text-black text-center">
               {editBook ? "Edit Selected Journal" : "Create New Journal"}
             </h2>
             <div className="flex flex-col gap-y-[60px]">

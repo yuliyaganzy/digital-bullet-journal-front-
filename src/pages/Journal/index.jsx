@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import HTMLFlipBook from "react-pageflip";
 import ToolMenu from "@/components/ui/ToolMenu";
+import Canvas from "@/components/Canvas";
 import TextMenu from "@/components/TextMenu";
 import { useClickAway } from "@/hooks/useClickAway";
 
@@ -15,11 +16,34 @@ import { useClickAway } from "@/hooks/useClickAway";
 // TODO don't allow moving text out of book edges
 // TODO fix page scrolling, make it fixed
 
+// TODO fix pagination
+
 const Journal = () => {
   const location = useLocation();
   const book = location.state?.book;
   const flipBook = useRef(null);
   const buttonRefs = useRef({});
+
+  // Canvas - separate refs for left and right pages
+  const canvasLeftRef = useRef(null);
+  const canvasRightRef = useRef(null);
+  const [brushSize, setBrushSize] = useState(10);
+  const [brushType, setBrushType] = useState("default"); // State for brush type
+
+  const _handleSave = () => {
+    // Save both left and right canvases
+    const canvasLeft = canvasLeftRef.current;
+    const canvasRight = canvasRightRef.current;
+    if (!canvasLeft && !canvasRight) return;
+
+    // For now, save the left canvas if available
+    const canvas = canvasLeft || canvasRight;
+    const dataURL = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = dataURL;
+    link.download = "canvas-image.png";
+    link.click();
+  };
 
   const [isOpened, setIsOpened] = useState(false);
   const [currentSpread, setCurrentSpread] = useState(0);
@@ -41,7 +65,8 @@ const Journal = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [scrollPos, setScrollPos] = useState({ left: 0, top: 0 });
-  const editorRef = useRef(null);
+  const editorLeftRef = useRef(null);
+  const editorRightRef = useRef(null);
 
   // Додавання тексту
   const [textMode, setTextMode] = useState(false);
@@ -92,14 +117,14 @@ const Journal = () => {
     ],
     bookmark: [{ icon: "img_plus_tool.svg", text: "Add bookmark" }],
     draw: [
-      { icon: "img_plus_tool.svg", text: "Eraser" },
-      { icon: "img_plus_tool.svg", text: "Pen" },
-      { icon: "img_plus_tool.svg", text: "Pencil" },
-      { icon: "img_plus_tool.svg", text: "Graphic pen" },
-      { icon: "img_plus_tool.svg", text: "Marker" },
-      { icon: "img_plus_tool.svg", text: "Brush pen" },
-      { icon: "img_plus_tool.svg", text: "Air Brush" },
-      { icon: "img_plus_tool.svg", text: "Watercolor" },
+      { icon: "img_plus_tool.svg", text: "Eraser", onClick: () => setBrushType("eraser") },
+      { icon: "img_plus_tool.svg", text: "Pen", onClick: () => setBrushType("default") },
+      { icon: "img_plus_tool.svg", text: "Pencil", onClick: () => setBrushType("feather") },
+      { icon: "img_plus_tool.svg", text: "Graphic pen", onClick: () => setBrushType("drip") },
+      { icon: "img_plus_tool.svg", text: "Marker", onClick: () => setBrushType("caligraphy") },
+      { icon: "img_plus_tool.svg", text: "Brush pen", onClick: () => setBrushType("swirl") },
+      { icon: "img_plus_tool.svg", text: "Air Brush", onClick: () => setBrushType("foam") },
+      { icon: "img_plus_tool.svg", text: "Watercolor", onClick: () => setBrushType("watercolor") },
     ],
     form: [
       { icon: "img_rectangle.svg", text: "Rectangle" },
@@ -114,8 +139,10 @@ const Journal = () => {
 
   // Обробка подій миші
   useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
+    const editorLeft = editorLeftRef.current;
+    const editorRight = editorRightRef.current;
+    if (!editorLeft && !editorRight) return;
+
     const handleMouseDown = (e) => {
       if (activeTool === "move" && selectedMoveTool === "hand" && e.button === 0) {
         setIsDragging(true);
@@ -123,9 +150,12 @@ const Journal = () => {
           x: e.clientX,
           y: e.clientY,
         });
+        // Use the editor that was clicked on
+        const clickedEditor =
+          e.target.closest(".w-screen.h-screen") === editorLeft ? editorLeft : editorRight;
         setScrollPos({
-          left: editor.scrollLeft,
-          top: editor.scrollTop,
+          left: clickedEditor.scrollLeft,
+          top: clickedEditor.scrollTop,
         });
         document.body.style.cursor = "grabbing";
       }
@@ -134,8 +164,16 @@ const Journal = () => {
       if (isDragging) {
         const dx = e.clientX - startPos.x;
         const dy = e.clientY - startPos.y;
-        editor.scrollLeft = scrollPos.left - dx;
-        editor.scrollTop = scrollPos.top - dy;
+
+        // Apply scroll to both editors to keep them in sync
+        if (editorLeft) {
+          editorLeft.scrollLeft = scrollPos.left - dx;
+          editorLeft.scrollTop = scrollPos.top - dy;
+        }
+        if (editorRight) {
+          editorRight.scrollLeft = scrollPos.left - dx;
+          editorRight.scrollTop = scrollPos.top - dy;
+        }
       }
     };
     const handleMouseUp = () => {
@@ -144,11 +182,23 @@ const Journal = () => {
         document.body.style.cursor = "grab";
       }
     };
-    editor.addEventListener("mousedown", handleMouseDown);
+
+    // Add event listeners to both editors
+    if (editorLeft) {
+      editorLeft.addEventListener("mousedown", handleMouseDown);
+    }
+    if (editorRight) {
+      editorRight.addEventListener("mousedown", handleMouseDown);
+    }
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => {
-      editor.removeEventListener("mousedown", handleMouseDown);
+      if (editorLeft) {
+        editorLeft.removeEventListener("mousedown", handleMouseDown);
+      }
+      if (editorRight) {
+        editorRight.removeEventListener("mousedown", handleMouseDown);
+      }
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -180,6 +230,15 @@ const Journal = () => {
         const x = e.clientX / scale;
         const y = e.clientY / scale;
 
+        // Determine which page was clicked based on position
+        const bookElement = document.querySelector(".flip-book-container");
+        const bookBounds = bookElement.getBoundingClientRect();
+        const clickX = e.clientX;
+        const isLeftPage = clickX < (bookBounds.left + bookBounds.right) / 2;
+
+        // Calculate page index based on current spread and left/right page
+        const pageIndex = currentSpread * 2 + (isLeftPage ? 0 : 1);
+
         const newTextElement = {
           id: Date.now(),
           x,
@@ -196,6 +255,7 @@ const Journal = () => {
           rotation: 0,
           width: 50,
           height: 30,
+          pageIndex: pageIndex, // Track which page the text belongs to
         };
 
         setTextElements([...textElements, newTextElement]);
@@ -214,7 +274,7 @@ const Journal = () => {
     return () => {
       document.removeEventListener("click", handlePageClick);
     };
-  }, [textMode, textElements, currentColor, scale]);
+  }, [textMode, textElements, currentColor, scale, currentSpread]);
 
   useEffect(() => {
     const handleClickPage = (e) => {
@@ -250,9 +310,19 @@ const Journal = () => {
         const dx = e.clientX - dragStartPos.x;
         const dy = e.clientY - dragStartPos.y;
 
-        // Get book boundaries - this is the key addition
-        const bookElement = document.querySelector(".flip-book-container");
-        const bookBounds = bookElement.getBoundingClientRect();
+        // Get current page boundaries based on active text element
+        const activeElement = textElements.find((el) => el.id === activeTextElement);
+        if (!activeElement) return;
+
+        // Determine which page the text belongs to within the current spread
+        const isLeftPage = activeElement.pageIndex % 2 === 0;
+        const pageElement = isLeftPage
+          ? document.querySelector(".page-left")
+          : document.querySelector(".page-right");
+
+        if (!pageElement) return;
+
+        const pageBounds = pageElement.getBoundingClientRect();
 
         setTextElements(
           textElements.map((el) => {
@@ -266,12 +336,12 @@ const Journal = () => {
               const newY = textBounds.top + dy;
 
               // Calculate right and bottom boundaries accounting for scale
-              const rightBoundary = bookBounds.right - el.width * scale;
-              const bottomBoundary = bookBounds.bottom - el.height * scale;
+              const rightBoundary = pageBounds.right - el.width * scale;
+              const bottomBoundary = pageBounds.bottom - el.height * scale;
 
-              // Clamp the position within book boundaries
-              const clampedX = Math.min(Math.max(newX, bookBounds.left), rightBoundary);
-              const clampedY = Math.min(Math.max(newY, bookBounds.top), bottomBoundary);
+              // Clamp the position within page boundaries
+              const clampedX = Math.min(Math.max(newX, pageBounds.left), rightBoundary);
+              const clampedY = Math.min(Math.max(newY, pageBounds.top), bottomBoundary);
 
               return {
                 ...el,
@@ -316,7 +386,7 @@ const Journal = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDraggingText, isResizing, dragStartPos, activeTextElement, textElements]);
+  }, [isDraggingText, isResizing, dragStartPos, activeTextElement, textElements, scale]);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -337,7 +407,7 @@ const Journal = () => {
   // Remove active text element on Delete key
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.key === "Delete" || e.key === "Backspace") && activeTextElement) {
+      if (e.key === "Delete" && activeTextElement) {
         setTextElements((prev) => prev.filter((el) => el.id !== activeTextElement));
         setActiveTextElement(null);
         setShowTextSettings(false);
@@ -376,28 +446,35 @@ const Journal = () => {
     const pages = [];
 
     for (let i = 0; i < book.pageCount; i++) {
-      pages.push(
-        <div key={`left-${i}`} className="page h-full w-full bg-[#f9f9f9]">
-          <div
-            className="flex flex-col justify-center items-center w-full h-full page-wrapper"
-            style={{
-              boxShadow: "inset -6px 0px 12px rgba(0, 0, 0, 0.25)",
-            }}
-          >
-            <div className="text-xl text-gray-600">{`Розворот ${i + 1} — Left`}</div>
-          </div>
-        </div>
-      );
+      const isLeftPage = i % 2 === 0;
+      const pageClassName = isLeftPage ? "page-left" : "page-right";
 
       pages.push(
-        <div key={`right-${i}`} className="page h-full w-full bg-[#f9f9f9]">
+        <div key={`page-${i}`} className={`page h-full w-full bg-[#f9f9f9] ${pageClassName}`}>
+          <Canvas
+            ref={isLeftPage ? canvasLeftRef : canvasRightRef}
+            color={brushType === "eraser" ? "#ffffff" : currentColor}
+            brushSize={brushSize}
+            width={640}
+            className={
+              isLeftPage
+                ? "shadow-[inset_-6px_0px_12px_rgba(0,0,0,0.25)]"
+                : "shadow-[inset_4px_0px_4px_rgba(0,0,0,0.25)]"
+            }
+            height={864}
+            brushType={brushType} // Pass brush type to Canvas
+          />
           <div
             className="flex flex-col justify-center items-center w-full h-full page-wrapper"
             style={{
-              boxShadow: "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
+              boxShadow: isLeftPage
+                ? "inset -6px 0px 12px rgba(0, 0, 0, 0.25)"
+                : "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
             }}
           >
-            <div className="text-xl text-gray-600">{`Розворот ${i + 1} — Right`}</div>
+            <div className="text-xl text-gray-600">
+              {`Розворот ${Math.floor(i / 2) + 1} — ${isLeftPage ? "Left" : "Right"}`}
+            </div>
           </div>
         </div>
       );
@@ -500,7 +577,7 @@ const Journal = () => {
       {isOpened && (
         <>
           {/* Панель інструментів */}
-          <div className="fixed right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
+          <div className="fixed top-[calc(100dvh-800px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
             {tools.map((tool) => {
               // Для move tool використовуємо обрану іконку
               const icon = tool.name === "move" ? `img_${selectedMoveTool}_tool.svg` : tool.icon;
@@ -592,11 +669,11 @@ const Journal = () => {
           </div>
 
           {/* Контейнер редактора */}
-          <div className="w-screen h-screen overflow-hidden bg-[#ebdccb]" ref={editorRef}>
+          <div className="w-screen h-screen overflow-hidden bg-[#ebdccb]" ref={editorLeftRef}>
             {/* Wrapper з padding */}
             <div
+              className="relative"
               style={{
-                padding: "60px",
                 overflow: "hidden",
                 boxSizing: "border-box",
                 minWidth: `${1280 * scale + 120}px`,
@@ -621,7 +698,7 @@ const Journal = () => {
                 clickEventForward={false}
                 useMouseEvents={false}
                 onFlip={handlePageChange}
-                className="shadow-lg flip-book-container"
+                className="shadow-lg flip-book-container relative"
                 style={{
                   borderRadius: "20px",
                   overflow: "hidden",
@@ -635,40 +712,48 @@ const Journal = () => {
                 {renderPages()}
               </HTMLFlipBook>
 
-              {/* Text element (label) */}
-              {textElements.map((element) => (
-                <div
-                  key={element.id}
-                  data-id={element.id}
-                  className="absolute cursor-move outline-none text-element"
-                  style={{
-                    left: `${element.x}px`,
-                    top: `${element.y}px`,
-                    transform: `rotate(${element.rotation}deg)`,
-                    color: element.color,
-                    fontSize: `${element.fontSize}px`,
-                    fontFamily: element.fontFamily,
-                    fontWeight: element.fontWeight,
-                    fontStyle: element.fontStyle,
-                    letterSpacing: element.letterSpacing,
-                    lineHeight: element.lineHeight,
-                    textTransform: element.textTransform,
-                    textDecoration: element.textDecoration,
-                    textAlign: element.textAlign,
-                    border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
-                  }}
-                  contentEditable={activeTextElement === element.id}
-                  suppressContentEditableWarning={true}
-                  onClick={(e) => handleTextElementClick(e, element)}
-                  onMouseDown={(e) => handleMouseDownOnText(e, element)}
-                >
-                  {element.text}
-                </div>
-              ))}
+              {/* Text element (label) - only show for current spread */}
+              {textElements
+                .filter((element) => {
+                  const elementSpread = Math.floor(element.pageIndex / 2);
+                  return elementSpread === currentSpread;
+                })
+                .map((element) => (
+                  <div
+                    key={element.id}
+                    data-id={element.id}
+                    className="absolute cursor-move outline-none text-element"
+                    style={{
+                      left: `${element.x}px`,
+                      top: `${element.y}px`,
+                      transform: `rotate(${element.rotation}deg)`,
+                      color: element.color,
+                      fontSize: `${element.fontSize}px`,
+                      fontFamily: element.fontFamily,
+                      fontWeight: element.fontWeight,
+                      fontStyle: element.fontStyle,
+                      letterSpacing: element.letterSpacing,
+                      lineHeight: element.lineHeight,
+                      textTransform: element.textTransform,
+                      textDecoration: element.textDecoration,
+                      textAlign: element.textAlign,
+                      border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
+                    }}
+                    contentEditable={activeTextElement === element.id}
+                    suppressContentEditableWarning={true}
+                    onClick={(e) => handleTextElementClick(e, element)}
+                    onMouseDown={(e) => handleMouseDownOnText(e, element)}
+                  >
+                    {element.text}
+                  </div>
+                ))}
             </div>
             {/* TextMenu */}
             {showTextSettings && activeTextElement && (
-              <div ref={textSettingsRef} className="fixed z-50 right-[115px] top-[330px] text-settings">
+              <div
+                ref={textSettingsRef}
+                className="fixed z-50 right-[115px] top-[calc(100dvh-710px)] text-settings"
+              >
                 <TextMenu
                   textElement={textElements.find((el) => el.id === activeTextElement)}
                   onTextElementChange={(updatedElement) => {
