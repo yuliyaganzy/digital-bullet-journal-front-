@@ -420,7 +420,9 @@ export const HomePage = () => {
                       placeholder="Enter quantity"
                       value={pageCount}
                       onChange={(e) => setPageCount(e.target.value)}
-                      className="w-full pl-[4px] bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:text-[16px] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30"
+                      disabled={editBook !== null}
+                      className={`w-full pl-[4px] bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:text-[16px] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30 ${editBook !== null ? "text-[#999999] cursor-not-allowed opacity-50" : ""
+                        }`}
                     />
                   </div>
                 </div>
@@ -433,7 +435,9 @@ export const HomePage = () => {
                     <select
                       value={layoutType}
                       onChange={(e) => setLayoutType(e.target.value)}
-                      className="w-full py-1 px-2 focus:outline-none focus:ring-0 cursor-pointer bg-transparent appearance-none"
+                      disabled={editBook !== null}
+                      className={`w-full pl-[4px] focus:outline-none focus:ring-0 bg-transparent appearance-none ${editBook !== null ? "text-[#999999] cursor-not-allowed opacity-50" : ""
+                        }`}
                     >
                       <option value="" disabled hidden>
                         Choose layout
@@ -474,14 +478,14 @@ export const HomePage = () => {
                           shelf.map((book) =>
                             book.id === editBook.id
                               ? {
-                                  ...book,
-                                  title: newBookTitle,
-                                  coverColor,
-                                  textColor,
-                                  shadowColor: getShadowColor(coverColor),
-                                  pageCount: parseInt(pageCount, 10),
-                                  layoutType,
-                                }
+                                ...book,
+                                title: newBookTitle,
+                                coverColor,
+                                textColor,
+                                shadowColor: getShadowColor(coverColor),
+                                pageCount: parseInt(pageCount, 10),
+                                layoutType,
+                              }
                               : book
                           )
                         )
@@ -655,11 +659,10 @@ export const HomePage = () => {
               <div className="absolute right-[48px] flex flex-row items-center gap-x-[32px]">
                 {visible && (
                   <div
-                    className={`top-0 flex transform transition-transform duration-700 ease-out ${
-                      animateIn ? "translate-y-0" : "-translate-y-full"
-                    }`}
+                    className={`top-0 flex transform transition-transform duration-700 ease-out ${animateIn ? "translate-y-0" : "-translate-y-full"
+                      }`}
                   >
-                    <div className="px-[24px] py-[18px] rounded-b-[10px] bg-[#c3dee1] text-[20px] font-[400] font-normal font-montserrat text-[#2a2a2a]">
+                    <div className="px-[24px] py-[18px] rounded-b-[10px] bg-[#c3dee1] text-[20px] font-[400] font-montserrat text-[#2a2a2a]">
                       {deleteMode ? "Select an object to delete" : "Select an object to edit"}
                     </div>
                   </div>
@@ -668,9 +671,8 @@ export const HomePage = () => {
                 {/* Done button */}
                 {doneVisible && (
                   <div
-                    className={`top-0 flex transform transition-transform duration-700 ease-out ${
-                      animateDoneIn ? "translate-y-0" : "-translate-y-full"
-                    }`}
+                    className={`top-0 flex transform transition-transform duration-700 ease-out ${animateDoneIn ? "translate-y-0" : "-translate-y-full"
+                      }`}
                   >
                     <button
                       className="px-[24px] py-[8px] border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
@@ -690,7 +692,7 @@ export const HomePage = () => {
                         }
                       }}
                     >
-                      <span className="text-[20px] font-[400] font-normal font-montserrat text-[#2a2a2a]">
+                      <span className="text-[20px] font-[400] font-montserrat text-[#2a2a2a]">
                         Done
                       </span>
                     </button>
@@ -730,21 +732,20 @@ export const HomePage = () => {
                   <img
                     src={selectMode ? "/images/img_delete_book.svg" : "/images/img_add_book.svg"}
                     alt="Action"
-                    className={`w-[18px] h-[18px] transition-transform duration-100 ${
-                      (selectMode && selectedBooks.length === 0) || deleteMode || editMode
-                        ? "opacity-30 cursor-not-allowed"
-                        : "active:scale-90"
-                    }`}
+                    className={`w-[18px] h-[18px] transition-transform duration-100 ${(selectMode && selectedBooks.length === 0) || deleteMode || editMode
+                      ? "opacity-30 cursor-not-allowed"
+                      : "active:scale-90"
+                      }`}
                   />
                   {((selectMode && selectedBooks.length === 0) || deleteMode || editMode) && (
                     <div className="absolute bottom-full mb-[4px] w-max px-[4px] bg-[#c3dee1] text-[#2a2a2a] text-[16px] font-[200] font-montserrat rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {selectMode && selectedBooks.length === 0
                         ? "Select an object"
                         : deleteMode
-                        ? "Complete the deletion"
-                        : editMode
-                        ? "Finish editing"
-                        : ""}
+                          ? "Complete the deletion"
+                          : editMode
+                            ? "Finish editing"
+                            : ""}
                     </div>
                   )}
                 </div>
@@ -760,21 +761,20 @@ export const HomePage = () => {
                   <img
                     src="/images/img_menu.svg"
                     alt="Menu"
-                    className={`w-[18px] h-[18px] ${
-                      selectMode || deleteMode || editMode
-                        ? "opacity-30 cursor-not-allowed"
-                        : "cursor-pointer active:scale-90"
-                    }`}
+                    className={`w-[18px] h-[18px] ${selectMode || deleteMode || editMode
+                      ? "opacity-30 cursor-not-allowed"
+                      : "cursor-pointer active:scale-90"
+                      }`}
                   />
                   {(selectMode || deleteMode || editMode) && (
                     <div className="absolute bottom-full mb-[4px] w-max px-[4px] bg-[#c3dee1] text-[#2a2a2a] text-[16px] font-[200] font-montserrat rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {selectMode
                         ? "Exit Selection mode"
                         : deleteMode
-                        ? "Complete the deletion"
-                        : editMode
-                        ? "Finish editing"
-                        : ""}
+                          ? "Complete the deletion"
+                          : editMode
+                            ? "Finish editing"
+                            : ""}
                     </div>
                   )}
                 </div>
@@ -791,9 +791,8 @@ export const HomePage = () => {
                     {menuItems.map((item, index) => (
                       <React.Fragment key={index}>
                         <li
-                          className={`px-[24px] py-[24px] hover:bg-[#a9d1d4] cursor-pointer ${
-                            index === 0 ? "hover:rounded-t-[10px]" : ""
-                          } ${index === menuItems.length - 1 ? "hover:rounded-b-[10px]" : ""}`}
+                          className={`px-[24px] py-[24px] hover:bg-[#a9d1d4] cursor-pointer ${index === 0 ? "hover:rounded-t-[10px]" : ""
+                            } ${index === menuItems.length - 1 ? "hover:rounded-b-[10px]" : ""}`}
                           onClick={() => handleMenuAction(item)}
                         >
                           {item}
@@ -843,10 +842,9 @@ export const HomePage = () => {
                     }
                   }}
                   className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer transition-all duration-1000 ease-in-out
-                    ${
-                      selectMode && selectedBooks.includes(book.id)
-                        ? "filter saturate-[1] brightness-[0.8] contrast-[1.8]"
-                        : ""
+                    ${selectMode && selectedBooks.includes(book.id)
+                      ? "filter saturate-[1] brightness-[0.8] contrast-[1.8]"
+                      : ""
                     }
                     ${openingBookId === book.id ? "pointer-events-none" : ""}`}
                   style={{

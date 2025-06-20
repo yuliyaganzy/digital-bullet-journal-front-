@@ -10,6 +10,7 @@ html, body {
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&display=swap');
 
+
 /* Custom font for Americana BT - you'll need to provide the actual font files */
 @font-face {
   font-family: 'Americana BT';

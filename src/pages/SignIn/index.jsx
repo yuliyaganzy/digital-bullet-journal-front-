@@ -10,6 +10,10 @@ const SignInPage = () => {
   });
 
   const [error, setError] = useState(""); // <-- стан для помилок
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
 
   const navigate = useNavigate(); // <-- инициализация хука
 
@@ -163,9 +167,13 @@ const SignInPage = () => {
 
           <div className="absolute bottom-[72px] flex items-center flex-col gap-y-[20px]">
             <div className="flex text-center">
-              <Link to="/forgotpassword" className="text-[20px] text-[#92c9cf] font-[600] hover:underline">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(true)}
+                className="text-[20px] text-[#92c9cf] font-[600] hover:underline"
+              >
                 Forgot Password?
-              </Link>
+              </button>
             </div>
 
             <div className="flex text-center">
@@ -179,6 +187,82 @@ const SignInPage = () => {
           </div>
         </div>
       </div>
+      {showForgotPasswordModal && (
+        <div className="absolute w-full h-full flex justify-center items-center z-[200]">
+          <div className="absolute inset-0 bg-[#2a2a2a] opacity-73 z-[190]" />
+          <div className="relative flex flex-col bg-[#F9F9F9] rounded-[10px] w-[350px] shadow-xl z-[200] gap-y-[20px] py-[40px]">
+            <h2 className="text-[32px] font-['Americana_BT'] text-center">
+              Change password
+            </h2>
+
+            <input
+              type="email"
+              placeholder="Enter your user email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="mx-[40px] w-[calc(100%-80px)] border-b border-[#2a2a2a] text-[#2a2a2a] font-[300] font-montserrat bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30"
+              required
+            />
+
+            {forgotError && (
+              <p className="text-center text-[#F15050] mt-2 max-w-[250px] mx-auto break-words">{forgotError}</p>
+            )}
+            {forgotSuccess && (
+              <p className="text-center text-[#56CD5A] mt-2 max-w-[250px] mx-auto break-words">{forgotSuccess}</p>
+            )}
+
+            <div className="flex justify-center gap-x-[28px] mt-4 ">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPasswordModal(false);
+                  setForgotEmail('');      // скидаємо введений email
+                  setForgotError('');      // скидаємо помилку
+                  setForgotSuccess('');    // скидаємо повідомлення про успіх
+                }
+                }
+                className="border-3 border-[#C3DEE1] px-[20px] py-[4px] rounded-[10px] hover:bg-[#c3dee1] cursor-pointer text-[20px] text-[#2a2a2a] font-[400] font-montserrat"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setForgotError('');
+                  setForgotSuccess('');
+                  try {
+                    const response = await axios.post(
+                      `${import.meta.env.VITE_API_URL}/api/forgot-password`,
+                      { email: forgotEmail },
+                      {
+                        headers: {
+                          Accept: 'application/json',
+                          'Content-Type': 'application/json',
+                        },
+                      }
+                    );
+                    setForgotSuccess('Check the message on the specified email');
+                    setForgotEmail('');
+                  } catch (error) {
+                    if (
+                      error.response &&
+                      error.response.data &&
+                      error.response.data.message
+                    ) {
+                      setForgotError(error.response.data.message);
+                    } else {
+                      setForgotError('Unfortunately, this user does not exist. Try again.');
+                    }
+                  }
+                }}
+                className="border-3 border-[#C3DEE1] px-[20px] py-[4px] rounded-[10px] hover:bg-[#c3dee1] cursor-pointer text-[20px] text-[#2a2a2a] font-[400] font-montserrat"
+              >
+                Send email
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

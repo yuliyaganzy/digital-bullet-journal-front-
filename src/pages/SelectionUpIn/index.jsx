@@ -29,28 +29,28 @@ const SelectionUpIn = () => {
 
         {/* Right Panel */}
         <div
-          className="relative w-[640px] h-[864px] p-10 flex flex-col items-center justify-center rounded-r-[20px] bg-[#f9f9f9]"
+          className="relative w-[640px] h-[864px] flex flex-col items-center justify-center rounded-r-[20px] bg-[#f9f9f9]"
           style={{
             boxShadow:
               "-6px 0px 20px rgba(0, 0, 0, 0.25), 4px 4px 12px 4px rgba(0, 0, 0, 0.3), inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
           }}
         >
-          <div className="flex flex-col gap-y-[40px] w-[274px]">
+          <div className="flex flex-col gap-y-[40px]">
             <button
               type="button"
               onClick={() => navigate("/signup")} // <-- переход по нажатию
-              className="h-[63px] px-24 py-12 border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
+              className="px-[90px] py-[4px] border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
             >
-              <span className="text-[32px] font-normal whitespace-nowrap font-montserrat text-[#2a2a2a]">
+              <span className="text-[32px] font-[300] whitespace-nowrap font-montserrat text-[#2a2a2a]">
                 Sign Up
               </span>
             </button>
             <button
               type="button"
               onClick={() => navigate("/signin")} // <-- переход по нажатию
-              className="h-[63px] px-24 py-12 border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
+              className="px-[90px] py-[4px] border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
             >
-              <span className="text-[32px] font-normal whitespace-nowrap font-montserrat text-[#2a2a2a]">
+              <span className="text-[32px] font-[300] whitespace-nowrap font-montserrat text-[#2a2a2a]">
                 Sign In
               </span>
             </button>
