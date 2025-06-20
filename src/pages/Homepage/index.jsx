@@ -421,8 +421,9 @@ export const HomePage = () => {
                       value={pageCount}
                       onChange={(e) => setPageCount(e.target.value)}
                       disabled={editBook !== null}
-                      className={`w-full pl-[4px] bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:text-[16px] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30 ${editBook !== null ? "text-[#999999] cursor-not-allowed opacity-50" : ""
-                        }`}
+                      className={`w-full pl-[4px] bg-transparent focus:outline-none placeholder:text-[#2a2a2a] placeholder:text-[16px] placeholder:font-[200] placeholder:font-montserrat placeholder:transition-opacity placeholder:duration-300 focus:placeholder:opacity-30 ${
+                        editBook !== null ? "text-[#999999] cursor-not-allowed opacity-50" : ""
+                      }`}
                     />
                   </div>
                 </div>
@@ -436,8 +437,9 @@ export const HomePage = () => {
                       value={layoutType}
                       onChange={(e) => setLayoutType(e.target.value)}
                       disabled={editBook !== null}
-                      className={`w-full pl-[4px] focus:outline-none focus:ring-0 bg-transparent appearance-none ${editBook !== null ? "text-[#999999] cursor-not-allowed opacity-50" : ""
-                        }`}
+                      className={`w-full pl-[4px] focus:outline-none focus:ring-0 bg-transparent appearance-none ${
+                        editBook !== null ? "text-[#999999] cursor-not-allowed opacity-50" : ""
+                      }`}
                     >
                       <option value="" disabled hidden>
                         Choose layout
@@ -478,14 +480,14 @@ export const HomePage = () => {
                           shelf.map((book) =>
                             book.id === editBook.id
                               ? {
-                                ...book,
-                                title: newBookTitle,
-                                coverColor,
-                                textColor,
-                                shadowColor: getShadowColor(coverColor),
-                                pageCount: parseInt(pageCount, 10),
-                                layoutType,
-                              }
+                                  ...book,
+                                  title: newBookTitle,
+                                  coverColor,
+                                  textColor,
+                                  shadowColor: getShadowColor(coverColor),
+                                  pageCount: parseInt(pageCount, 10),
+                                  layoutType,
+                                }
                               : book
                           )
                         )
@@ -519,18 +521,18 @@ export const HomePage = () => {
           <div className="absolute top-0 left-0 w-full h-full bg-[#2a2a2a] opacity-40 pointer-events-none z-[190] mix-blend-normal"></div>
 
           <div
-            className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] p-4 max-w-[90%] shadow-xl"
+            className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] max-w-[90%] shadow-xl"
             style={{ boxShadow: "-10px 10px 30px 4px rgba(0, 0, 0, 0.4)" }}
           >
             <div className="text-center text-[#2a2a2a] font-montserrat">
               <p className="text-[20px] font-[600] px-[12px] py-[12px] break-words max-w-[300px] mx-auto">
                 Unable to enter this mode. Shelves are empty.
               </p>
-              <hr className="border-[#2a2a2a] w-full mx-auto my-2" />
+              <hr className="border-[#2a2a2a] w-full mx-auto" />
               <div className="flex w-full text-[#2a2a2a] text-[20px] font-[300]">
                 <button
                   onClick={() => setShowNoBooksAlert(false)}
-                  className="w-full py-[12px] hover:bg-[#a9d1d4] hover:rounded-[10px] cursor-pointer"
+                  className="w-full py-[12px] hover:bg-[#a9d1d4] rounded-b-[10px] cursor-pointer"
                 >
                   Ok
                 </button>
@@ -553,14 +555,14 @@ export const HomePage = () => {
 
           {/* Модальне вікно */}
           <div
-            className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] p-4 max-w-[90%] shadow-xl"
+            className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] max-w-[90%] shadow-xl"
             style={{ boxShadow: "-10px 10px 30px 4px rgba(0, 0, 0, 0.4)" }}
           >
             <div className="text-center text-[#2a2a2a] font-montserrat">
-              <p className="text-[20px] font-[600] px-[12px] py-[12px] break-words max-w-[300px] mx-auto">
+              <p className="text-[20px] font-[600] px-5 py-4 break-words max-w-[300px] mx-auto">
                 Do you confirm the deletion?
               </p>
-              <hr className="border-[#2a2a2a] w-full mx-auto my-2" />
+              <hr className="border-[#2a2a2a] w-full mx-auto" />
               <div className="flex w-full text-[#2a2a2a] text-[20px] font-[300]">
                 <button
                   onClick={handleConfirmDelete}
@@ -581,6 +583,7 @@ export const HomePage = () => {
       )}
 
       {/* Вікно підтверження створення нової полиці */}
+
       {showCreatePageConfirm && (
         <div className="absolute w-full h-full flex justify-center items-center z-[200]">
           {/* Напівпрозорий фон */}
@@ -588,14 +591,14 @@ export const HomePage = () => {
 
           {/* Модальне вікно */}
           <div
-            className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] p-4 max-w-[90%] shadow-xl"
+            className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] max-w-[90%] shadow-xl"
             style={{ boxShadow: "-10px 10px 30px 4px rgba(0, 0, 0, 0.4)" }}
           >
             <div className="text-center text-[#2a2a2a] font-montserrat">
-              <p className="text-[20px] font-[600] px-[12px] py-[4px] break-words max-w-[300px] mx-auto">
+              <p className="text-[20px] font-[600] px-5 py-3 break-words max-w-[300px] mx-auto">
                 This shelf is completely full. Would you like to create a new one?
               </p>
-              <hr className="border-[#2a2a2a] w-full mx-auto my-2" />
+              <hr className="border-[#2a2a2a] w-full mx-auto" />
               <div className="flex w-full text-[#2a2a2a] text-[20px] font-[300]">
                 <button
                   onClick={handleConfirmCreatePage}
@@ -618,12 +621,12 @@ export const HomePage = () => {
       {showGoToAvailablePageModal && (
         <div className="absolute w-full h-full flex justify-center items-center z-[200]">
           <div className="absolute top-0 left-0 w-full h-full bg-[#2a2a2a] opacity-40 pointer-events-none z-[190]" />
-          <div className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] p-4 max-w-[90%] shadow-xl">
+          <div className="relative flex justify-center bg-[#c3dee1] rounded-[10px] z-[200] max-w-[90%] shadow-xl">
             <div className="text-center text-[#2a2a2a] font-montserrat">
-              <p className="text-[20px] font-[600] px-[12px] py-[4px] max-w-[300px] mx-auto">
+              <p className="text-[20px] font-[600] px-5 py-3 max-w-[300px] mx-auto">
                 There is free space on another shelf. Would you like to go there?
               </p>
-              <hr className="border-[#2a2a2a] w-full mx-auto my-2" />
+              <hr className="border-[#2a2a2a] w-full mx-auto" />
               <div className="flex w-full text-[#2a2a2a] text-[20px] font-[300]">
                 <button
                   className="w-1/2 py-[12px] hover:bg-[#a9d1d4] hover:rounded-bl-[10px] cursor-pointer"
@@ -659,8 +662,9 @@ export const HomePage = () => {
               <div className="absolute right-[48px] flex flex-row items-center gap-x-[32px]">
                 {visible && (
                   <div
-                    className={`top-0 flex transform transition-transform duration-700 ease-out ${animateIn ? "translate-y-0" : "-translate-y-full"
-                      }`}
+                    className={`top-0 flex transform transition-transform duration-700 ease-out ${
+                      animateIn ? "translate-y-0" : "-translate-y-full"
+                    }`}
                   >
                     <div className="px-[24px] py-[18px] rounded-b-[10px] bg-[#c3dee1] text-[20px] font-[400] font-montserrat text-[#2a2a2a]">
                       {deleteMode ? "Select an object to delete" : "Select an object to edit"}
@@ -671,8 +675,9 @@ export const HomePage = () => {
                 {/* Done button */}
                 {doneVisible && (
                   <div
-                    className={`top-0 flex transform transition-transform duration-700 ease-out ${animateDoneIn ? "translate-y-0" : "-translate-y-full"
-                      }`}
+                    className={`top-0 flex transform transition-transform duration-700 ease-out ${
+                      animateDoneIn ? "translate-y-0" : "-translate-y-full"
+                    }`}
                   >
                     <button
                       className="px-[24px] py-[8px] border-3 border-[#c3dee1] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#c3dee1] active:scale-95"
@@ -692,9 +697,7 @@ export const HomePage = () => {
                         }
                       }}
                     >
-                      <span className="text-[20px] font-[400] font-montserrat text-[#2a2a2a]">
-                        Done
-                      </span>
+                      <span className="text-[20px] font-[400] font-montserrat text-[#2a2a2a]">Done</span>
                     </button>
                   </div>
                 )}
@@ -732,20 +735,21 @@ export const HomePage = () => {
                   <img
                     src={selectMode ? "/images/img_delete_book.svg" : "/images/img_add_book.svg"}
                     alt="Action"
-                    className={`w-[18px] h-[18px] transition-transform duration-100 ${(selectMode && selectedBooks.length === 0) || deleteMode || editMode
-                      ? "opacity-30 cursor-not-allowed"
-                      : "active:scale-90"
-                      }`}
+                    className={`w-[18px] h-[18px] transition-transform duration-100 ${
+                      (selectMode && selectedBooks.length === 0) || deleteMode || editMode
+                        ? "opacity-30 cursor-not-allowed"
+                        : "active:scale-90"
+                    }`}
                   />
                   {((selectMode && selectedBooks.length === 0) || deleteMode || editMode) && (
                     <div className="absolute bottom-full mb-[4px] w-max px-[4px] bg-[#c3dee1] text-[#2a2a2a] text-[16px] font-[200] font-montserrat rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {selectMode && selectedBooks.length === 0
                         ? "Select an object"
                         : deleteMode
-                          ? "Complete the deletion"
-                          : editMode
-                            ? "Finish editing"
-                            : ""}
+                        ? "Complete the deletion"
+                        : editMode
+                        ? "Finish editing"
+                        : ""}
                     </div>
                   )}
                 </div>
@@ -761,20 +765,21 @@ export const HomePage = () => {
                   <img
                     src="/images/img_menu.svg"
                     alt="Menu"
-                    className={`w-[18px] h-[18px] ${selectMode || deleteMode || editMode
-                      ? "opacity-30 cursor-not-allowed"
-                      : "cursor-pointer active:scale-90"
-                      }`}
+                    className={`w-[18px] h-[18px] ${
+                      selectMode || deleteMode || editMode
+                        ? "opacity-30 cursor-not-allowed"
+                        : "cursor-pointer active:scale-90"
+                    }`}
                   />
                   {(selectMode || deleteMode || editMode) && (
                     <div className="absolute bottom-full mb-[4px] w-max px-[4px] bg-[#c3dee1] text-[#2a2a2a] text-[16px] font-[200] font-montserrat rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {selectMode
                         ? "Exit Selection mode"
                         : deleteMode
-                          ? "Complete the deletion"
-                          : editMode
-                            ? "Finish editing"
-                            : ""}
+                        ? "Complete the deletion"
+                        : editMode
+                        ? "Finish editing"
+                        : ""}
                     </div>
                   )}
                 </div>
@@ -791,8 +796,9 @@ export const HomePage = () => {
                     {menuItems.map((item, index) => (
                       <React.Fragment key={index}>
                         <li
-                          className={`px-[24px] py-[24px] hover:bg-[#a9d1d4] cursor-pointer ${index === 0 ? "hover:rounded-t-[10px]" : ""
-                            } ${index === menuItems.length - 1 ? "hover:rounded-b-[10px]" : ""}`}
+                          className={`px-[24px] py-[24px] hover:bg-[#a9d1d4] cursor-pointer ${
+                            index === 0 ? "hover:rounded-t-[10px]" : ""
+                          } ${index === menuItems.length - 1 ? "hover:rounded-b-[10px]" : ""}`}
                           onClick={() => handleMenuAction(item)}
                         >
                           {item}
@@ -842,9 +848,10 @@ export const HomePage = () => {
                     }
                   }}
                   className={`absolute w-[85px] h-[199px] overflow-hidden cursor-pointer transition-all duration-1000 ease-in-out
-                    ${selectMode && selectedBooks.includes(book.id)
-                      ? "filter saturate-[1] brightness-[0.8] contrast-[1.8]"
-                      : ""
+                    ${
+                      selectMode && selectedBooks.includes(book.id)
+                        ? "filter saturate-[1] brightness-[0.8] contrast-[1.8]"
+                        : ""
                     }
                     ${openingBookId === book.id ? "pointer-events-none" : ""}`}
                   style={{
