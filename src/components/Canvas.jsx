@@ -1,8 +1,7 @@
 import React, { useRef, useEffect } from "react";
-import "../styles/Canvas.css";
 import { brushHandlers } from "./brushes"; // Import brush handlers
 
-const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType }, forwardedRef) => {
+const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, className }, forwardedRef) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const lastPositionRef = useRef({ x: 0, y: 0 });
@@ -64,8 +63,8 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType },
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      className="canvas"
-    ></canvas>
+      className={`shadow-lg block cursor-crosshair transition-shadow duration-300 ease-in-out hover:shadow-xl ${className}`}
+    />
   );
 });
 
