@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { brushHandlers } from "./brushes"; // Import brush handlers
 
-const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, className }, forwardedRef) => {
+const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, className, style, isDrawingActive = false }, forwardedRef) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const lastPositionRef = useRef({ x: 0, y: 0 });
@@ -23,12 +23,22 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
   }, [width, height]);
 
   const handleMouseDown = (e) => {
+    // Only allow drawing if isDrawingActive is true
+    if (!isDrawingActive) {
+      return;
+    }
+
     const currentPosition = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
     lastPositionRef.current = currentPosition;
     isDrawingRef.current = true;
   };
 
   const handleMouseMove = (e) => {
+    // Only allow drawing if isDrawingActive is true
+    if (!isDrawingActive) {
+      return;
+    }
+
     if (!isDrawingRef.current) return;
 
     const canvas = canvasRef.current;
@@ -53,18 +63,25 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
   };
 
   const handleMouseUp = () => {
+    // Only allow drawing if isDrawingActive is true
+    if (!isDrawingActive) {
+      return;
+    }
+
     isDrawingRef.current = false;
   };
 
+
   return (
-    <canvas
-      ref={canvasRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      className={`shadow-lg block cursor-crosshair transition-shadow duration-300 ease-in-out hover:shadow-xl ${className}`}
-    />
+      <canvas
+          ref={canvasRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className={`shadow-lg block transition-shadow duration-300 ease-in-out hover:shadow-xl ${className}`}
+          style={style}
+      />
   );
 });
 
