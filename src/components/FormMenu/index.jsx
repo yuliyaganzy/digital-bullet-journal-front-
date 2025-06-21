@@ -71,54 +71,67 @@ const FormMenu = ({ formElement, onFormElementChange }) => {
     setTempStrokeColor("");
   };
 
-  const renderFillTab = () => (
-    <div className="p-6">
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <label className="block text-sm">Fill Color</label>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-[8px]">
-              {[...defaultColors, ...customColors].slice(0, 5).map((color, index) => (
-                <button
-                  key={`${color}-${index}`}
-                  onClick={() => handleColorChange(color)}
-                  className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-600 transition-colors"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-            <div className="relative">
-              <button className="w-8 h-8 rounded-full border-2 border-dashed border-gray-400 hover:border-gray-600 flex items-center justify-center">
-                <TbPlus size={20} />
-              </button>
-              <input
-                type="color"
-                value={tempColor || formElement.fillColor}
-                onChange={(e) => handleTempColorChange(e.target.value)}
-                onMouseOut={handleColorBlur}
-                className="absolute top-0 left-0 w-8 h-8 opacity-0 cursor-pointer"
-              />
-            </div>
+  const renderFillTab = () => {
+    // Don't show fill options for line and arrow
+    if (formElement.type === "line" || formElement.type === "arrow") {
+      return (
+        <div className="p-6">
+          <div className="text-center text-gray-500">
+            Fill options are not available for this shape type.
           </div>
         </div>
+      );
+    }
 
-        <div className="space-y-3">
-          <label className="block text-sm">Fill Transparency</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={formElement.fillTransparency || 100}
-              onChange={(e) => onFormElementChange({ ...formElement, fillTransparency: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm w-12 text-right">{formElement.fillTransparency || 100}%</span>
+    return (
+      <div className="p-6">
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <label className="block text-sm">Fill Color</label>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex gap-[8px]">
+                {[...defaultColors, ...customColors].slice(0, 5).map((color, index) => (
+                  <button
+                    key={`${color}-${index}`}
+                    onClick={() => handleColorChange(color)}
+                    className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-600 transition-colors"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+              <div className="relative">
+                <button className="w-8 h-8 rounded-full border-2 border-dashed border-gray-400 hover:border-gray-600 flex items-center justify-center">
+                  <TbPlus size={20} />
+                </button>
+                <input
+                  type="color"
+                  value={tempColor || formElement.fillColor}
+                  onChange={(e) => handleTempColorChange(e.target.value)}
+                  onMouseOut={handleColorBlur}
+                  className="absolute top-0 left-0 w-8 h-8 opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm">Fill Transparency</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={formElement.fillTransparency || 100}
+                onChange={(e) => onFormElementChange({ ...formElement, fillTransparency: parseInt(e.target.value) })}
+                className="flex-1"
+              />
+              <span className="text-sm w-12 text-right">{formElement.fillTransparency || 100}%</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderStrokeTab = () => (
     <div className="p-6">
@@ -187,20 +200,22 @@ const FormMenu = ({ formElement, onFormElementChange }) => {
   const renderShapeTab = () => (
     <div className="p-6">
       <div className="space-y-6">
-        <div className="space-y-3">
-          <label className="block text-sm">Corner Radius</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="0"
-              max="50"
-              value={formElement.cornerRadius || 0}
-              onChange={(e) => onFormElementChange({ ...formElement, cornerRadius: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm w-12 text-right">{formElement.cornerRadius || 0}px</span>
+        {formElement.type !== "ellipse" && (
+          <div className="space-y-3">
+            <label className="block text-sm">Corner Radius</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="50"
+                value={formElement.cornerRadius || 0}
+                onChange={(e) => onFormElementChange({ ...formElement, cornerRadius: parseInt(e.target.value) })}
+                className="flex-1"
+              />
+              <span className="text-sm w-12 text-right">{formElement.cornerRadius || 0}px</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-3">
           <label className="block text-sm">Rotation</label>

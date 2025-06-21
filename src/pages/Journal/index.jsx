@@ -6,7 +6,10 @@ import Canvas from "@/components/Canvas";
 import FormCanvas from "@/components/FormCanvas";
 import TextMenu from "@/components/TextMenu";
 import FormMenu from "@/components/FormMenu";
+import FormElement from "@/components/FormElement";
+import TempFormElement from "@/components/TempFormElement";
 import { useClickAway } from "@/hooks/useClickAway";
+import * as ReactDOM from "react-dom/client";
 
 // TODO take https://github.com/omarseyam1729/SeyPaint/tree/main as a reference
 // TODO create a canvas component
@@ -97,7 +100,7 @@ const Journal = () => {
   const [showFormSettings, setShowFormSettings] = useState(false);
   const [isDraggingForm, setIsDraggingForm] = useState(false);
   const [isResizingForm, setIsResizingForm] = useState(false);
-  const [resizeFormStartSize, setResizeFormStartSize] = useState({ width: 0, height: 0 });
+  const [resizeFormStartSize, setResizeFormStartSize] = useState({ width: 0, height: 0, x: 0, y: 0, resizeHandle: null });
 
   // Переміщення і розтягування тексту
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -386,67 +389,95 @@ const Journal = () => {
     const pageElement = document.querySelector(`.page[data-page-index="${pageIndex}"]`);
     if (!pageElement) return;
 
-    // Create a temporary form element for preview
-    const tempFormElement = document.getElementById("temp-form-element");
-    if (tempFormElement) {
-      // Update the temporary element
-      const width = Math.abs(currentX - startX);
-      const height = Math.abs(currentY - startY);
-      const left = Math.min(currentX, startX);
-      const top = Math.min(currentY, startY);
+    // Calculate width, height, and position
+    let width, height, left, top;
 
-      tempFormElement.style.left = `${left}px`;
-      tempFormElement.style.top = `${top}px`;
-      tempFormElement.style.width = `${width}px`;
-      tempFormElement.style.height = `${height}px`;
+    // For line and arrow, we want to keep the start point fixed and extend to current point
+    if (formType === "line" || formType === "arrow") {
+      // For line and arrow, width and height are the distances from start to current
+      width = currentX - startX;
+      height = currentY - startY;
+      // The position is always the starting point
+      left = startX;
+      top = startY;
     } else {
-      // Create a new temporary element
-      const tempElement = document.createElement("div");
-      tempElement.id = "temp-form-element";
-      tempElement.style.position = "absolute";
-      tempElement.style.border = `${strokeWidth}px solid rgba(${parseInt(strokeColor.slice(1, 3), 16)}, ${parseInt(strokeColor.slice(3, 5), 16)}, ${parseInt(strokeColor.slice(5, 7), 16)}, ${strokeTransparency / 100})`;
-      tempElement.style.backgroundColor = `rgba(${parseInt(currentColor.slice(1, 3), 16)}, ${parseInt(currentColor.slice(3, 5), 16)}, ${parseInt(currentColor.slice(5, 7), 16)}, ${fillTransparency / 100})`;
-      tempElement.style.borderRadius = `${cornerRadius}px`;
-      tempElement.style.transform = `rotate(${rotation}deg)`;
-      tempElement.style.pointerEvents = "none";
-      tempElement.style.zIndex = "20";
-
-      // Set initial position and size
-      const width = Math.abs(currentX - startX);
-      const height = Math.abs(currentY - startY);
-      const left = Math.min(currentX, startX);
-      const top = Math.min(currentY, startY);
-
-      tempElement.style.left = `${left}px`;
-      tempElement.style.top = `${top}px`;
-      tempElement.style.width = `${width}px`;
-      tempElement.style.height = `${height}px`;
-
-      // Add to the page
-      pageElement.appendChild(tempElement);
+      // For other shapes, use the standard rectangle calculation
+      width = Math.abs(currentX - startX);
+      height = Math.abs(currentY - startY);
+      left = Math.min(currentX, startX);
+      top = Math.min(currentY, startY);
     }
+
+    // Create a temporary form element for preview
+    let tempFormElement = document.getElementById("temp-form-element-container");
+    if (!tempFormElement) {
+      // Create a new container for the temporary element
+      tempFormElement = document.createElement("div");
+      tempFormElement.id = "temp-form-element-container";
+      pageElement.appendChild(tempFormElement);
+    }
+
+    // Render the TempFormElement component into the container
+    const root = ReactDOM.createRoot(tempFormElement);
+    root.render(
+      <TempFormElement
+        formType={formType}
+        left={left}
+        top={top}
+        width={width}
+        height={height}
+        fillColor={currentColor}
+        fillTransparency={fillTransparency}
+        strokeColor={strokeColor}
+        strokeTransparency={strokeTransparency}
+        cornerRadius={cornerRadius}
+        rotation={rotation}
+        strokeWidth={strokeWidth}
+      />
+    );
   };
 
   const handleFormEnd = (pageIndex, startX, startY, endX, endY) => {
     if (!isDragging) return;
 
     // We're finishing drawing a form
-    const tempFormElement = document.getElementById("temp-form-element");
-    if (tempFormElement) {
-      // Calculate width and height
-      const width = Math.abs(endX - startX);
-      const height = Math.abs(endY - startY);
+    const tempFormElementContainer = document.getElementById("temp-form-element-container");
+    if (tempFormElementContainer) {
+      // Calculate width, height, and position
+      let width, height, left, top;
 
-      // Skip if the form is too small
-      if (width < 5 || height < 5) {
-        tempFormElement.remove();
-        setIsDragging(false);
-        return;
+      // For line and arrow, we want to keep the start point fixed and extend to end point
+      if (formType === "line" || formType === "arrow") {
+        // For line and arrow, width and height are the distances from start to end
+        width = endX - startX;
+        height = endY - startY;
+        // The position is always the starting point
+        left = startX;
+        top = startY;
+
+        // Skip if the line/arrow is too small (using length instead of width/height)
+        const length = Math.sqrt(width * width + height * height);
+        if (length < 5) {
+          tempFormElementContainer.remove();
+          setIsDragging(false);
+          return;
+        }
+      } else {
+        // For other shapes, use the standard rectangle calculation
+        width = Math.abs(endX - startX);
+        height = Math.abs(endY - startY);
+
+        // Skip if the form is too small
+        if (width < 5 || height < 5) {
+          tempFormElementContainer.remove();
+          setIsDragging(false);
+          return;
+        }
+
+        // Calculate position
+        left = Math.min(endX, startX);
+        top = Math.min(endY, startY);
       }
-
-      // Calculate position
-      const left = Math.min(endX, startX);
-      const top = Math.min(endY, startY);
 
       // Create a new form element
       const newFormElement = {
@@ -472,8 +503,10 @@ const Journal = () => {
       // Set as active form element
       setActiveFormElement(newFormElement.id);
 
-      // Remove temporary element
-      tempFormElement.remove();
+      // Remove temporary element container
+      const root = ReactDOM.createRoot(tempFormElementContainer);
+      root.unmount();
+      tempFormElementContainer.remove();
 
       // Reset form mode and set tool back to move
       setIsFormMode(false);
@@ -760,6 +793,8 @@ const Journal = () => {
 
       // Handle form element resizing
       if (isResizingForm && activeFormElement) {
+        // Calculate the delta from the original drag start position
+        // This ensures smooth resizing without jerkiness
         const dx = e.clientX - dragStartPos.x;
         const dy = e.clientY - dragStartPos.y;
 
@@ -778,27 +813,139 @@ const Journal = () => {
         const pageWidth = pageBounds.width / scale;
         const pageHeight = pageBounds.height / scale;
 
+        // Get the resize handle being used
+        const resizeHandle = resizeFormStartSize.resizeHandle;
+
+        // Special handling for line and arrow forms
+        const isLineOrArrow = activeElement.type === "line" || activeElement.type === "arrow";
+
         setFormElements(
             formElements.map((el) => {
               if (el.id === activeFormElement) {
-                // Calculate new width and height
-                const newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
-                const newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                // Always start with the original position and size from resizeFormStartSize
+                // This prevents cumulative errors that cause jerkiness
+                let newX = resizeFormStartSize.x;
+                let newY = resizeFormStartSize.y;
+                let newWidth = resizeFormStartSize.width;
+                let newHeight = resizeFormStartSize.height;
+
+                // Handle resizing based on which handle is being used
+                switch(resizeHandle) {
+                  case "top-left":
+                    // Resize from top-left corner
+                    newX = Math.min(resizeFormStartSize.x + dx / scale, resizeFormStartSize.x + resizeFormStartSize.width - 20);
+                    newY = Math.min(resizeFormStartSize.y + dy / scale, resizeFormStartSize.y + resizeFormStartSize.height - 20);
+                    newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
+                    newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
+                    break;
+                  case "top-right":
+                    // Resize from top-right corner
+                    newY = Math.min(resizeFormStartSize.y + dy / scale, resizeFormStartSize.y + resizeFormStartSize.height - 20);
+                    newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
+                    newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
+                    break;
+                  case "bottom-left":
+                    // Resize from bottom-left corner
+                    newX = Math.min(resizeFormStartSize.x + dx / scale, resizeFormStartSize.x + resizeFormStartSize.width - 20);
+                    newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
+                    newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                    break;
+                  case "bottom-right":
+                    // Resize from bottom-right corner (default behavior)
+                    newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
+                    newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                    break;
+                  case "top":
+                    // Resize from top edge
+                    newY = Math.min(resizeFormStartSize.y + dy / scale, resizeFormStartSize.y + resizeFormStartSize.height - 20);
+                    newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
+                    break;
+                  case "bottom":
+                    // Resize from bottom edge
+                    newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                    break;
+                  case "left":
+                    // Resize from left edge
+                    newX = Math.min(resizeFormStartSize.x + dx / scale, resizeFormStartSize.x + resizeFormStartSize.width - 20);
+                    newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
+                    break;
+                  case "right":
+                    // Resize from right edge
+                    newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
+                    break;
+                  case "start":
+                    if (isLineOrArrow) {
+                      // For line/arrow, adjust the start point
+                      // Use the original width and height from resizeFormStartSize
+                      const originalWidth = resizeFormStartSize.width;
+                      const originalHeight = resizeFormStartSize.height;
+                      // Calculate the angle based on the original width and height
+                      // This gives us the angle of the line/arrow without any rotation
+                      const baseAngle = Math.atan2(originalHeight, originalWidth);
+                      // Add the rotation to get the actual angle of the line/arrow
+                      const angle = baseAngle + (activeElement.rotation * Math.PI / 180);
+                      const length = Math.sqrt(originalWidth * originalWidth + originalHeight * originalHeight);
+                      const dLength = dx / scale * Math.cos(angle) + dy / scale * Math.sin(angle);
+                      const newLength = Math.max(20, length - dLength);
+                      const ratio = newLength / length;
+
+                      newWidth = originalWidth * ratio;
+                      newHeight = originalHeight * ratio;
+
+                      // Adjust position to keep the end point fixed
+                      newX = resizeFormStartSize.x + originalWidth - newWidth;
+                      newY = resizeFormStartSize.y + originalHeight - newHeight;
+                    }
+                    break;
+                  case "end":
+                    if (isLineOrArrow) {
+                      // For line/arrow, adjust the end point
+                      // Use the original width and height from resizeFormStartSize
+                      const originalWidth = resizeFormStartSize.width;
+                      const originalHeight = resizeFormStartSize.height;
+                      // Calculate the angle based on the original width and height
+                      // This gives us the angle of the line/arrow without any rotation
+                      const baseAngle = Math.atan2(originalHeight, originalWidth);
+                      // Add the rotation to get the actual angle of the line/arrow
+                      const angle = baseAngle + (activeElement.rotation * Math.PI / 180);
+                      const dLength = dx / scale * Math.cos(angle) + dy / scale * Math.sin(angle);
+                      const length = Math.sqrt(originalWidth * originalWidth + originalHeight * originalHeight);
+                      const newLength = Math.max(20, length + dLength);
+                      const ratio = newLength / length;
+
+                      newWidth = originalWidth * ratio;
+                      newHeight = originalHeight * ratio;
+                    }
+                    break;
+                }
 
                 // Ensure the element doesn't resize beyond page boundaries
-                const maxWidth = pageWidth - el.x - 5; // 5px margin
-                const maxHeight = pageHeight - el.y - 5; // 5px margin
+                const margin = 5;
+
+                // Clamp position within page boundaries
+                newX = Math.max(margin, Math.min(newX, pageWidth - newWidth - margin));
+                newY = Math.max(margin, Math.min(newY, pageHeight - newHeight - margin));
+
+                // Ensure minimum size
+                newWidth = Math.max(20, newWidth);
+                newHeight = Math.max(20, newHeight);
+
+                // Ensure the element doesn't resize beyond page boundaries
+                newWidth = Math.min(newWidth, pageWidth - newX - margin);
+                newHeight = Math.min(newHeight, pageHeight - newY - margin);
 
                 return {
                   ...el,
-                  width: Math.min(newWidth, maxWidth),
-                  height: Math.min(newHeight, maxHeight),
+                  x: newX,
+                  y: newY,
+                  width: newWidth,
+                  height: newHeight,
                 };
               }
               return el;
             })
         );
-        setDragStartPos({ x: e.clientX, y: e.clientY });
+        // Don't update dragStartPos here to maintain consistent resizing relative to the original position
       }
     };
 
@@ -813,8 +960,12 @@ const Journal = () => {
         // Reset cursor to default after dragging
         document.body.style.cursor = "default";
       }
+      if (isResizingForm) {
+        setIsResizingForm(false);
+        // Reset cursor to default after resizing
+        document.body.style.cursor = "default";
+      }
       setIsResizing(false);
-      setIsResizingForm(false);
     };
 
     if (isDraggingText || isResizing || isDraggingForm || isResizingForm) {
@@ -956,30 +1107,13 @@ const Journal = () => {
 
               {/* Form elements for this page */}
               {pageFormElements.map((element) => (
-                  <div
-                      key={`form-${element.id}`}
-                      data-id={element.id}
-                      className={`absolute form-element ${activeFormElement === element.id ? 'cursor-move' : 'cursor-pointer'}`}
-                      style={{
-                        left: `${element.x}px`,
-                        top: `${element.y}px`,
-                        width: `${element.width}px`,
-                        height: `${element.height}px`,
-                        backgroundColor: `rgba(${parseInt(element.fillColor.slice(1, 3), 16)}, ${parseInt(element.fillColor.slice(3, 5), 16)}, ${parseInt(element.fillColor.slice(5, 7), 16)}, ${element.fillTransparency / 100})`,
-                        border: `${element.strokeWidth}px solid rgba(${parseInt(element.strokeColor.slice(1, 3), 16)}, ${parseInt(element.strokeColor.slice(3, 5), 16)}, ${parseInt(element.strokeColor.slice(5, 7), 16)}, ${element.strokeTransparency / 100})`,
-                        borderRadius: `${element.cornerRadius}px`,
-                        transform: `rotate(${element.rotation}deg)`,
-                        position: "absolute",
-                        zIndex: 15,
-                        outline: activeFormElement === element.id ? "1px dashed #2A2A2A" : "none",
-                      }}
-                      onClick={(e) => handleFormElementClick(e, element)}
-                      onMouseDown={(e) => handleMouseDownOnForm(e, element)}
-                  >
-                    {activeFormElement === element.id && (
-                        <div className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-[#2A2A2A] cursor-se-resize" />
-                    )}
-                  </div>
+                <FormElement
+                  key={`form-${element.id}`}
+                  element={element}
+                  isActive={activeFormElement === element.id}
+                  onClick={(e) => handleFormElementClick(e, element)}
+                  onMouseDown={(e) => handleMouseDownOnForm(e, element)}
+                />
               ))}
 
               {/* Text elements for this page */}
@@ -1126,11 +1260,55 @@ const Journal = () => {
     // If this is the start of resizing
     if (e.target.classList.contains("resize-handle")) {
       setIsResizingForm(true);
+
+      // Get the resize handle direction from the data attribute
+      const resizeHandle = e.target.getAttribute("data-resize-handle");
+
       setResizeFormStartSize({
         width: element.width,
         height: element.height,
+        x: element.x,
+        y: element.y,
+        resizeHandle: resizeHandle // Store which handle is being used
       });
+
       setDragStartPos({ x: e.clientX, y: e.clientY });
+
+      // Set appropriate cursor based on resize handle
+      switch(resizeHandle) {
+        case "top-left":
+          document.body.style.cursor = "nw-resize";
+          break;
+        case "top-right":
+          document.body.style.cursor = "ne-resize";
+          break;
+        case "bottom-left":
+          document.body.style.cursor = "sw-resize";
+          break;
+        case "bottom-right":
+          document.body.style.cursor = "se-resize";
+          break;
+        case "top":
+          document.body.style.cursor = "n-resize";
+          break;
+        case "bottom":
+          document.body.style.cursor = "s-resize";
+          break;
+        case "left":
+          document.body.style.cursor = "w-resize";
+          break;
+        case "right":
+          document.body.style.cursor = "e-resize";
+          break;
+        case "start":
+          document.body.style.cursor = "w-resize";
+          break;
+        case "end":
+          document.body.style.cursor = "e-resize";
+          break;
+        default:
+          document.body.style.cursor = "se-resize";
+      }
     } else {
       // Remember position for possible dragging
       setIsDraggingForm(true);
