@@ -110,8 +110,15 @@ const Journal = () => {
   const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
   const [isEditing, setIsEditing] = useState(false);
 
+  // Bookmark states
+  const [bookmarks, setBookmarks] = useState([]);
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [bookmarkForm, setBookmarkForm] = useState({ name: "", spread: 0, color: "#93C9CF" });
+  const [bookmarkError, setBookmarkError] = useState("");
+
   const textSettingsRef = useClickAway(() => setShowTextSettings(false));
   const formSettingsRef = useClickAway(() => setShowFormSettings(false));
+  const bookmarkModalRef = useClickAway(() => setShowBookmarkModal(false));
   const tools = [
     { icon: "img_move_tool.svg", name: "move" },
     { icon: "img_text_tool.svg", name: "text" },
@@ -146,7 +153,17 @@ const Journal = () => {
       { icon: "img_key_tool.svg", text: "Add keys" },
       { icon: "img_event_tool.svg", text: "Create event" },
     ],
-    bookmark: [{ icon: "img_plus_tool.svg", text: "Add bookmark" }],
+    bookmark: [{ 
+      icon: "img_plus_tool.svg", 
+      text: "Add bookmark",
+      onClick: () => {
+        // Reset form and errors
+        setBookmarkForm({ name: "", spread: currentSpread, color: "#93C9CF" });
+        setBookmarkError("");
+        // Show modal
+        setShowBookmarkModal(true);
+      }
+    }],
     draw: [
       {
         icon: "img_plus_tool.svg",
@@ -1119,6 +1136,43 @@ const Journal = () => {
     }
   };
 
+  // Function to go to a specific spread (for bookmarks)
+  const goToSpread = (spreadNumber) => {
+    if (flipBook.current && spreadNumber >= 0 && spreadNumber < book.pageCount) {
+      const targetPage = spreadNumber * 2;
+      flipBook.current.pageFlip().flip(targetPage);
+    }
+  };
+
+  // Function to create a bookmark
+  const createBookmark = () => {
+    // Validate form
+    if (!bookmarkForm.name.trim()) {
+      setBookmarkError("Please fill in all the fields");
+      return;
+    }
+
+    // Check if bookmark already exists for this spread
+    if (bookmarks.some(bookmark => bookmark.spread === bookmarkForm.spread)) {
+      setBookmarkError("There is already a bookmark on this spread");
+      return;
+    }
+
+    // Create new bookmark
+    const newBookmark = {
+      id: Date.now(),
+      name: bookmarkForm.name.trim(),
+      spread: bookmarkForm.spread,
+      color: bookmarkForm.color
+    };
+
+    // Add to bookmarks
+    setBookmarks([...bookmarks, newBookmark]);
+
+    // Close modal
+    setShowBookmarkModal(false);
+  };
+
   // Створюємо сторінки для щоденника (враховуючи, що кожен розворот = 2 сторінки)
   const renderPages = () => {
     const pages = [];
@@ -1582,6 +1636,24 @@ const Journal = () => {
                 })}
               </div>
 
+              {/* Bookmarks at the top of the browser */}
+              <div className="fixed top-0 left-0 right-0 z-50 flex justify-center gap-2 p-2">
+                {bookmarks.map((bookmark) => (
+                  <div
+                    key={bookmark.id}
+                    className="cursor-pointer flex flex-col items-center"
+                    onClick={() => goToSpread(bookmark.spread)}
+                  >
+                    <div
+                      className="w-[80px] h-[30px] flex items-center justify-center text-white font-medium text-sm rounded-b-lg"
+                      style={{ backgroundColor: bookmark.color }}
+                    >
+                      {bookmark.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Підпис розвороту (spread) */}
               <div
                   className="fixed left-[0px] bottom-[0px] z-50 flex justify-center items-center"
@@ -1703,6 +1775,86 @@ const Journal = () => {
                     </div>
                 )}
               </div>
+
+              {/* Bookmark Modal */}
+              {showBookmarkModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowBookmarkModal(false)}></div>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={bookmarkModalRef}
+                    className="bg-white rounded-lg p-6 w-[400px] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">Create Bookmark</h2>
+
+                    {/* Error message */}
+                    {bookmarkError && (
+                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                        {bookmarkError}
+                      </div>
+                    )}
+
+                    {/* Bookmark name */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">Bookmark name</label>
+                      <input 
+                        type="text" 
+                        value={bookmarkForm.name}
+                        onChange={(e) => setBookmarkForm({...bookmarkForm, name: e.target.value})}
+                        className="w-full p-2 border rounded"
+                        placeholder="Enter bookmark name"
+                      />
+                    </div>
+
+                    {/* Spread selection */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">Select a spread</label>
+                      <select 
+                        value={bookmarkForm.spread}
+                        onChange={(e) => setBookmarkForm({...bookmarkForm, spread: parseInt(e.target.value)})}
+                        className="w-full p-2 border rounded"
+                      >
+                        {Array.from({length: book.pageCount}, (_, i) => (
+                          <option key={i} value={i}>Spread {i + 1}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Color selection */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-1">Select a color</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {["#93C9CF", "#EFB8C8", "#84A285", "#782746", "#2A2A2A", "#85544D"].map(color => (
+                          <div 
+                            key={color}
+                            className={`w-8 h-8 rounded-full cursor-pointer border-2 ${bookmarkForm.color === color ? 'border-black' : 'border-transparent'}`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => setBookmarkForm({...bookmarkForm, color})}
+                          ></div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => setShowBookmarkModal(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        onClick={createBookmark}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
         )}
       </div>
