@@ -313,6 +313,86 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
     );
   };
 
+  const renderImage = () => {
+    // Determine if it's an image or video based on the file type
+    const isVideo = element.file && (
+      element.file.type.startsWith('video/') || 
+      element.fileUrl.endsWith('.mp4') || 
+      element.fileUrl.endsWith('.webm') || 
+      element.fileUrl.endsWith('.ogg') ||
+      element.fileUrl.includes('video')
+    );
+
+    return (
+      <div
+        className={`absolute form-element ${isActive ? 'cursor-move' : 'cursor-pointer'}`}
+        style={{
+          left: `${element.x}px`,
+          top: `${element.y}px`,
+          width: `${element.width}px`,
+          height: `${element.height}px`,
+          border: `${element.strokeWidth}px solid rgba(${parseInt(element.strokeColor.slice(1, 3), 16)}, ${parseInt(element.strokeColor.slice(3, 5), 16)}, ${parseInt(element.strokeColor.slice(5, 7), 16)}, ${element.strokeTransparency / 100})`,
+          borderRadius: `${element.cornerRadius}px`,
+          transform: `rotate(${element.rotation}deg)`,
+          position: "absolute",
+          zIndex: 15,
+          outline: isActive ? "1px dashed #2A2A2A" : "none",
+          overflow: "hidden",
+        }}
+        onClick={onClick}
+        onMouseDown={onMouseDown}
+      >
+        {isVideo ? (
+          <>
+            <video 
+              key={element.id} 
+              src={element.fileUrl} 
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "fill",
+                opacity: element.fillTransparency / 100,
+              }}
+              controls
+              autoPlay
+              playsInline
+              loop
+              onError={(e) => console.error("Video error:", e)}
+            >
+              Your browser does not support the video tag or the video format.
+            </video>
+          </>
+        ) : (
+          <img 
+            src={element.fileUrl} 
+            alt="Uploaded image"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "fill",
+              opacity: element.fillTransparency / 100,
+            }}
+          />
+        )}
+        {isActive && (
+          <>
+            {/* Corner resize handles */}
+            <div className="resize-handle absolute top-0 left-0 w-4 h-4 bg-[#2A2A2A] cursor-nw-resize" data-resize-handle="top-left" />
+            <div className="resize-handle absolute top-0 right-0 w-4 h-4 bg-[#2A2A2A] cursor-ne-resize" data-resize-handle="top-right" />
+            <div className="resize-handle absolute bottom-0 left-0 w-4 h-4 bg-[#2A2A2A] cursor-sw-resize" data-resize-handle="bottom-left" />
+            <div className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-[#2A2A2A] cursor-se-resize" data-resize-handle="bottom-right" />
+
+            {/* Edge resize handles */}
+            <div className="resize-handle absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#2A2A2A] cursor-n-resize" data-resize-handle="top" />
+            <div className="resize-handle absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#2A2A2A] cursor-s-resize" data-resize-handle="bottom" />
+            <div className="resize-handle absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#2A2A2A] cursor-w-resize" data-resize-handle="left" />
+            <div className="resize-handle absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#2A2A2A] cursor-e-resize" data-resize-handle="right" />
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderStar = () => {
     // Create a five-pointed star
     const width = element.width;
@@ -407,6 +487,8 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
       return renderPolygon();
     case "star":
       return renderStar();
+    case "image":
+      return renderImage();
     default:
       return renderRectangle(); // Default to rectangle
   }

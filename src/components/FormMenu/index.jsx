@@ -83,6 +83,30 @@ const FormMenu = ({ formElement, onFormElementChange }) => {
       );
     }
 
+    // For image/video, only show transparency option
+    if (formElement.type === "image") {
+      return (
+        <div className="p-6">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="block text-sm">Image/Video Transparency</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={formElement.fillTransparency || 100}
+                  onChange={(e) => onFormElementChange({ ...formElement, fillTransparency: parseInt(e.target.value) })}
+                  className="flex-1"
+                />
+                <span className="text-sm w-12 text-right">{formElement.fillTransparency || 100}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="p-6">
         <div className="space-y-6">

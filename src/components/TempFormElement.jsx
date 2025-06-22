@@ -54,7 +54,7 @@ const createRoundedPolygonPath = (points, radius) => {
   return path;
 };
 
-const TempFormElement = ({ formType, left, top, width, height, fillColor, fillTransparency, strokeColor, strokeTransparency, cornerRadius, rotation, strokeWidth }) => {
+const TempFormElement = ({ formType, left, top, width, height, fillColor, fillTransparency, strokeColor, strokeTransparency, cornerRadius, rotation, strokeWidth, selectedImageFile }) => {
   // Common styles for all form types
   const commonStyles = {
     position: "absolute",
@@ -230,6 +230,60 @@ const TempFormElement = ({ formType, left, top, width, height, fillColor, fillTr
             strokeWidth={strokeWidth}
           />
         </svg>
+      </div>
+    );
+  }
+
+  // Render image/video placeholder or preview
+  if (formType === "image") {
+    // If we have a selected image file, show a preview
+    if (selectedImageFile && selectedImageFile.fileUrl) {
+      return (
+        <div
+          style={{
+            ...commonStyles,
+            border: `${strokeWidth}px solid ${createRgbaColor(strokeColor, strokeTransparency)}`,
+            borderRadius: `${cornerRadius}px`,
+            transform: `rotate(${rotation}deg)`,
+            overflow: "hidden",
+          }}
+        >
+          <img 
+            src={selectedImageFile.fileUrl} 
+            alt="Selected image"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "fill",
+              opacity: fillTransparency / 100,
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Otherwise show a placeholder
+    return (
+      <div
+        style={{
+          ...commonStyles,
+          backgroundColor: "rgba(200, 200, 200, 0.5)",
+          border: `${strokeWidth}px solid ${createRgbaColor(strokeColor, strokeTransparency)}`,
+          borderRadius: `${cornerRadius}px`,
+          transform: `rotate(${rotation}deg)`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ 
+          color: "rgba(0, 0, 0, 0.7)", 
+          fontSize: "14px", 
+          textAlign: "center",
+          padding: "10px"
+        }}>
+          Image / Video<br/>Placeholder
+        </div>
       </div>
     );
   }

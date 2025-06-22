@@ -82,6 +82,7 @@ const Journal = () => {
   const [formElements, setFormElements] = useState([]);
   const [activeFormElement, setActiveFormElement] = useState(null);
   const [isFormMode, setIsFormMode] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState(null); // Store selected image/video file
 
   // Обробка подій миші
   const [isDragging, setIsDragging] = useState(false);
@@ -167,7 +168,7 @@ const Journal = () => {
         icon: "img_plus_tool.svg",
         text: "Pencil",
         onClick: () => {
-          setBrushType("feather");
+          setBrushType("pencil");
           document.body.style.cursor = "url('/images/img_pencil_cursor.svg'), auto";
         }
       },
@@ -273,7 +274,51 @@ const Journal = () => {
           document.body.style.cursor = "crosshair";
         }
       },
-      { icon: "img_image_video.svg", text: "Image / video" },
+      {
+        icon: "img_image_video.svg",
+        text: "Image / video",
+        onClick: () => {
+          // Immediately open file selector
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.accept = "image/*,video/*";
+          fileInput.style.display = "none";
+          document.body.appendChild(fileInput);
+
+          // Handle file selection
+          fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              // Set form type and activate form mode for placement
+              setFormType("image");
+              setIsFormMode(true);
+              setIsFormActive(true);
+
+              // Store the selected file for later use
+              setSelectedImageFile({
+                file: file,
+                fileUrl: URL.createObjectURL(file)
+              });
+
+              // Change cursor to indicate placement mode
+              document.body.style.cursor = "crosshair";
+            } else {
+              // If no file selected, clean up
+              document.body.removeChild(fileInput);
+            }
+          };
+
+          // Trigger file selection dialog
+          fileInput.click();
+
+          // Clean up the input element if dialog is canceled
+          setTimeout(() => {
+            if (document.body.contains(fileInput)) {
+              document.body.removeChild(fileInput);
+            }
+          }, 300000); // Remove after 5 minutes if not removed earlier
+        }
+      },
     ],
   };
 
@@ -433,6 +478,7 @@ const Journal = () => {
         cornerRadius={cornerRadius}
         rotation={rotation}
         strokeWidth={strokeWidth}
+        selectedImageFile={selectedImageFile}
       />
     );
   };
@@ -479,7 +525,48 @@ const Journal = () => {
         top = Math.min(endY, startY);
       }
 
-      // Create a new form element
+      // For image/video, use the already selected file
+      if (formType === "image" && selectedImageFile) {
+        // Create a new form element with the selected file
+        const newFormElement = {
+          id: Date.now(),
+          type: formType,
+          x: left,
+          y: top,
+          width: width,
+          height: height,
+          file: selectedImageFile.file,
+          fileUrl: selectedImageFile.fileUrl,
+          fillTransparency: fillTransparency,
+          strokeColor: strokeColor,
+          strokeTransparency: strokeTransparency,
+          cornerRadius: cornerRadius,
+          rotation: rotation,
+          strokeWidth: strokeWidth,
+          pageIndex: pageIndex,
+        };
+
+        // Add to form elements
+        setFormElements([...formElements, newFormElement]);
+
+        // Set as active form element
+        setActiveFormElement(newFormElement.id);
+
+        // Clean up
+        tempFormElementContainer.remove();
+        setIsDragging(false);
+        setIsFormMode(false);
+        setIsFormActive(false); // Deactivate form canvas
+        setActiveTool("move");
+        document.body.style.cursor = "default";
+
+        // Reset the selected image file
+        setSelectedImageFile(null);
+
+        return;
+      }
+
+      // Create a new form element for other shapes
       const newFormElement = {
         id: Date.now(),
         type: formType,
@@ -1020,14 +1107,14 @@ const Journal = () => {
 
   const goToPrevSpread = () => {
     if (flipBook.current && currentSpread > 0) {
-      const targetPage = 1 + (currentSpread - 1) * 2;
+      const targetPage = (currentSpread - 1) * 2;
       flipBook.current.pageFlip().flip(targetPage);
     }
   };
 
   const goToNextSpread = () => {
     if (flipBook.current && currentSpread < book.pageCount - 1) {
-      const targetPage = 1 + (currentSpread + 1) * 2;
+      const targetPage = (currentSpread + 1) * 2;
       flipBook.current.pageFlip().flip(targetPage);
     }
   };
@@ -1036,7 +1123,8 @@ const Journal = () => {
   const renderPages = () => {
     const pages = [];
 
-    for (let i = 0; i < book.pageCount; i++) {
+    // Multiply by 2 because each spread consists of 2 pages
+    for (let i = 0; i < book.pageCount * 2; i++) {
       const isLeftPage = i % 2 === 0;
       const pageClassName = isLeftPage ? "page-left" : "page-right";
 
@@ -1428,7 +1516,7 @@ const Journal = () => {
                                   case "default":
                                     document.body.style.cursor = "url('/images/img_pen_cursor.svg'), auto";
                                     break;
-                                  case "feather":
+                                  case "pencil":
                                     document.body.style.cursor = "url('/images/img_pencil_cursor.svg'), auto";
                                     break;
                                   case "drip":
@@ -1494,7 +1582,7 @@ const Journal = () => {
                 })}
               </div>
 
-              {/* Підпис сторінки */}
+              {/* Підпис розвороту (spread) */}
               <div
                   className="fixed left-[0px] bottom-[0px] z-50 flex justify-center items-center"
                   style={{
@@ -1507,7 +1595,7 @@ const Journal = () => {
                     color: "#2A2A2A",
                   }}
               >
-                {currentSpread + 1}/{book.pageCount}
+                Spread {currentSpread + 1}/{book.pageCount}
               </div>
 
               {/* Пагінація з іконками */}

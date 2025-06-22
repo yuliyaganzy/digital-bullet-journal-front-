@@ -10,6 +10,7 @@ import { dripBrush } from './dripBrush';
 import { glitchBrush } from './glitchBrush';
 import { foamBrush } from './foamBrush'
 import { watercolorBrush } from './waterColorBrush'
+import { pencilBrush } from './pencilBrush'
 export const brushHandlers = {
   default: defaultBrush,
   calligraphy: calligraphyBrush,
@@ -19,6 +20,7 @@ export const brushHandlers = {
   scribble:scribbleBrush,
   fire:fireBrush,
   feather:featherBrush,
+  pencil:pencilBrush,
   drip:dripBrush,
   glitch:glitchBrush,
   foam:foamBrush,
