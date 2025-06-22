@@ -10,6 +10,31 @@ import FormElement from "@/components/FormElement";
 import TempFormElement from "@/components/TempFormElement";
 import { useClickAway } from "@/hooks/useClickAway";
 import * as ReactDOM from "react-dom/client";
+import { brushHandlers } from "@/components/brushes";
+
+// Helper function to convert month name to number (01-12)
+const getMonthNumber = (monthName) => {
+  const months = {
+    'January': '01',
+    'February': '02',
+    'March': '03',
+    'April': '04',
+    'May': '05',
+    'June': '06',
+    'July': '07',
+    'August': '08',
+    'September': '09',
+    'October': '10',
+    'November': '11',
+    'December': '12'
+  };
+  return months[monthName] || '00';
+};
+
+// Helper function to format day with leading zero
+const formatDay = (day) => {
+  return day < 10 ? `0${day}` : `${day}`;
+};
 
 // TODO take https://github.com/omarseyam1729/SeyPaint/tree/main as a reference
 // TODO create a canvas component
@@ -116,9 +141,74 @@ const Journal = () => {
   const [bookmarkForm, setBookmarkForm] = useState({ name: "", spread: 0, color: "#93C9CF" });
   const [bookmarkError, setBookmarkError] = useState("");
 
+  // Calendar states
+  const [calendarTemplates, setCalendarTemplates] = useState([
+    { 
+      id: 1, 
+      name: "Template 1", 
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 1%3C/text%3E%3C/svg%3E" 
+    },
+    { 
+      id: 2, 
+      name: "Template 2", 
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 2%3C/text%3E%3C/svg%3E" 
+    },
+    { 
+      id: 3, 
+      name: "Template 3", 
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23d0d0d0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 3%3C/text%3E%3C/svg%3E" 
+    },
+    { 
+      id: 4, 
+      name: "Template 4", 
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23c0c0c0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 4%3C/text%3E%3C/svg%3E" 
+    },
+    { 
+      id: 5, 
+      name: "Template 5", 
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23b0b0b0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 5%3C/text%3E%3C/svg%3E" 
+    },
+  ]);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [showCalendarPreviewModal, setShowCalendarPreviewModal] = useState(false);
+  const [selectedCalendarTemplate, setSelectedCalendarTemplate] = useState(null);
+  const [isCalendarPlacementMode, setIsCalendarPlacementMode] = useState(false);
+  const [calendarPlacementData, setCalendarPlacementData] = useState(null);
+
+  // Event system states
+  const [events, setEvents] = useState([]);
+  const [showEventSystemModal, setShowEventSystemModal] = useState(false);
+  const [showEventSetupModal, setShowEventSetupModal] = useState(false);
+  const [eventForm, setEventForm] = useState({
+    day: '',
+    month: '',
+    year: '',
+    description: '',
+    isAnnual: false,
+    sendReminders: false
+  });
+  const [eventError, setEventError] = useState("");
+
+  // Key system states
+  const [keys, setKeys] = useState([]);
+  const [showKeySystemModal, setShowKeySystemModal] = useState(false);
+  const [showKeySetupModal, setShowKeySetupModal] = useState(false);
+  const [keyForm, setKeyForm] = useState({ name: "", brushType: "default", color: "#000000" });
+  const [keyError, setKeyError] = useState("");
+  const [keyDrawingCanvas, setKeyDrawingCanvas] = useState(null);
+  const keyBrushStateRef = useRef({});
+  const currentKeyColorRef = useRef("#000000");
+  const [svgPathData, setSvgPathData] = useState("");
+
   const textSettingsRef = useClickAway(() => setShowTextSettings(false));
   const formSettingsRef = useClickAway(() => setShowFormSettings(false));
   const bookmarkModalRef = useClickAway(() => setShowBookmarkModal(false));
+  const calendarModalRef = useClickAway(() => setShowCalendarModal(false));
+  const calendarPreviewModalRef = useClickAway(() => setShowCalendarPreviewModal(false));
+  const keySystemModalRef = useClickAway(() => setShowKeySystemModal(false));
+  const keySetupModalRef = useClickAway(() => setShowKeySetupModal(false));
+  const eventSystemModalRef = useClickAway(() => setShowEventSystemModal(false));
+  const eventSetupModalRef = useClickAway(() => setShowEventSetupModal(false));
   const tools = [
     { icon: "img_move_tool.svg", name: "move" },
     { icon: "img_text_tool.svg", name: "text" },
@@ -149,9 +239,38 @@ const Journal = () => {
       },
     ],
     calendar: [
-      { icon: "img_plus_tool.svg", text: "Create calendar" },
-      { icon: "img_key_tool.svg", text: "Add keys" },
-      { icon: "img_event_tool.svg", text: "Create event" },
+      { 
+        icon: "img_plus_tool.svg", 
+        text: "Create calendar",
+        onClick: () => {
+          setShowCalendarModal(true);
+        }
+      },
+      { 
+        icon: "img_key_tool.svg", 
+        text: "Add keys",
+        onClick: () => {
+          setShowKeySystemModal(true);
+        }
+      },
+      { 
+        icon: "img_event_tool.svg", 
+        text: "Create event",
+        onClick: () => {
+          // Reset form and errors
+          setEventForm({
+            day: '',
+            month: '',
+            year: '',
+            description: '',
+            isAnnual: false,
+            sendReminders: false
+          });
+          setEventError("");
+          // Show event system modal
+          setShowEventSystemModal(true);
+        }
+      },
     ],
     bookmark: [{ 
       icon: "img_plus_tool.svg", 
@@ -479,25 +598,48 @@ const Journal = () => {
       pageElement.appendChild(tempFormElement);
     }
 
-    // Render the TempFormElement component into the container
-    const root = ReactDOM.createRoot(tempFormElement);
-    root.render(
-      <TempFormElement
-        formType={formType}
-        left={left}
-        top={top}
-        width={width}
-        height={height}
-        fillColor={currentColor}
-        fillTransparency={fillTransparency}
-        strokeColor={strokeColor}
-        strokeTransparency={strokeTransparency}
-        cornerRadius={cornerRadius}
-        rotation={rotation}
-        strokeWidth={strokeWidth}
-        selectedImageFile={selectedImageFile}
-      />
-    );
+    // Special handling for calendar placement
+    if (formType === "calendar" && isCalendarPlacementMode && calendarPlacementData) {
+      // Render the calendar template preview
+      const root = ReactDOM.createRoot(tempFormElement);
+      root.render(
+        <TempFormElement
+          formType="image"
+          left={left}
+          top={top}
+          width={width}
+          height={height}
+          fillColor={currentColor}
+          fillTransparency={100}
+          strokeColor="#000000"
+          strokeTransparency={100}
+          cornerRadius={0}
+          rotation={0}
+          strokeWidth={1}
+          selectedImageFile={{ fileUrl: calendarPlacementData.template.url }}
+        />
+      );
+    } else {
+      // Render the standard form element preview
+      const root = ReactDOM.createRoot(tempFormElement);
+      root.render(
+        <TempFormElement
+          formType={formType}
+          left={left}
+          top={top}
+          width={width}
+          height={height}
+          fillColor={currentColor}
+          fillTransparency={fillTransparency}
+          strokeColor={strokeColor}
+          strokeTransparency={strokeTransparency}
+          cornerRadius={cornerRadius}
+          rotation={rotation}
+          strokeWidth={strokeWidth}
+          selectedImageFile={selectedImageFile}
+        />
+      );
+    }
   };
 
   const handleFormEnd = (pageIndex, startX, startY, endX, endY) => {
@@ -540,6 +682,17 @@ const Journal = () => {
         // Calculate position
         left = Math.min(endX, startX);
         top = Math.min(endY, startY);
+      }
+
+      // Special handling for calendar placement
+      if (formType === "calendar" && isCalendarPlacementMode && calendarPlacementData) {
+        // Finalize calendar placement
+        finalizeCalendarPlacement(pageIndex, left, top, width, height);
+
+        // Clean up
+        tempFormElementContainer.remove();
+        setIsDragging(false);
+        return;
       }
 
       // For image/video, use the already selected file
@@ -1171,6 +1324,127 @@ const Journal = () => {
 
     // Close modal
     setShowBookmarkModal(false);
+  };
+
+  // Function to handle adding a new calendar template
+  const handleAddCalendarTemplate = () => {
+    // Create a file input element
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".svg";
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+
+    // Handle file selection
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Check if the file is an SVG
+        if (!file.name.toLowerCase().endsWith('.svg')) {
+          alert("Please select an SVG file");
+          document.body.removeChild(fileInput);
+          return;
+        }
+
+        // Create a new template
+        const newTemplate = {
+          id: Date.now(),
+          name: `Template ${calendarTemplates.length + 1}`,
+          url: URL.createObjectURL(file),
+          file: file
+        };
+
+        // Add to templates
+        setCalendarTemplates([...calendarTemplates, newTemplate]);
+      }
+
+      // Clean up
+      document.body.removeChild(fileInput);
+    };
+
+    // Trigger file selection dialog
+    fileInput.click();
+
+    // Clean up the input element if dialog is canceled
+    setTimeout(() => {
+      if (document.body.contains(fileInput)) {
+        document.body.removeChild(fileInput);
+      }
+    }, 300000); // Remove after 5 minutes if not removed earlier
+  };
+
+  // Function to handle selecting a calendar template
+  const handleSelectCalendarTemplate = (template) => {
+    setSelectedCalendarTemplate(template);
+    setShowCalendarPreviewModal(true);
+  };
+
+  // Function to start the calendar template placement process
+  const addCalendarToJournal = () => {
+    if (!selectedCalendarTemplate) return;
+
+    // Get the current page index
+    const currentPageIndex = flipBook.current ? flipBook.current.pageFlip().getCurrentPageIndex() : 0;
+
+    // Set up calendar placement data
+    setCalendarPlacementData({
+      template: selectedCalendarTemplate,
+      pageIndex: currentPageIndex
+    });
+
+    // Enter calendar placement mode
+    setIsCalendarPlacementMode(true);
+
+    // Close modals
+    setShowCalendarPreviewModal(false);
+    setShowCalendarModal(false);
+
+    // Change cursor to indicate placement mode
+    document.body.style.cursor = "crosshair";
+
+    // Activate form canvas for placement
+    setIsFormActive(true);
+    setFormType("calendar");
+  };
+
+  // Function to finalize calendar placement and add it to the journal
+  const finalizeCalendarPlacement = (pageIndex, x, y, width, height) => {
+    if (!calendarPlacementData || !calendarPlacementData.template) return;
+
+    // Create a new form element for the calendar
+    const newFormElement = {
+      id: Date.now(),
+      type: "image",
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      fileUrl: calendarPlacementData.template.url,
+      file: calendarPlacementData.template.file,
+      fillTransparency: 100,
+      strokeColor: "#000000",
+      strokeTransparency: 100,
+      cornerRadius: 0,
+      rotation: 0,
+      strokeWidth: 1,
+      pageIndex: pageIndex,
+    };
+
+    // Add to form elements
+    setFormElements([...formElements, newFormElement]);
+
+    // Exit calendar placement mode
+    setIsCalendarPlacementMode(false);
+    setCalendarPlacementData(null);
+    setIsFormActive(false);
+    setFormType(null);
+
+    // Reset selected template
+    setSelectedCalendarTemplate(null);
+
+    // Switch to move tool
+    setActiveTool("move");
+    document.body.style.cursor = "default";
   };
 
   // Створюємо сторінки для щоденника (враховуючи, що кожен розворот = 2 сторінки)
@@ -1827,7 +2101,7 @@ const Journal = () => {
                       <label className="block text-sm font-medium mb-1">Select a color</label>
                       <div className="flex gap-2 flex-wrap">
                         {["#93C9CF", "#EFB8C8", "#84A285", "#782746", "#2A2A2A", "#85544D"].map(color => (
-                          <div 
+                          <div
                             key={color}
                             className={`w-8 h-8 rounded-full cursor-pointer border-2 ${bookmarkForm.color === color ? 'border-black' : 'border-transparent'}`}
                             style={{ backgroundColor: color }}
@@ -1848,6 +2122,751 @@ const Journal = () => {
                       <button 
                         className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
                         onClick={createBookmark}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar Templates Modal */}
+              {showCalendarModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCalendarModal(false)}></div>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={calendarModalRef}
+                    className="bg-white rounded-lg p-6 w-[800px] max-h-[80vh] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">Calendar Templates</h2>
+
+                    {/* Templates grid */}
+                    <div className="overflow-y-auto max-h-[60vh] mb-4">
+                      <div className="grid grid-cols-5 gap-4">
+                        {calendarTemplates.map((template) => (
+                          <div 
+                            key={template.id}
+                            className="flex flex-col items-center cursor-pointer"
+                            onDoubleClick={() => handleSelectCalendarTemplate(template)}
+                          >
+                            <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
+                              <img 
+                                src={template.url} 
+                                alt={template.name} 
+                                className="max-w-full max-h-full"
+                              />
+                            </div>
+                            <span className="mt-1 text-sm">{template.name}</span>
+                          </div>
+                        ))}
+
+                        {/* Add template button */}
+                        <div 
+                          className="flex flex-col items-center cursor-pointer"
+                          onClick={handleAddCalendarTemplate}
+                        >
+                          <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </div>
+                          <span className="mt-1 text-sm">Add template</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => setShowCalendarModal(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar Preview Modal */}
+              {showCalendarPreviewModal && selectedCalendarTemplate && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCalendarPreviewModal(false)}></div>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={calendarPreviewModalRef}
+                    className="bg-white rounded-lg p-6 w-[800px] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">{selectedCalendarTemplate.name}</h2>
+
+                    {/* Large preview */}
+                    <div className="flex justify-center mb-6">
+                      <img 
+                        src={selectedCalendarTemplate.url} 
+                        alt={selectedCalendarTemplate.name} 
+                        className="max-w-full max-h-[60vh]"
+                      />
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => setShowCalendarPreviewModal(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        onClick={addCalendarToJournal}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Key System Modal */}
+              {showKeySystemModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowKeySystemModal(false)}></div>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={keySystemModalRef}
+                    className="bg-white rounded-lg p-6 w-[600px] max-h-[80vh] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">Your key system</h2>
+
+                    {/* Keys display area */}
+                    <div className="overflow-y-auto max-h-[60vh] mb-4">
+                      {keys.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          No keys have been added to the system
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2">
+                          {keys.map((key) => (
+                            <div 
+                              key={key.id}
+                              className="flex items-center p-2 border rounded"
+                            >
+                              <img 
+                                src={key.imageUrl} 
+                                alt={key.name} 
+                                className="w-12 h-12 mr-3"
+                              />
+                              <span>{key.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-between gap-2">
+                      <button 
+                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        onClick={() => {
+                          // Reset form and errors
+                          setKeyForm({ name: "", brushType: "default", color: "#000000" });
+                          setKeyError("");
+                          // Reset drawing canvas and brush state
+                          setKeyDrawingCanvas(null);
+                          keyBrushStateRef.current = {};
+                          // Initialize the color ref
+                          currentKeyColorRef.current = "#000000";
+                          // Reset SVG path data
+                          setSvgPathData("");
+                          // Show setup modal
+                          setShowKeySetupModal(true);
+                          setShowKeySystemModal(false);
+                        }}
+                      >
+                        Add new
+                      </button>
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => setShowKeySystemModal(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Key Setup Modal */}
+              {showKeySetupModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowKeySetupModal(false)}></div>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={keySetupModalRef}
+                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">Set up your key</h2>
+
+                    {/* Error message */}
+                    {keyError && (
+                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                        {keyError}
+                      </div>
+                    )}
+
+                    {/* Key name input */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">Key name</label>
+                      <input 
+                        type="text" 
+                        value={keyForm.name}
+                        onChange={(e) => setKeyForm({...keyForm, name: e.target.value})}
+                        className="w-full p-2 border rounded"
+                        placeholder="Enter key name"
+                      />
+                    </div>
+
+
+                    {/* Color picker */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">Select a color</label>
+                      <div className="flex flex-col gap-2">
+                        {/* RGB Color Picker */}
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="color" 
+                            value={keyForm.color}
+                            onChange={(e) => {
+                              const newColor = e.target.value;
+                              currentKeyColorRef.current = newColor;
+                              setKeyForm({...keyForm, color: newColor});
+                            }}
+                            className="w-10 h-10 cursor-pointer"
+                          />
+                          <span className="text-sm">{keyForm.color}</span>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    {/* Drawing canvas */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-1">Draw the symbol</label>
+                      <div className="relative">
+                        {/* Canvas container */}
+                        <div 
+                          className="border rounded w-full h-[250px] flex items-center justify-center bg-white relative overflow-hidden"
+                          ref={(el) => {
+                            if (el && !keyDrawingCanvas) {
+                              // Create a canvas element
+                              const canvas = document.createElement('canvas');
+                              // Set canvas size to match container size
+                              canvas.width = el.clientWidth;
+                              canvas.height = el.clientHeight;
+                              canvas.style.border = 'none';
+                              canvas.style.width = '100%';
+                              canvas.style.height = '100%';
+                              canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+
+                              // Clear the canvas
+                              const ctx = canvas.getContext('2d');
+                              ctx.fillStyle = '#ffffff';
+                              ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                              // Append the canvas to the container
+                              el.innerHTML = '';
+                              el.appendChild(canvas);
+
+                              // Store the canvas reference
+                              setKeyDrawingCanvas(canvas);
+
+                              // Add event listeners for drawing
+                              let isDrawing = false;
+                              let lastX = 0;
+                              let lastY = 0;
+                              let lastTime = Date.now();
+
+                              // Function to update cursor based on brush type
+                              const updateCursor = () => {
+                                canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+                              };
+
+                              canvas.addEventListener('mousedown', (e) => {
+                                isDrawing = true;
+                                const rect = canvas.getBoundingClientRect();
+                                lastX = e.clientX - rect.left;
+                                lastY = e.clientY - rect.top;
+
+                                // Initialize or reset brush state for the current brush type
+                                const brushType = "default";
+                                if (brushType) {
+                                  // Keep some properties like lastPoints for smooth transitions between strokes
+                                  const existingState = keyBrushStateRef.current[brushType] || {};
+                                  keyBrushStateRef.current[brushType] = {
+                                    // Keep lastPoints if they exist, otherwise initialize to empty array
+                                    lastPoints: existingState.lastPoints || [],
+                                    // Reset other properties
+                                    lastSpeed: 0,
+                                    lastWidth: 3, // Slightly larger brush size for better visibility
+                                    lastPressure: 0.5,
+                                    lastGrainOffset: existingState.lastGrainOffset || 0,
+                                  };
+                                }
+
+                                // Start a new SVG path
+                                setSvgPathData(`M ${lastX} ${lastY}`);
+                              });
+
+                              canvas.addEventListener('mousemove', (e) => {
+                                if (!isDrawing) return;
+
+                                const rect = canvas.getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                const y = e.clientY - rect.top;
+
+                                const brushType = "default";
+                                const brushHandler = brushHandlers[brushType] || brushHandlers.default;
+
+                                // Get the current brush state or initialize an empty object
+                                const currentBrushState = keyBrushStateRef.current[brushType] || {};
+
+                                // Call the brush handler with the current state
+                                const newBrushState = brushHandler(ctx, {
+                                  start: { x: lastX, y: lastY },
+                                  end: { x, y },
+                                  color: currentKeyColorRef.current,
+                                  size: 3, // Slightly larger brush size for better visibility
+                                  lastTime: lastTime,
+                                  ...currentBrushState, // Spread the current brush state
+                                });
+
+                                // Update the brush state if the handler returned a new state
+                                if (newBrushState) {
+                                  keyBrushStateRef.current[brushType] = newBrushState;
+                                }
+
+                                // Add a line segment to the SVG path
+                                setSvgPathData(prevPath => `${prevPath} L ${x} ${y}`);
+
+                                lastX = x;
+                                lastY = y;
+                                lastTime = Date.now();
+                              });
+
+                              canvas.addEventListener('mouseup', (e) => {
+                                if (isDrawing) {
+                                  const brushType = "default";
+                                  if (brushType) {
+                                    const rect = canvas.getBoundingClientRect();
+                                    const x = e.clientX - rect.left;
+                                    const y = e.clientY - rect.top;
+
+                                    const brushHandler = brushHandlers[brushType] || brushHandlers.default;
+                                    const currentBrushState = keyBrushStateRef.current[brushType] || {};
+
+                                    // Call the brush handler with isEndOfStroke flag
+                                    const newBrushState = brushHandler(ctx, {
+                                      start: { x: lastX, y: lastY },
+                                      end: { x, y },
+                                      color: currentKeyColorRef.current,
+                                      size: 3, // Slightly larger brush size for better visibility
+                                      lastTime: lastTime,
+                                      isEndOfStroke: true, // Flag to indicate end of stroke
+                                      ...currentBrushState,
+                                    });
+
+                                    // Update the brush state
+                                    if (newBrushState) {
+                                      keyBrushStateRef.current[brushType] = newBrushState;
+                                    }
+                                  }
+                                }
+                                isDrawing = false;
+                              });
+
+                              canvas.addEventListener('mouseleave', () => {
+                                isDrawing = false;
+                              });
+
+                              // Update cursor when brush type changes
+                              const observer = new MutationObserver(() => {
+                                updateCursor();
+                              });
+                              observer.observe(el, { attributes: true, childList: true, subtree: true });
+                            }
+                          }}
+                        ></div>
+
+                        {/* Canvas controls */}
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button 
+                            className="bg-white p-1 rounded border hover:bg-gray-100"
+                            onClick={() => {
+                              if (keyDrawingCanvas) {
+                                const ctx = keyDrawingCanvas.getContext('2d');
+                                ctx.fillStyle = '#ffffff';
+                                ctx.fillRect(0, 0, keyDrawingCanvas.width, keyDrawingCanvas.height);
+                                // Reset SVG path data
+                                setSvgPathData("");
+                              }
+                            }}
+                            title="Clear canvas"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => {
+                          // Reset drawing canvas and brush state
+                          setKeyDrawingCanvas(null);
+                          keyBrushStateRef.current = {};
+                          // Reset SVG path data
+                          setSvgPathData("");
+
+                          setShowKeySetupModal(false);
+                          setShowKeySystemModal(true);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        onClick={() => {
+                          // Validate form
+                          if (!keyForm.name.trim()) {
+                            setKeyError("Please fill in all the fields");
+                            return;
+                          }
+
+                          // Check for duplicate key name
+                          if (keys.some(key => key.name === keyForm.name.trim())) {
+                            setKeyError("A key with this name already exists");
+                            return;
+                          }
+
+                          // Create an SVG from the path data
+                          if (keyDrawingCanvas) {
+                            // Get the canvas dimensions
+                            const canvasWidth = keyDrawingCanvas.width;
+                            const canvasHeight = keyDrawingCanvas.height;
+
+                            // Create SVG content with the path data
+                            const svgContent = `
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
+                                <path d="${svgPathData}" fill="none" stroke="${keyForm.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                              </svg>
+                            `;
+
+                            // Create data URL
+                            const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+
+                            // Create a new key
+                            const newKey = {
+                              id: Date.now(),
+                              name: keyForm.name.trim(),
+                              imageUrl: svgDataUrl,
+                              brushType: "default",
+                              color: keyForm.color
+                            };
+
+                            // Add to keys
+                            setKeys([...keys, newKey]);
+
+                            // Reset drawing canvas and brush state
+                            setKeyDrawingCanvas(null);
+                            keyBrushStateRef.current = {};
+                            // Reset SVG path data
+                            setSvgPathData("");
+
+                            // Close modal and show key system modal
+                            setShowKeySetupModal(false);
+                            setShowKeySystemModal(true);
+                          }
+                        }}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Event System Modal */}
+              {showEventSystemModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEventSystemModal(false)}></div>
+
+                  {/* Style for marquee animation */}
+                  <style>
+                    {`
+                      @keyframes marquee {
+                        0% { transform: translateX(0%); }
+                        100% { transform: translateX(-100%); }
+                      }
+                      .marquee-container {
+                        position: relative;
+                        width: 100%;
+                        overflow: hidden;
+                      }
+                      .marquee-text {
+                        display: inline-block;
+                        white-space: nowrap;
+                      }
+                      .marquee-text.animate {
+                        animation: marquee 30s linear infinite;
+                      }
+                    `}
+                  </style>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={eventSystemModalRef}
+                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">Your event system</h2>
+
+                    {/* Events area with scrolling */}
+                    <div className="mb-6 max-h-[400px] overflow-y-auto">
+                      {events.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          No events have been added to the system
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {events.map((event, index) => (
+                            <div key={index} className="p-3 border rounded bg-gray-50">
+                              <div className="flex items-center">
+                                <div className="font-medium mr-2">
+                                  {event.isAnnual 
+                                    ? `${formatDay(event.day)}.${getMonthNumber(event.month)} (Annual)` 
+                                    : `${formatDay(event.day)}.${getMonthNumber(event.month)}.${event.year}`}
+                                </div>
+                                <div className="marquee-container">
+                                  <div 
+                                    className="marquee-text" 
+                                    id={`event-desc-${index}`}
+                                    ref={(el) => {
+                                      if (el) {
+                                        // Check if text overflows container
+                                        const isOverflowing = el.scrollWidth > el.parentElement.clientWidth;
+                                        // Apply animation class only if text overflows
+                                        if (isOverflowing) {
+                                          el.classList.add('animate');
+                                        } else {
+                                          el.classList.remove('animate');
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    {event.description}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-between gap-2">
+                      <button 
+                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        onClick={() => {
+                          // Reset form and errors
+                          setEventForm({
+                            day: '',
+                            month: '',
+                            year: '',
+                            description: '',
+                            isAnnual: false,
+                            sendReminders: false
+                          });
+                          setEventError("");
+                          // Show event setup modal
+                          setShowEventSetupModal(true);
+                          setShowEventSystemModal(false);
+                        }}
+                      >
+                        Add new
+                      </button>
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => setShowEventSystemModal(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Event Setup Modal */}
+              {showEventSetupModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center">
+                  {/* Darkened background */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEventSetupModal(false)}></div>
+
+                  {/* Modal content */}
+                  <div 
+                    ref={eventSetupModalRef}
+                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+                  >
+                    <h2 className="text-2xl font-bold mb-4">Customize your event</h2>
+
+                    {/* Error message */}
+                    {eventError && (
+                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                        {eventError}
+                      </div>
+                    )}
+
+                    {/* Event date fields */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">Event date</label>
+                      <div className="flex items-center gap-3">
+                        <select 
+                          value={eventForm.day}
+                          onChange={(e) => setEventForm({...eventForm, day: e.target.value})}
+                          className="w-20 p-2 border rounded"
+                        >
+                          <option value="">Day</option>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>{day}</option>
+                          ))}
+                        </select>
+                        <select 
+                          value={eventForm.month}
+                          onChange={(e) => setEventForm({...eventForm, month: e.target.value})}
+                          className="w-24 p-2 border rounded"
+                        >
+                          <option value="">Month</option>
+                          {['January', 'February', 'March', 'April', 'May', 'June', 'July', 
+                            'August', 'September', 'October', 'November', 'December'].map(month => (
+                            <option key={month} value={month}>{month}</option>
+                          ))}
+                        </select>
+                        <select 
+                          value={eventForm.year}
+                          onChange={(e) => setEventForm({...eventForm, year: e.target.value})}
+                          className={`w-20 p-2 border rounded ${eventForm.isAnnual ? 'bg-gray-100' : ''}`}
+                          disabled={eventForm.isAnnual}
+                        >
+                          <option value="">Year</option>
+                          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center ml-4">
+                          <input 
+                            type="checkbox" 
+                            id="annualEvent"
+                            checked={eventForm.isAnnual}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked;
+                              setEventForm({
+                                ...eventForm, 
+                                isAnnual: isChecked,
+                                // Clear the year field if the checkbox is checked
+                                year: isChecked ? '' : eventForm.year
+                              });
+                            }}
+                            className="mr-2"
+                          />
+                          <label htmlFor="annualEvent" className="text-sm">An annual event</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Event description */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">Description</label>
+                      <textarea 
+                        value={eventForm.description}
+                        onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                        className="w-full p-2 border rounded"
+                        placeholder="Enter event description"
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* Email reminder checkbox */}
+                    <div className="mb-6">
+                      <div className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id="sendReminders"
+                          checked={eventForm.sendReminders}
+                          onChange={(e) => setEventForm({...eventForm, sendReminders: e.target.checked})}
+                          className="mr-2"
+                        />
+                        <label htmlFor="sendReminders" className="text-sm">Send reminders by email</label>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        onClick={() => {
+                          // Close setup modal and show event system modal
+                          setShowEventSetupModal(false);
+                          setShowEventSystemModal(true);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        onClick={() => {
+                          // Validate form
+                          if (!eventForm.day || !eventForm.month || (!eventForm.year && !eventForm.isAnnual) || !eventForm.description) {
+                            setEventError("Please fill in all fields");
+                            return;
+                          }
+
+                          // Create new event
+                          const newEvent = {
+                            day: eventForm.day,
+                            month: eventForm.month,
+                            year: eventForm.isAnnual ? '' : eventForm.year,
+                            description: eventForm.description,
+                            isAnnual: eventForm.isAnnual,
+                            sendReminders: eventForm.sendReminders
+                          };
+
+                          // Add to events list
+                          setEvents([...events, newEvent]);
+
+                          // If sendReminders is checked, schedule email reminder
+                          if (eventForm.sendReminders) {
+                            // In a real implementation, this would integrate with SendGrid
+                            // to schedule an email reminder at 00:00 on the event date
+                            console.log(`Email reminder scheduled for ${formatDay(newEvent.day)}.${getMonthNumber(newEvent.month)}.${newEvent.year || '(Annual)'}`);
+                          }
+
+                          // Close setup modal and show event system modal
+                          setShowEventSetupModal(false);
+                          setShowEventSystemModal(true);
+                        }}
                       >
                         Create
                       </button>
