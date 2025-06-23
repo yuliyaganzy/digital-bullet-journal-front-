@@ -127,14 +127,24 @@ const TempFormElement = ({ formType, left, top, width, height, fillColor, fillTr
     // Calculate the length of the arrow
     const length = Math.sqrt(dx * dx + dy * dy);
 
+    // Calculate arrowhead size based on stroke width
+    const arrowheadWidth = Math.max(10, strokeWidth * 2);
+    const arrowheadHeight = Math.max(10, strokeWidth * 2);
+
+    // Calculate extra space needed for the arrowhead
+    const arrowheadSpace = Math.max(15, strokeWidth * 3);
+
+    // Calculate the center y-coordinate
+    const centerY = Math.max(15, strokeWidth * 2.5);
+
     return (
       <div
         style={{
           position: "absolute",
           left: `${left}px`,
           top: `${top}px`,
-          width: `${length}px`,
-          height: `${Math.max(20, strokeWidth * 3)}px`,
+          width: `${length + arrowheadSpace}px`,
+          height: `${Math.max(30, strokeWidth * 5)}px`,
           transform: `rotate(${angle + rotation}deg)`,
           transformOrigin: "0 50%",
           pointerEvents: "none",
@@ -146,20 +156,20 @@ const TempFormElement = ({ formType, left, top, width, height, fillColor, fillTr
         <svg 
           width="100%" 
           height="100%" 
-          viewBox={`0 0 ${length} ${Math.max(20, strokeWidth * 3)}`}
+          viewBox={`0 0 ${length + arrowheadSpace} ${Math.max(30, strokeWidth * 5)}`}
           overflow="visible"
         >
           <line
             x1="0"
-            y1={Math.max(10, strokeWidth * 1.5)}
-            x2={length - 10}
-            y2={Math.max(10, strokeWidth * 1.5)}
+            y1={centerY}
+            x2={length}
+            y2={centerY}
             stroke={createRgbaColor(strokeColor, strokeTransparency)}
             strokeWidth={strokeWidth}
             strokeLinecap={cornerRadius > 0 ? "round" : "butt"}
           />
           <polygon
-            points={`${length - 10},${Math.max(10, strokeWidth * 1.5) - 5} ${length},${Math.max(10, strokeWidth * 1.5)} ${length - 10},${Math.max(10, strokeWidth * 1.5) + 5}`}
+            points={`${length},${centerY - arrowheadHeight/2} ${length + arrowheadWidth},${centerY} ${length},${centerY + arrowheadHeight/2}`}
             fill={createRgbaColor(strokeColor, strokeTransparency)}
           />
         </svg>

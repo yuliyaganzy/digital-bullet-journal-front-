@@ -887,20 +887,27 @@ const Journal = () => {
         }, 100);
 
         // Focus the text element to enable immediate editing
+        // Use a longer timeout to ensure the DOM has fully updated
         setTimeout(() => {
           const textElement = document.querySelector(`.text-element[data-id='${newTextElement.id}']`);
           if (textElement) {
             textElement.focus();
 
             // Place cursor at the end of the text
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(textElement);
-            range.collapse(false); // false means collapse to end
-            selection.removeAllRanges();
-            selection.addRange(range);
+            try {
+              const selection = window.getSelection();
+              const range = document.createRange();
+              range.selectNodeContents(textElement);
+              range.collapse(false); // false means collapse to end
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } catch (error) {
+              console.error("Error setting cursor position:", error);
+            }
+          } else {
+            console.warn("Text element not found in DOM after creation");
           }
-        }, 0);
+        }, 50);
       }
     };
 
@@ -915,9 +922,18 @@ const Journal = () => {
 
   useEffect(() => {
     const handleClickPage = (e) => {
-      if (!e.target.closest(".text-element") && !e.target.closest(".text-settings")) {
+      // Check if click is outside text elements, text settings, form elements, and form settings
+      if (!e.target.closest(".text-element") && 
+          !e.target.closest(".text-settings") && 
+          !e.target.closest(".form-element") && 
+          !e.target.closest(".form-settings")) {
+        // Deselect text elements
         setShowTextSettings(false);
         setActiveTextElement(null);
+
+        // Deselect form elements
+        setShowFormSettings(false);
+        setActiveFormElement(null);
       }
     };
 
@@ -927,6 +943,13 @@ const Journal = () => {
 
   // Переміщення і розтягування тексту
   const handleMouseDownOnText = (e, element) => {
+    // Deselect any active form element
+    setActiveFormElement(null);
+    setShowFormSettings(false);
+
+    // Check if this element is already selected
+    const isAlreadySelected = activeTextElement === element.id;
+
     // Устанавливаем активный элемент
     setActiveTextElement(element.id);
     setShowTextSettings(true);
@@ -939,6 +962,30 @@ const Journal = () => {
         height: element.height,
       });
       setDragStartPos({ x: e.clientX, y: e.clientY });
+    } else if (isAlreadySelected) {
+      // If the element is already selected, enter editing mode
+      setIsEditing(true);
+      document.body.style.cursor = "text";
+
+      // Focus the element and position the cursor
+      setTimeout(() => {
+        const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
+        if (textElement) {
+          textElement.focus();
+          try {
+            const range = document.createRange();
+            const selection = window.getSelection();
+            range.selectNodeContents(textElement);
+            range.collapse(false); // Cursor at the end of text
+            selection.removeAllRanges();
+            selection.addRange(range);
+          } catch (error) {
+            console.error("Error setting cursor position:", error);
+          }
+        } else {
+          console.warn("Text element not found in DOM for focus");
+        }
+      }, 10);
     } else {
       // Запоминаем позицию для возможного перетаскивания
       setIsDraggingText(true);
@@ -1449,6 +1496,7 @@ const Journal = () => {
     if (!calendarPlacementData || !calendarPlacementData.template) return;
 
     // Create a new form element for the calendar
+    // Set all parameters to zero or default values except position and size
     const newFormElement = {
       id: Date.now(),
       type: "image",
@@ -1458,12 +1506,12 @@ const Journal = () => {
       height: height,
       fileUrl: calendarPlacementData.template.url,
       file: calendarPlacementData.template.file,
-      fillTransparency: 100,
+      fillTransparency: 100, // Keep at 100 for full visibility
       strokeColor: "#000000",
-      strokeTransparency: 100,
+      strokeTransparency: 0, // Set to 0 (no stroke)
       cornerRadius: 0,
       rotation: 0,
-      strokeWidth: 1,
+      strokeWidth: 0, // Set to 0 (no stroke)
       pageIndex: pageIndex,
       isCalendar: true, // Mark this as a calendar element
     };
@@ -1521,6 +1569,7 @@ const Journal = () => {
     if (!keyPlacementData || !keyPlacementData.key) return;
 
     // Create a new form element for the key
+    // Set all parameters to zero or default values except position and size
     const newFormElement = {
       id: Date.now(),
       type: "image",
@@ -1529,12 +1578,12 @@ const Journal = () => {
       width: width,
       height: height,
       fileUrl: keyPlacementData.key.imageUrl,
-      fillTransparency: 100,
+      fillTransparency: 100, // Keep at 100 for full visibility
       strokeColor: "#000000",
-      strokeTransparency: 100,
+      strokeTransparency: 0, // Set to 0 (no stroke)
       cornerRadius: 0,
       rotation: 0,
-      strokeWidth: 1,
+      strokeWidth: 0, // Set to 0 (no stroke)
       pageIndex: pageIndex,
       isKey: true, // Mark this as a key element
     };
@@ -1643,7 +1692,7 @@ const Journal = () => {
                   <div
                       key={element.id}
                       data-id={element.id}
-                      className={`absolute outline-none text-element ${isEditing && activeTextElement === element.id ? 'cursor-text' : 'cursor-move'}`}
+                      className={`absolute outline-none text-element ${activeTextElement === element.id ? 'cursor-text' : 'cursor-move'}`}
                       style={{
                         left: `${element.x}px`,
                         top: `${element.y}px`,
@@ -1716,6 +1765,10 @@ const Journal = () => {
     }
 
     e.stopPropagation();
+    // Deselect any active form element
+    setActiveFormElement(null);
+    setShowFormSettings(false);
+    // Select the text element
     setActiveTextElement(element.id);
     setShowTextSettings(true);
     setIsEditing(true);
@@ -1726,19 +1779,29 @@ const Journal = () => {
       const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
       if (textElement) {
         textElement.focus();
-        const range = document.createRange();
-        const selection = window.getSelection();
-        range.selectNodeContents(textElement);
-        range.collapse(false); // Курсор в конец текста
-        selection.removeAllRanges();
-        selection.addRange(range);
+        try {
+          const range = document.createRange();
+          const selection = window.getSelection();
+          range.selectNodeContents(textElement);
+          range.collapse(false); // Курсор в конец текста
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } catch (error) {
+          console.error("Error setting cursor position:", error);
+        }
+      } else {
+        console.warn("Text element not found in DOM for focus");
       }
-    }, 0);
+    }, 10);
   };
 
   // Handle text element double click
   const handleTextElementDoubleClick = (e, element) => {
     e.stopPropagation();
+    // Deselect any active form element
+    setActiveFormElement(null);
+    setShowFormSettings(false);
+    // Select the text element
     setActiveTextElement(element.id);
     setShowTextSettings(true);
     setIsEditing(true);
@@ -1748,14 +1811,20 @@ const Journal = () => {
       const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
       if (textElement) {
         textElement.focus();
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(textElement);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        try {
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(textElement);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } catch (error) {
+          console.error("Error setting cursor position:", error);
+        }
+      } else {
+        console.warn("Text element not found in DOM for focus on double click");
       }
-    }, 0);
+    }, 10);
   };
 
   // Handle form element click
@@ -1767,6 +1836,10 @@ const Journal = () => {
     }
 
     e.stopPropagation();
+    // Deselect any active text element
+    setActiveTextElement(null);
+    setShowTextSettings(false);
+    // Select the form element
     setActiveFormElement(element.id);
     setShowFormSettings(true);
     // Ensure activeTool is set to move
@@ -1775,6 +1848,9 @@ const Journal = () => {
 
   // Handle mouse down on form element
   const handleMouseDownOnForm = (e, element) => {
+    // Deselect any active text element
+    setActiveTextElement(null);
+    setShowTextSettings(false);
     // Set active element
     setActiveFormElement(element.id);
     setShowFormSettings(true);

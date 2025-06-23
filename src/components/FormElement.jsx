@@ -86,6 +86,13 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
     // Calculate the length of the arrow
     const length = Math.sqrt(dx * dx + dy * dy);
 
+    // Calculate arrowhead size based on stroke width
+    const arrowheadWidth = Math.max(10, element.strokeWidth * 2);
+    const arrowheadHeight = Math.max(7, element.strokeWidth * 1.4);
+
+    // Calculate extra space needed for the arrowhead
+    const arrowheadSpace = Math.max(15, element.strokeWidth * 3);
+
     // Create an SVG arrow
     return (
       <div
@@ -93,8 +100,8 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
         style={{
           left: `${element.x}px`,
           top: `${element.y}px`,
-          width: `${length}px`,
-          height: `${Math.max(20, element.strokeWidth * 3)}px`,
+          width: `${length + arrowheadSpace}px`,
+          height: `${Math.max(30, element.strokeWidth * 5)}px`,
           transform: `rotate(${angle + element.rotation}deg)`,
           transformOrigin: "0 50%",
           position: "absolute",
@@ -104,18 +111,18 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
         onClick={onClick}
         onMouseDown={onMouseDown}
       >
-        <svg width="100%" height="100%" viewBox={`0 0 ${length} ${Math.max(20, element.strokeWidth * 3)}`}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${length + arrowheadSpace} ${Math.max(30, element.strokeWidth * 5)}`}>
           <defs>
             <marker
               id={`arrowhead-${element.id}`}
-              markerWidth="10"
-              markerHeight="7"
-              refX="0"
-              refY="3.5"
+              markerWidth={arrowheadWidth}
+              markerHeight={arrowheadHeight}
+              refX={element.strokeWidth}
+              refY={arrowheadHeight / 2}
               orient="auto"
             >
               <polygon
-                points="0 0, 10 3.5, 0 7"
+                points={`0 0, ${arrowheadWidth} ${arrowheadHeight / 2}, 0 ${arrowheadHeight}`}
                 fill={`rgba(${parseInt(element.strokeColor.slice(1, 3), 16)}, ${parseInt(element.strokeColor.slice(3, 5), 16)}, ${parseInt(element.strokeColor.slice(5, 7), 16)}, ${element.strokeTransparency / 100})`}
                 rx={element.cornerRadius}
                 ry={element.cornerRadius}
@@ -124,9 +131,9 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
           </defs>
           <line
             x1="0"
-            y1={Math.max(10, element.strokeWidth * 1.5)}
-            x2={length - 10}
-            y2={Math.max(10, element.strokeWidth * 1.5)}
+            y1={Math.max(15, element.strokeWidth * 2.5)}
+            x2={length}
+            y2={Math.max(15, element.strokeWidth * 2.5)}
             stroke={`rgba(${parseInt(element.strokeColor.slice(1, 3), 16)}, ${parseInt(element.strokeColor.slice(3, 5), 16)}, ${parseInt(element.strokeColor.slice(5, 7), 16)}, ${element.strokeTransparency / 100})`}
             strokeWidth={element.strokeWidth}
             strokeLinecap={element.cornerRadius > 0 ? "round" : "butt"}
@@ -137,7 +144,7 @@ const FormElement = ({ element, isActive, onClick, onMouseDown }) => {
           <>
             {/* Start and end resize handles for the arrow */}
             <div className="resize-handle absolute top-1/2 left-0 w-4 h-4 bg-[#2A2A2A] cursor-w-resize -translate-y-1/2" data-resize-handle="start" />
-            <div className="resize-handle absolute top-1/2 right-0 w-4 h-4 bg-[#2A2A2A] cursor-e-resize -translate-y-1/2" data-resize-handle="end" />
+            <div className="resize-handle absolute top-1/2 right-0 w-4 h-4 bg-[#2A2A2A] cursor-e-resize -translate-y-1/2" data-resize-handle="end" style={{ right: `${arrowheadSpace}px` }} />
           </>
         )}
       </div>

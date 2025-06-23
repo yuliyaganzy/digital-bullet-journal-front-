@@ -10,6 +10,8 @@ import {
 } from "react-icons/tb";
 
 const FormMenu = ({ formElement, onFormElementChange }) => {
+  // Check if the form element is a calendar or key object
+  const isCalendarOrKey = formElement.isCalendar || formElement.isKey;
   const [activeTab, setActiveTab] = useState(null);
   const [customColors, setCustomColors] = useState(() => {
     const saved = localStorage.getItem("customColors");
@@ -258,6 +260,12 @@ const FormMenu = ({ formElement, onFormElementChange }) => {
       </div>
     </div>
   );
+
+  // If it's a calendar or key object, show a simplified interface
+  // Render different content based on whether it's a calendar or key object
+  if (isCalendarOrKey) {
+    return
+  }
 
   return (
     <div className="bg-[#C3DEE1] rounded-2xl shadow-lg w-[320px] overflow-hidden">
