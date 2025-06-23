@@ -15,20 +15,20 @@ import { brushHandlers } from "@/components/brushes";
 // Helper function to convert month name to number (01-12)
 const getMonthNumber = (monthName) => {
   const months = {
-    'January': '01',
-    'February': '02',
-    'March': '03',
-    'April': '04',
-    'May': '05',
-    'June': '06',
-    'July': '07',
-    'August': '08',
-    'September': '09',
-    'October': '10',
-    'November': '11',
-    'December': '12'
+    January: "01",
+    February: "02",
+    March: "03",
+    April: "04",
+    May: "05",
+    June: "06",
+    July: "07",
+    August: "08",
+    September: "09",
+    October: "10",
+    November: "11",
+    December: "12",
   };
-  return months[monthName] || '00';
+  return months[monthName] || "00";
 };
 
 // Helper function to format day with leading zero
@@ -127,7 +127,13 @@ const Journal = () => {
   const [showFormSettings, setShowFormSettings] = useState(false);
   const [isDraggingForm, setIsDraggingForm] = useState(false);
   const [isResizingForm, setIsResizingForm] = useState(false);
-  const [resizeFormStartSize, setResizeFormStartSize] = useState({ width: 0, height: 0, x: 0, y: 0, resizeHandle: null });
+  const [resizeFormStartSize, setResizeFormStartSize] = useState({
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    resizeHandle: null,
+  });
 
   // Переміщення і розтягування тексту
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -135,6 +141,7 @@ const Journal = () => {
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
   const [isEditing, setIsEditing] = useState(false);
+  const [isStartingEdit, setIsStartingEdit] = useState(false); // Add this flag
 
   // Bookmark states
   const [bookmarks, setBookmarks] = useState([]);
@@ -144,30 +151,30 @@ const Journal = () => {
 
   // Calendar states
   const [calendarTemplates, setCalendarTemplates] = useState([
-    { 
-      id: 1, 
-      name: "Template 1", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 1%3C/text%3E%3C/svg%3E" 
+    {
+      id: 1,
+      name: "Template 1",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 1%3C/text%3E%3C/svg%3E",
     },
-    { 
-      id: 2, 
-      name: "Template 2", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 2%3C/text%3E%3C/svg%3E" 
+    {
+      id: 2,
+      name: "Template 2",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 2%3C/text%3E%3C/svg%3E",
     },
-    { 
-      id: 3, 
-      name: "Template 3", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23d0d0d0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 3%3C/text%3E%3C/svg%3E" 
+    {
+      id: 3,
+      name: "Template 3",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23d0d0d0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 3%3C/text%3E%3C/svg%3E",
     },
-    { 
-      id: 4, 
-      name: "Template 4", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23c0c0c0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 4%3C/text%3E%3C/svg%3E" 
+    {
+      id: 4,
+      name: "Template 4",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23c0c0c0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 4%3C/text%3E%3C/svg%3E",
     },
-    { 
-      id: 5, 
-      name: "Template 5", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23b0b0b0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 5%3C/text%3E%3C/svg%3E" 
+    {
+      id: 5,
+      name: "Template 5",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23b0b0b0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 5%3C/text%3E%3C/svg%3E",
     },
   ]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -181,12 +188,12 @@ const Journal = () => {
   const [showEventSystemModal, setShowEventSystemModal] = useState(false);
   const [showEventSetupModal, setShowEventSetupModal] = useState(false);
   const [eventForm, setEventForm] = useState({
-    day: '',
-    month: '',
-    year: '',
-    description: '',
+    day: "",
+    month: "",
+    year: "",
+    description: "",
     isAnnual: false,
-    sendReminders: false
+    sendReminders: false,
   });
   const [eventError, setEventError] = useState("");
 
@@ -243,50 +250,52 @@ const Journal = () => {
       },
     ],
     calendar: [
-      { 
-        icon: "img_plus_tool.svg", 
+      {
+        icon: "img_plus_tool.svg",
         text: "Create calendar",
         onClick: () => {
           setShowCalendarModal(true);
-        }
+        },
       },
-      { 
-        icon: "img_key_tool.svg", 
+      {
+        icon: "img_key_tool.svg",
         text: "Add keys",
         onClick: () => {
           setShowKeySystemModal(true);
-        }
+        },
       },
-      { 
-        icon: "img_event_tool.svg", 
+      {
+        icon: "img_event_tool.svg",
         text: "Create event",
         onClick: () => {
           // Reset form and errors
           setEventForm({
-            day: '',
-            month: '',
-            year: '',
-            description: '',
+            day: "",
+            month: "",
+            year: "",
+            description: "",
             isAnnual: false,
-            sendReminders: false
+            sendReminders: false,
           });
           setEventError("");
           // Show event system modal
           setShowEventSystemModal(true);
-        }
+        },
       },
     ],
-    bookmark: [{ 
-      icon: "img_plus_tool.svg", 
-      text: "Add bookmark",
-      onClick: () => {
-        // Reset form and errors
-        setBookmarkForm({ name: "", spread: currentSpread, color: "#93C9CF" });
-        setBookmarkError("");
-        // Show modal
-        setShowBookmarkModal(true);
-      }
-    }],
+    bookmark: [
+      {
+        icon: "img_plus_tool.svg",
+        text: "Add bookmark",
+        onClick: () => {
+          // Reset form and errors
+          setBookmarkForm({ name: "", spread: currentSpread, color: "#93C9CF" });
+          setBookmarkError("");
+          // Show modal
+          setShowBookmarkModal(true);
+        },
+      },
+    ],
     draw: [
       {
         icon: "img_plus_tool.svg",
@@ -294,7 +303,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("eraser");
           document.body.style.cursor = "url('/images/img_eraser_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -302,7 +311,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("default");
           document.body.style.cursor = "url('/images/img_pen_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -310,7 +319,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("pencil");
           document.body.style.cursor = "url('/images/img_pencil_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -318,7 +327,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("drip");
           document.body.style.cursor = "url('/images/img_graphic_pen_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -326,7 +335,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("caligraphy");
           document.body.style.cursor = "url('/images/img_marker_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -334,7 +343,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("swirl");
           document.body.style.cursor = "url('/images/img_brush_pen_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -342,7 +351,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("foam");
           document.body.style.cursor = "url('/images/img_air_brush_cursor.svg'), auto";
-        }
+        },
       },
       {
         icon: "img_plus_tool.svg",
@@ -350,7 +359,7 @@ const Journal = () => {
         onClick: () => {
           setBrushType("watercolor");
           document.body.style.cursor = "url('/images/img_watercolor_cursor.svg'), auto";
-        }
+        },
       },
     ],
     form: [
@@ -362,7 +371,7 @@ const Journal = () => {
           setIsFormMode(true);
           setIsFormActive(true); // Activate form canvas
           document.body.style.cursor = "crosshair";
-        }
+        },
       },
       {
         icon: "img_line.svg",
@@ -372,7 +381,7 @@ const Journal = () => {
           setIsFormMode(true);
           setIsFormActive(true); // Activate form canvas
           document.body.style.cursor = "crosshair";
-        }
+        },
       },
       {
         icon: "img_arrow.svg",
@@ -382,7 +391,7 @@ const Journal = () => {
           setIsFormMode(true);
           setIsFormActive(true); // Activate form canvas
           document.body.style.cursor = "crosshair";
-        }
+        },
       },
       {
         icon: "img_ellipse.svg",
@@ -392,7 +401,7 @@ const Journal = () => {
           setIsFormMode(true);
           setIsFormActive(true); // Activate form canvas
           document.body.style.cursor = "crosshair";
-        }
+        },
       },
       {
         icon: "img_polygon.svg",
@@ -402,7 +411,7 @@ const Journal = () => {
           setIsFormMode(true);
           setIsFormActive(true); // Activate form canvas
           document.body.style.cursor = "crosshair";
-        }
+        },
       },
       {
         icon: "img_star.svg",
@@ -412,7 +421,7 @@ const Journal = () => {
           setIsFormMode(true);
           setIsFormActive(true); // Activate form canvas
           document.body.style.cursor = "crosshair";
-        }
+        },
       },
       {
         icon: "img_image_video.svg",
@@ -437,7 +446,7 @@ const Journal = () => {
               // Store the selected file for later use
               setSelectedImageFile({
                 file: file,
-                fileUrl: URL.createObjectURL(file)
+                fileUrl: URL.createObjectURL(file),
               });
 
               // Change cursor to indicate placement mode
@@ -457,7 +466,7 @@ const Journal = () => {
               document.body.removeChild(fileInput);
             }
           }, 300000); // Remove after 5 minutes if not removed earlier
-        }
+        },
       },
     ],
   };
@@ -477,7 +486,7 @@ const Journal = () => {
         });
         // Use the editor that was clicked on
         const clickedEditor =
-            e.target.closest(".w-screen.h-screen") === editorLeft ? editorLeft : editorRight;
+          e.target.closest(".w-screen.h-screen") === editorLeft ? editorLeft : editorRight;
         setScrollPos({
           left: clickedEditor.scrollLeft,
           top: clickedEditor.scrollTop,
@@ -560,7 +569,7 @@ const Journal = () => {
     setStartPos({
       x: x,
       y: y,
-      pageIndex: pageIndex
+      pageIndex: pageIndex,
     });
 
     // Start drawing
@@ -623,7 +632,7 @@ const Journal = () => {
           selectedImageFile={{ fileUrl: calendarPlacementData.template.url }}
         />
       );
-    } 
+    }
     // Special handling for key placement
     else if (formType === "image" && isKeyPlacementMode && keyPlacementData) {
       // Render the key preview
@@ -816,19 +825,17 @@ const Journal = () => {
   useEffect(() => {
     const handlePageClick = (e) => {
       const isEditorClick =
-          e.target.closest(".flip-book-container") ||
-          e.target.closest(".page-wrapper") ||
-          e.target.closest(".page");
+        e.target.closest(".flip-book-container") ||
+        e.target.closest(".page-wrapper") ||
+        e.target.closest(".page");
 
       // If adding text
       if (
-          textMode &&
-          isEditorClick &&
-          !e.target.closest(".text-element") &&
-          !e.target.closest(".text-settings")
+        textMode &&
+        isEditorClick &&
+        !e.target.closest(".text-element") &&
+        !e.target.closest(".text-settings")
       ) {
-        // We'll calculate position relative to the page instead of using global coordinates
-
         // Determine which page was clicked based on position
         const bookElement = document.querySelector(".flip-book-container");
         const bookBounds = bookElement.getBoundingClientRect();
@@ -854,7 +861,7 @@ const Journal = () => {
           id: Date.now(),
           x: relativeX,
           y: relativeY,
-          text: "Text",  // Default text
+          text: "Text", // Default text
           fontSize: 16,
           fontFamily: "Montserrat",
           fontWeight: "400",
@@ -868,7 +875,6 @@ const Journal = () => {
           height: 30,
           pageIndex: pageIndex, // Track which page the text belongs to
         };
-
         setTextElements([...textElements, newTextElement]);
         setActiveTextElement(newTextElement.id);
         setShowTextSettings(true);
@@ -902,10 +908,10 @@ const Journal = () => {
               selection.removeAllRanges();
               selection.addRange(range);
             } catch (error) {
-              console.error("Error setting cursor position:", error);
+              console.error("❌ Error setting cursor position for new text element:", error);
             }
           } else {
-            console.warn("Text element not found in DOM after creation");
+            console.warn("⚠️ New text element not found in DOM after creation");
           }
         }, 50);
       }
@@ -916,17 +922,21 @@ const Journal = () => {
     }
 
     return () => {
-      document.removeEventListener("click", handlePageClick);
+      if (textMode) {
+        document.removeEventListener("click", handlePageClick);
+      }
     };
   }, [textMode, textElements, currentColor, scale, currentSpread]);
 
   useEffect(() => {
     const handleClickPage = (e) => {
       // Check if click is outside text elements, text settings, form elements, and form settings
-      if (!e.target.closest(".text-element") && 
-          !e.target.closest(".text-settings") && 
-          !e.target.closest(".form-element") && 
-          !e.target.closest(".form-settings")) {
+      if (
+        !e.target.closest(".text-element") &&
+        !e.target.closest(".text-settings") &&
+        !e.target.closest(".form-element") &&
+        !e.target.closest(".form-settings")
+      ) {
         // Deselect text elements
         setShowTextSettings(false);
         setActiveTextElement(null);
@@ -938,11 +948,15 @@ const Journal = () => {
     };
 
     document.addEventListener("click", handleClickPage);
-    return () => document.removeEventListener("click", handleClickPage);
+    return () => {
+      document.removeEventListener("click", handleClickPage);
+    };
   }, [textMode]);
 
   // Переміщення і розтягування тексту
   const handleMouseDownOnText = (e, element) => {
+    setIsStartingEdit(true);
+
     // Deselect any active form element
     setActiveFormElement(null);
     setShowFormSettings(false);
@@ -962,35 +976,71 @@ const Journal = () => {
         height: element.height,
       });
       setDragStartPos({ x: e.clientX, y: e.clientY });
-    } else if (isAlreadySelected) {
-      // If the element is already selected, enter editing mode
-      setIsEditing(true);
-      document.body.style.cursor = "text";
-
-      // Focus the element and position the cursor
-      setTimeout(() => {
-        const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
-        if (textElement) {
-          textElement.focus();
-          try {
-            const range = document.createRange();
-            const selection = window.getSelection();
-            range.selectNodeContents(textElement);
-            range.collapse(false); // Cursor at the end of text
-            selection.removeAllRanges();
-            selection.addRange(range);
-          } catch (error) {
-            console.error("Error setting cursor position:", error);
-          }
-        } else {
-          console.warn("Text element not found in DOM for focus");
-        }
-      }, 10);
     } else {
-      // Запоминаем позицию для возможного перетаскивания
-      setIsDraggingText(true);
-      setDragStartPos({ x: e.clientX, y: e.clientY });
-      document.body.style.cursor = "move";
+      // For text elements, prioritize editing over dragging
+      // Only start dragging if we're not already in editing mode and this is a fresh click
+      if (!isEditing && !isAlreadySelected) {
+        // Enter editing mode immediately
+        setIsEditing(true);
+        document.body.style.cursor = "text";
+
+        // Focus the element and position the cursor
+        setTimeout(() => {
+          const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
+          if (textElement) {
+            textElement.focus();
+            try {
+              const range = document.createRange();
+              const selection = window.getSelection();
+              range.selectNodeContents(textElement);
+              range.collapse(false); // Cursor at the end of text
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } catch (error) {
+              console.error("Error setting cursor position:", error);
+            }
+          } else {
+            console.warn("Text element not found in DOM for focus");
+          }
+        }, 10);
+      } else if (isAlreadySelected && !isEditing) {
+        // If already selected but not editing, enter editing mode
+        setIsEditing(true);
+        document.body.style.cursor = "text";
+
+        // Focus the element and position the cursor
+        setTimeout(() => {
+          const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
+          if (textElement) {
+            textElement.focus();
+            try {
+              const range = document.createRange();
+              const selection = window.getSelection();
+              range.selectNodeContents(textElement);
+              range.collapse(false); // Cursor at the end of text
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } catch (error) {
+              console.error("Error setting cursor position:", error);
+            }
+          } else {
+            console.warn("Text element not found in DOM for focus");
+          }
+
+          // Clear the flag after a short delay
+          setTimeout(() => {
+            setIsStartingEdit(false);
+          }, 100);
+        }, 10);
+      } else {
+        // Only start dragging if we're not in editing mode
+        // This prevents dragging from interfering with text editing
+        if (!isEditing) {
+          setIsDraggingText(true);
+          setDragStartPos({ x: e.clientX, y: e.clientY });
+          document.body.style.cursor = "move";
+        }
+      }
     }
     e.stopPropagation();
   };
@@ -1014,30 +1064,30 @@ const Journal = () => {
         const pageBounds = pageElement.getBoundingClientRect();
 
         setTextElements(
-            textElements.map((el) => {
-              if (el.id === activeTextElement) {
-                // Calculate new position relative to the page
-                const newX = el.x + dx / scale;
-                const newY = el.y + dy / scale;
+          textElements.map((el) => {
+            if (el.id === activeTextElement) {
+              // Calculate new position relative to the page
+              const newX = el.x + dx / scale;
+              const newY = el.y + dy / scale;
 
-                // Calculate page boundaries in page coordinates
-                const pageWidth = pageBounds.width / scale;
-                const pageHeight = pageBounds.height / scale;
+              // Calculate page boundaries in page coordinates
+              const pageWidth = pageBounds.width / scale;
+              const pageHeight = pageBounds.height / scale;
 
-                // Clamp the position within page boundaries
-                // Leave a small margin (5px) to ensure text is always visible
-                const margin = 5;
-                const clampedX = Math.min(Math.max(newX, margin), pageWidth - el.width - margin);
-                const clampedY = Math.min(Math.max(newY, margin), pageHeight - el.height - margin);
+              // Clamp the position within page boundaries
+              // Leave a small margin (5px) to ensure text is always visible
+              const margin = 5;
+              const clampedX = Math.min(Math.max(newX, margin), pageWidth - el.width - margin);
+              const clampedY = Math.min(Math.max(newY, margin), pageHeight - el.height - margin);
 
-                return {
-                  ...el,
-                  x: clampedX,
-                  y: clampedY,
-                };
-              }
-              return el;
-            })
+              return {
+                ...el,
+                x: clampedX,
+                y: clampedY,
+              };
+            }
+            return el;
+          })
         );
 
         setDragStartPos({ x: e.clientX, y: e.clientY });
@@ -1060,30 +1110,30 @@ const Journal = () => {
         const pageBounds = pageElement.getBoundingClientRect();
 
         setFormElements(
-            formElements.map((el) => {
-              if (el.id === activeFormElement) {
-                // Calculate new position relative to the page
-                const newX = el.x + dx / scale;
-                const newY = el.y + dy / scale;
+          formElements.map((el) => {
+            if (el.id === activeFormElement) {
+              // Calculate new position relative to the page
+              const newX = el.x + dx / scale;
+              const newY = el.y + dy / scale;
 
-                // Calculate page boundaries in page coordinates
-                const pageWidth = pageBounds.width / scale;
-                const pageHeight = pageBounds.height / scale;
+              // Calculate page boundaries in page coordinates
+              const pageWidth = pageBounds.width / scale;
+              const pageHeight = pageBounds.height / scale;
 
-                // Clamp the position within page boundaries
-                // Leave a small margin (5px) to ensure form is always visible
-                const margin = 5;
-                const clampedX = Math.min(Math.max(newX, margin), pageWidth - el.width - margin);
-                const clampedY = Math.min(Math.max(newY, margin), pageHeight - el.height - margin);
+              // Clamp the position within page boundaries
+              // Leave a small margin (5px) to ensure form is always visible
+              const margin = 5;
+              const clampedX = Math.min(Math.max(newX, margin), pageWidth - el.width - margin);
+              const clampedY = Math.min(Math.max(newY, margin), pageHeight - el.height - margin);
 
-                return {
-                  ...el,
-                  x: clampedX,
-                  y: clampedY,
-                };
-              }
-              return el;
-            })
+              return {
+                ...el,
+                x: clampedX,
+                y: clampedY,
+              };
+            }
+            return el;
+          })
         );
 
         setDragStartPos({ x: e.clientX, y: e.clientY });
@@ -1110,24 +1160,24 @@ const Journal = () => {
         const pageHeight = pageBounds.height / scale;
 
         setTextElements(
-            textElements.map((el) => {
-              if (el.id === activeTextElement) {
-                // Calculate new width and height
-                const newWidth = Math.max(50, resizeStartSize.width + dx / scale);
-                const newHeight = Math.max(20, resizeStartSize.height + dy / scale);
+          textElements.map((el) => {
+            if (el.id === activeTextElement) {
+              // Calculate new width and height
+              const newWidth = Math.max(50, resizeStartSize.width + dx / scale);
+              const newHeight = Math.max(20, resizeStartSize.height + dy / scale);
 
-                // Ensure the element doesn't resize beyond page boundaries
-                const maxWidth = pageWidth - el.x - 5; // 5px margin
-                const maxHeight = pageHeight - el.y - 5; // 5px margin
+              // Ensure the element doesn't resize beyond page boundaries
+              const maxWidth = pageWidth - el.x - 5; // 5px margin
+              const maxHeight = pageHeight - el.y - 5; // 5px margin
 
-                return {
-                  ...el,
-                  width: Math.min(newWidth, maxWidth),
-                  height: Math.min(newHeight, maxHeight),
-                };
-              }
-              return el;
-            })
+              return {
+                ...el,
+                width: Math.min(newWidth, maxWidth),
+                height: Math.min(newHeight, maxHeight),
+              };
+            }
+            return el;
+          })
         );
         setDragStartPos({ x: e.clientX, y: e.clientY });
       }
@@ -1161,130 +1211,148 @@ const Journal = () => {
         const isLineOrArrow = activeElement.type === "line" || activeElement.type === "arrow";
 
         setFormElements(
-            formElements.map((el) => {
-              if (el.id === activeFormElement) {
-                // Always start with the original position and size from resizeFormStartSize
-                // This prevents cumulative errors that cause jerkiness
-                let newX = resizeFormStartSize.x;
-                let newY = resizeFormStartSize.y;
-                let newWidth = resizeFormStartSize.width;
-                let newHeight = resizeFormStartSize.height;
+          formElements.map((el) => {
+            if (el.id === activeFormElement) {
+              // Always start with the original position and size from resizeFormStartSize
+              // This prevents cumulative errors that cause jerkiness
+              let newX = resizeFormStartSize.x;
+              let newY = resizeFormStartSize.y;
+              let newWidth = resizeFormStartSize.width;
+              let newHeight = resizeFormStartSize.height;
 
-                // Handle resizing based on which handle is being used
-                switch(resizeHandle) {
-                  case "top-left":
-                    // Resize from top-left corner
-                    newX = Math.min(resizeFormStartSize.x + dx / scale, resizeFormStartSize.x + resizeFormStartSize.width - 20);
-                    newY = Math.min(resizeFormStartSize.y + dy / scale, resizeFormStartSize.y + resizeFormStartSize.height - 20);
-                    newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
-                    newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
-                    break;
-                  case "top-right":
-                    // Resize from top-right corner
-                    newY = Math.min(resizeFormStartSize.y + dy / scale, resizeFormStartSize.y + resizeFormStartSize.height - 20);
-                    newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
-                    newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
-                    break;
-                  case "bottom-left":
-                    // Resize from bottom-left corner
-                    newX = Math.min(resizeFormStartSize.x + dx / scale, resizeFormStartSize.x + resizeFormStartSize.width - 20);
-                    newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
-                    newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
-                    break;
-                  case "bottom-right":
-                    // Resize from bottom-right corner (default behavior)
-                    newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
-                    newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
-                    break;
-                  case "top":
-                    // Resize from top edge
-                    newY = Math.min(resizeFormStartSize.y + dy / scale, resizeFormStartSize.y + resizeFormStartSize.height - 20);
-                    newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
-                    break;
-                  case "bottom":
-                    // Resize from bottom edge
-                    newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
-                    break;
-                  case "left":
-                    // Resize from left edge
-                    newX = Math.min(resizeFormStartSize.x + dx / scale, resizeFormStartSize.x + resizeFormStartSize.width - 20);
-                    newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
-                    break;
-                  case "right":
-                    // Resize from right edge
-                    newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
-                    break;
-                  case "start":
-                    if (isLineOrArrow) {
-                      // For line/arrow, adjust the start point
-                      // Use the original width and height from resizeFormStartSize
-                      const originalWidth = resizeFormStartSize.width;
-                      const originalHeight = resizeFormStartSize.height;
-                      // Calculate the angle based on the original width and height
-                      // This gives us the angle of the line/arrow without any rotation
-                      const baseAngle = Math.atan2(originalHeight, originalWidth);
-                      // Add the rotation to get the actual angle of the line/arrow
-                      const angle = baseAngle + (activeElement.rotation * Math.PI / 180);
-                      const length = Math.sqrt(originalWidth * originalWidth + originalHeight * originalHeight);
-                      const dLength = dx / scale * Math.cos(angle) + dy / scale * Math.sin(angle);
-                      const newLength = Math.max(20, length - dLength);
-                      const ratio = newLength / length;
+              // Handle resizing based on which handle is being used
+              switch (resizeHandle) {
+                case "top-left":
+                  // Resize from top-left corner
+                  newX = Math.min(
+                    resizeFormStartSize.x + dx / scale,
+                    resizeFormStartSize.x + resizeFormStartSize.width - 20
+                  );
+                  newY = Math.min(
+                    resizeFormStartSize.y + dy / scale,
+                    resizeFormStartSize.y + resizeFormStartSize.height - 20
+                  );
+                  newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
+                  newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
+                  break;
+                case "top-right":
+                  // Resize from top-right corner
+                  newY = Math.min(
+                    resizeFormStartSize.y + dy / scale,
+                    resizeFormStartSize.y + resizeFormStartSize.height - 20
+                  );
+                  newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
+                  newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
+                  break;
+                case "bottom-left":
+                  // Resize from bottom-left corner
+                  newX = Math.min(
+                    resizeFormStartSize.x + dx / scale,
+                    resizeFormStartSize.x + resizeFormStartSize.width - 20
+                  );
+                  newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
+                  newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                  break;
+                case "bottom-right":
+                  // Resize from bottom-right corner (default behavior)
+                  newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
+                  newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                  break;
+                case "top":
+                  // Resize from top edge
+                  newY = Math.min(
+                    resizeFormStartSize.y + dy / scale,
+                    resizeFormStartSize.y + resizeFormStartSize.height - 20
+                  );
+                  newHeight = resizeFormStartSize.height - (newY - resizeFormStartSize.y);
+                  break;
+                case "bottom":
+                  // Resize from bottom edge
+                  newHeight = Math.max(20, resizeFormStartSize.height + dy / scale);
+                  break;
+                case "left":
+                  // Resize from left edge
+                  newX = Math.min(
+                    resizeFormStartSize.x + dx / scale,
+                    resizeFormStartSize.x + resizeFormStartSize.width - 20
+                  );
+                  newWidth = resizeFormStartSize.width - (newX - resizeFormStartSize.x);
+                  break;
+                case "right":
+                  // Resize from right edge
+                  newWidth = Math.max(20, resizeFormStartSize.width + dx / scale);
+                  break;
+                case "start":
+                  if (isLineOrArrow) {
+                    // For line/arrow, adjust the start point
+                    // Use the original width and height from resizeFormStartSize
+                    const originalWidth = resizeFormStartSize.width;
+                    const originalHeight = resizeFormStartSize.height;
+                    // Calculate the angle based on the original width and height
+                    // This gives us the angle of the line/arrow without any rotation
+                    const baseAngle = Math.atan2(originalHeight, originalWidth);
+                    // Add the rotation to get the actual angle of the line/arrow
+                    const angle = baseAngle + (activeElement.rotation * Math.PI) / 180;
+                    const length = Math.sqrt(originalWidth * originalWidth + originalHeight * originalHeight);
+                    const dLength = (dx / scale) * Math.cos(angle) + (dy / scale) * Math.sin(angle);
+                    const newLength = Math.max(20, length - dLength);
+                    const ratio = newLength / length;
 
-                      newWidth = originalWidth * ratio;
-                      newHeight = originalHeight * ratio;
+                    newWidth = originalWidth * ratio;
+                    newHeight = originalHeight * ratio;
 
-                      // Adjust position to keep the end point fixed
-                      newX = resizeFormStartSize.x + originalWidth - newWidth;
-                      newY = resizeFormStartSize.y + originalHeight - newHeight;
-                    }
-                    break;
-                  case "end":
-                    if (isLineOrArrow) {
-                      // For line/arrow, adjust the end point
-                      // Use the original width and height from resizeFormStartSize
-                      const originalWidth = resizeFormStartSize.width;
-                      const originalHeight = resizeFormStartSize.height;
-                      // Calculate the angle based on the original width and height
-                      // This gives us the angle of the line/arrow without any rotation
-                      const baseAngle = Math.atan2(originalHeight, originalWidth);
-                      // Add the rotation to get the actual angle of the line/arrow
-                      const angle = baseAngle + (activeElement.rotation * Math.PI / 180);
-                      const dLength = dx / scale * Math.cos(angle) + dy / scale * Math.sin(angle);
-                      const length = Math.sqrt(originalWidth * originalWidth + originalHeight * originalHeight);
-                      const newLength = Math.max(20, length + dLength);
-                      const ratio = newLength / length;
+                    // Adjust position to keep the end point fixed
+                    newX = resizeFormStartSize.x + originalWidth - newWidth;
+                    newY = resizeFormStartSize.y + originalHeight - newHeight;
+                  }
+                  break;
+                case "end":
+                  if (isLineOrArrow) {
+                    // For line/arrow, adjust the end point
+                    // Use the original width and height from resizeFormStartSize
+                    const originalWidth = resizeFormStartSize.width;
+                    const originalHeight = resizeFormStartSize.height;
+                    // Calculate the angle based on the original width and height
+                    // This gives us the angle of the line/arrow without any rotation
+                    const baseAngle = Math.atan2(originalHeight, originalWidth);
+                    // Add the rotation to get the actual angle of the line/arrow
+                    const angle = baseAngle + (activeElement.rotation * Math.PI) / 180;
+                    const dLength = (dx / scale) * Math.cos(angle) + (dy / scale) * Math.sin(angle);
+                    const length = Math.sqrt(originalWidth * originalWidth + originalHeight * originalHeight);
+                    const newLength = Math.max(20, length + dLength);
+                    const ratio = newLength / length;
 
-                      newWidth = originalWidth * ratio;
-                      newHeight = originalHeight * ratio;
-                    }
-                    break;
-                }
-
-                // Ensure the element doesn't resize beyond page boundaries
-                const margin = 5;
-
-                // Clamp position within page boundaries
-                newX = Math.max(margin, Math.min(newX, pageWidth - newWidth - margin));
-                newY = Math.max(margin, Math.min(newY, pageHeight - newHeight - margin));
-
-                // Ensure minimum size
-                newWidth = Math.max(20, newWidth);
-                newHeight = Math.max(20, newHeight);
-
-                // Ensure the element doesn't resize beyond page boundaries
-                newWidth = Math.min(newWidth, pageWidth - newX - margin);
-                newHeight = Math.min(newHeight, pageHeight - newY - margin);
-
-                return {
-                  ...el,
-                  x: newX,
-                  y: newY,
-                  width: newWidth,
-                  height: newHeight,
-                };
+                    newWidth = originalWidth * ratio;
+                    newHeight = originalHeight * ratio;
+                  }
+                  break;
               }
-              return el;
-            })
+
+              // Ensure the element doesn't resize beyond page boundaries
+              const margin = 5;
+
+              // Clamp position within page boundaries
+              newX = Math.max(margin, Math.min(newX, pageWidth - newWidth - margin));
+              newY = Math.max(margin, Math.min(newY, pageHeight - newHeight - margin));
+
+              // Ensure minimum size
+              newWidth = Math.max(20, newWidth);
+              newHeight = Math.max(20, newHeight);
+
+              // Ensure the element doesn't resize beyond page boundaries
+              newWidth = Math.min(newWidth, pageWidth - newX - margin);
+              newHeight = Math.min(newHeight, pageHeight - newY - margin);
+
+              return {
+                ...el,
+                x: newX,
+                y: newY,
+                width: newWidth,
+                height: newHeight,
+              };
+            }
+            return el;
+          })
         );
         // Don't update dragStartPos here to maintain consistent resizing relative to the original position
       }
@@ -1318,7 +1386,20 @@ const Journal = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDraggingText, isResizing, isDraggingForm, isResizingForm, dragStartPos, activeTextElement, activeFormElement, textElements, formElements, scale, resizeStartSize, resizeFormStartSize]);
+  }, [
+    isDraggingText,
+    isResizing,
+    isDraggingForm,
+    isResizingForm,
+    dragStartPos,
+    activeTextElement,
+    activeFormElement,
+    textElements,
+    formElements,
+    scale,
+    resizeStartSize,
+    resizeFormStartSize,
+  ]);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -1390,7 +1471,7 @@ const Journal = () => {
     }
 
     // Check if bookmark already exists for this spread
-    if (bookmarks.some(bookmark => bookmark.spread === bookmarkForm.spread)) {
+    if (bookmarks.some((bookmark) => bookmark.spread === bookmarkForm.spread)) {
       setBookmarkError("There is already a bookmark on this spread");
       return;
     }
@@ -1400,7 +1481,7 @@ const Journal = () => {
       id: Date.now(),
       name: bookmarkForm.name.trim(),
       spread: bookmarkForm.spread,
-      color: bookmarkForm.color
+      color: bookmarkForm.color,
     };
 
     // Add to bookmarks
@@ -1424,7 +1505,7 @@ const Journal = () => {
       const file = e.target.files[0];
       if (file) {
         // Check if the file is an SVG
-        if (!file.name.toLowerCase().endsWith('.svg')) {
+        if (!file.name.toLowerCase().endsWith(".svg")) {
           alert("Please select an SVG file");
           document.body.removeChild(fileInput);
           return;
@@ -1435,7 +1516,7 @@ const Journal = () => {
           id: Date.now(),
           name: `Template ${calendarTemplates.length + 1}`,
           url: URL.createObjectURL(file),
-          file: file
+          file: file,
         };
 
         // Add to templates
@@ -1473,7 +1554,7 @@ const Journal = () => {
     // Set up calendar placement data
     setCalendarPlacementData({
       template: selectedCalendarTemplate,
-      pageIndex: currentPageIndex
+      pageIndex: currentPageIndex,
     });
 
     // Enter calendar placement mode
@@ -1541,8 +1622,8 @@ const Journal = () => {
 
     // Check if any form element is a calendar and is on the current spread
     return formElements.some(
-      element => element.isCalendar && 
-      (element.pageIndex === leftPageIndex || element.pageIndex === rightPageIndex)
+      (element) =>
+        element.isCalendar && (element.pageIndex === leftPageIndex || element.pageIndex === rightPageIndex)
     );
   };
 
@@ -1550,7 +1631,7 @@ const Journal = () => {
   const startKeyPlacement = (key) => {
     // Set up key placement data
     setKeyPlacementData({
-      key: key
+      key: key,
     });
 
     // Enter key placement mode
@@ -1613,143 +1694,157 @@ const Journal = () => {
 
       // Filter text elements for this specific page
       // Make sure we're using the correct pageIndex that doesn't change with pagination
-      const pageTextElements = textElements.filter(element => element.pageIndex === i);
+      const pageTextElements = textElements.filter((element) => element.pageIndex === i);
 
       // Filter form elements for this specific page
-      const pageFormElements = formElements.filter(element => element.pageIndex === i);
+      const pageFormElements = formElements.filter((element) => element.pageIndex === i);
 
       pages.push(
-          <div key={`page-${i}`} className={`page h-full w-full bg-[#f9f9f9] ${pageClassName} `} data-page-index={i}>
-            <div className="w-full h-full relative">
-              {/* Drawing Canvas */}
-              <Canvas
-                  ref={isLeftPage ? canvasLeftRef : canvasRightRef}
-                  color={brushType === "eraser" ? "#ffffff" : currentColor}
-                  brushSize={brushSize}
-                  width={640}
-                  className={
-                    isLeftPage
-                        ? "shadow-[inset_-6px_0px_12px_rgba(0,0,0,0.25)]"
-                        : "shadow-[inset_4px_0px_4px_rgba(0,0,0,0.25)]"
-                  }
-                  height={864}
-                  brushType={brushType} // Pass brush type to Canvas
-                  isDrawingActive={isDrawingActive} // Pass isDrawingActive prop
-                  style={{
-                    position: "absolute",
-                    zIndex: 5,
-                    cursor: isDrawingActive ? "crosshair" : "default" // Change cursor based on isDrawingActive
-                  }} // Add position and zIndex to ensure it's positioned correctly
-              />
+        <div
+          key={`page-${i}`}
+          className={`page h-full w-full bg-[#f9f9f9] ${pageClassName} `}
+          data-page-index={i}
+        >
+          <div className="w-full h-full relative">
+            {/* Drawing Canvas */}
+            <Canvas
+              ref={isLeftPage ? canvasLeftRef : canvasRightRef}
+              color={brushType === "eraser" ? "#ffffff" : currentColor}
+              brushSize={brushSize}
+              width={640}
+              className={
+                isLeftPage
+                  ? "shadow-[inset_-6px_0px_12px_rgba(0,0,0,0.25)]"
+                  : "shadow-[inset_4px_0px_4px_rgba(0,0,0,0.25)]"
+              }
+              height={864}
+              brushType={brushType} // Pass brush type to Canvas
+              isDrawingActive={isDrawingActive} // Pass isDrawingActive prop
+              style={{
+                position: "absolute",
+                zIndex: 5,
+                cursor: isDrawingActive ? "crosshair" : "default", // Change cursor based on isDrawingActive
+              }} // Add position and zIndex to ensure it's positioned correctly
+            />
 
-              {/* Form Canvas - separate canvas for form tools */}
-              <FormCanvas
-                  ref={isLeftPage ? formCanvasLeftRef : formCanvasRightRef}
-                  width={640}
-                  className={
-                    isLeftPage
-                        ? "shadow-[inset_-6px_0px_12px_rgba(0,0,0,0.25)]"
-                        : "shadow-[inset_4px_0px_4px_rgba(0,0,0,0.25)]"
-                  }
-                  height={864}
-                  isFormActive={isFormActive} // Pass isFormActive prop
-                  onFormStart={(x, y) => handleFormStart(i, x, y)}
-                  onFormMove={(startX, startY, currentX, currentY) => handleFormMove(i, startX, startY, currentX, currentY)}
-                  onFormEnd={(startX, startY, endX, endY) => handleFormEnd(i, startX, startY, endX, endY)}
-                  style={{
-                    position: "absolute",
-                    zIndex: 6, // Higher than drawing canvas
-                    cursor: isFormActive ? "crosshair" : "default" // Change cursor based on isFormActive
-                  }}
-              />
-              <div
-                  className="flex flex-col justify-center items-center w-full h-full page-wrapper"
-                  style={{
-                    boxShadow: isLeftPage
-                        ? "inset -6px 0px 12px rgba(0, 0, 0, 0.25)"
-                        : "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
-                    pointerEvents: "none", // Allow mouse events to pass through to the Canvas component
-                  }}
-              >
-                <div className="text-xl text-gray-600">
-                  {`Розворот ${Math.floor(i / 2) + 1} — ${isLeftPage ? "Left" : "Right"}`}
-                </div>
+            {/* Form Canvas - separate canvas for form tools */}
+            <FormCanvas
+              ref={isLeftPage ? formCanvasLeftRef : formCanvasRightRef}
+              width={640}
+              className={
+                isLeftPage
+                  ? "shadow-[inset_-6px_0px_12px_rgba(0,0,0,0.25)]"
+                  : "shadow-[inset_4px_0px_4px_rgba(0,0,0,0.25)]"
+              }
+              height={864}
+              isFormActive={isFormActive} // Pass isFormActive prop
+              onFormStart={(x, y) => handleFormStart(i, x, y)}
+              onFormMove={(startX, startY, currentX, currentY) =>
+                handleFormMove(i, startX, startY, currentX, currentY)
+              }
+              onFormEnd={(startX, startY, endX, endY) => handleFormEnd(i, startX, startY, endX, endY)}
+              style={{
+                position: "absolute",
+                zIndex: 6, // Higher than drawing canvas
+                cursor: isFormActive ? "crosshair" : "default", // Change cursor based on isFormActive
+              }}
+            />
+            <div
+              className="flex flex-col justify-center items-center w-full h-full page-wrapper"
+              style={{
+                boxShadow: isLeftPage
+                  ? "inset -6px 0px 12px rgba(0, 0, 0, 0.25)"
+                  : "inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
+                pointerEvents: "none", // Allow mouse events to pass through to the Canvas component
+              }}
+            >
+              <div className="text-xl text-gray-600">
+                {`Розворот ${Math.floor(i / 2) + 1} — ${isLeftPage ? "Left" : "Right"}`}
               </div>
-
-              {/* Form elements for this page */}
-              {pageFormElements.map((element) => (
-                <FormElement
-                  key={`form-${element.id}`}
-                  element={element}
-                  isActive={activeFormElement === element.id}
-                  onClick={(e) => handleFormElementClick(e, element)}
-                  onMouseDown={(e) => handleMouseDownOnForm(e, element)}
-                />
-              ))}
-
-              {/* Text elements for this page */}
-              {pageTextElements.map((element) => (
-                  <div
-                      key={element.id}
-                      data-id={element.id}
-                      className={`absolute outline-none text-element ${activeTextElement === element.id ? 'cursor-text' : 'cursor-move'}`}
-                      style={{
-                        left: `${element.x}px`,
-                        top: `${element.y}px`,
-                        transform: `rotate(${element.rotation}deg)`,
-                        color: element.color,
-                        fontSize: `${element.fontSize}px`,
-                        fontFamily: element.fontFamily,
-                        fontWeight: element.fontWeight,
-                        fontStyle: element.fontStyle,
-                        letterSpacing: element.letterSpacing,
-                        lineHeight: element.lineHeight,
-                        textTransform: element.textTransform,
-                        textDecoration: element.textDecoration,
-                        textAlign: element.textAlign,
-                        border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
-                        minWidth: "50px",
-                        minHeight: "20px",
-                        width: `${element.width}px`,
-                        height: `${element.height}px`,
-                        position: "absolute",
-                        zIndex: 10, // Ensure text is above other elements
-                      }}
-                      contentEditable={isEditing && activeTextElement === element.id}
-                      suppressContentEditableWarning={true}
-                      onClick={(e) => handleTextElementClick(e, element)}
-                      onMouseDown={(e) => handleMouseDownOnText(e, element)}
-                      onDoubleClick={(e) => handleTextElementDoubleClick(e, element)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey && isEditing) {
-                          e.preventDefault();
-                          e.target.blur();
-                        }
-                      }}
-                      onBlur={(e) => {
-                        if (activeTextElement === element.id) {
-                          const updatedText = e.target.innerText;
-                          setTextElements(
-                              textElements.map((el) =>
-                                  el.id === element.id ? { ...el, text: updatedText } : el
-                              )
-                          );
-                          setIsEditing(false);
-                          // Set cursor back to default for move tool
-                          document.body.style.cursor = "default";
-                          // Ensure activeTool is set to move
-                          setActiveTool("move");
-                        }
-                      }}
-                  >
-                    {element.text}
-                    {activeTextElement === element.id && !isEditing && (
-                        <div className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-[#2A2A2A] cursor-se-resize" />
-                    )}
-                  </div>
-              ))}
             </div>
+
+            {/* Form elements for this page */}
+            {pageFormElements.map((element) => (
+              <FormElement
+                key={`form-${element.id}`}
+                element={element}
+                isActive={activeFormElement === element.id}
+                onClick={(e) => handleFormElementClick(e, element)}
+                onMouseDown={(e) => handleMouseDownOnForm(e, element)}
+              />
+            ))}
+
+            {/* Text elements for this page */}
+            {pageTextElements.map((element) => (
+              <div
+                key={element.id}
+                data-id={element.id}
+                className={`absolute outline-none text-element ${
+                  activeTextElement === element.id ? "cursor-text" : "cursor-move"
+                }`}
+                style={{
+                  left: `${element.x}px`,
+                  top: `${element.y}px`,
+                  transform: `rotate(${element.rotation}deg)`,
+                  color: element.color,
+                  fontSize: `${element.fontSize}px`,
+                  fontFamily: element.fontFamily,
+                  fontWeight: element.fontWeight,
+                  fontStyle: element.fontStyle,
+                  letterSpacing: element.letterSpacing,
+                  lineHeight: element.lineHeight,
+                  textTransform: element.textTransform,
+                  textDecoration: element.textDecoration,
+                  textAlign: element.textAlign,
+                  border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
+                  minWidth: "50px",
+                  minHeight: "20px",
+                  width: `${element.width}px`,
+                  height: isEditing && activeTextElement === element.id ? "auto" : `${element.height}px`,
+                  position: "absolute",
+                  zIndex: 10, // Ensure text is above other elements
+                }}
+                contentEditable={isEditing && activeTextElement === element.id}
+                suppressContentEditableWarning={true}
+                onClick={(e) => handleTextElementClick(e, element)}
+                onMouseDown={(e) => handleMouseDownOnText(e, element)}
+                onDoubleClick={(e) => handleTextElementDoubleClick(e, element)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && isEditing) {
+                    e.preventDefault();
+                    e.target.blur();
+                  }
+                }}
+                onBlur={(e) => {
+                  // Don't handle blur if we're in the process of starting to edit
+                  if (isStartingEdit) {
+                    return;
+                  }
+
+                  if (activeTextElement === element.id) {
+                    const updatedText = e.target.innerText;
+                    const newHeight = e.target.scrollHeight;
+                    setTextElements(
+                      textElements.map((el) =>
+                        el.id === element.id ? { ...el, text: updatedText, height: newHeight } : el
+                      )
+                    );
+                    setIsEditing(false);
+                    // Set cursor back to default for move tool
+                    document.body.style.cursor = "default";
+                    // Ensure activeTool is set to move
+                    setActiveTool("move");
+                  }
+                }}
+              >
+                {element.text}
+                {activeTextElement === element.id && !isEditing && (
+                  <div className="resize-handle absolute z-10 bottom-0 right-0 w-4 h-4 bg-[#2A2A2A] cursor-se-resize" />
+                )}
+              </div>
+            ))}
           </div>
+        </div>
       );
     }
 
@@ -1765,6 +1860,7 @@ const Journal = () => {
     }
 
     e.stopPropagation();
+
     // Deselect any active form element
     setActiveFormElement(null);
     setShowFormSettings(false);
@@ -1779,18 +1875,19 @@ const Journal = () => {
       const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
       if (textElement) {
         textElement.focus();
-        try {
-          const range = document.createRange();
-          const selection = window.getSelection();
-          range.selectNodeContents(textElement);
-          range.collapse(false); // Курсор в конец текста
-          selection.removeAllRanges();
-          selection.addRange(range);
-        } catch (error) {
-          console.error("Error setting cursor position:", error);
-        }
+        // TODO double check (issue with focus is here)
+        // try {
+        //   const range = document.createRange();
+        //   const selection = window.getSelection();
+        //   range.selectNodeContents(textElement);
+        //   selection.removeAllRanges();
+        //   // selection.addRange(range);
+        //   console.log("✅ handleTextElementClick: Focus and cursor position set successfully");
+        // } catch (error) {
+        //   console.error("❌ handleTextElementClick: Error setting cursor position:", error);
+        // }
       } else {
-        console.warn("Text element not found in DOM for focus");
+        console.warn("⚠️ handleTextElementClick: Text element not found in DOM for focus");
       }
     }, 10);
   };
@@ -1867,13 +1964,13 @@ const Journal = () => {
         height: element.height,
         x: element.x,
         y: element.y,
-        resizeHandle: resizeHandle // Store which handle is being used
+        resizeHandle: resizeHandle, // Store which handle is being used
       });
 
       setDragStartPos({ x: e.clientX, y: e.clientY });
 
       // Set appropriate cursor based on resize handle
-      switch(resizeHandle) {
+      switch (resizeHandle) {
         case "top-left":
           document.body.style.cursor = "nw-resize";
           break;
@@ -1917,921 +2014,956 @@ const Journal = () => {
   };
 
   return (
-      <div className="relative w-full h-screen overflow-hidden bg-[#EBDCCB] flex items-center">
-        {/* Закрита обкладинка */}
-        {!isOpened && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[864px]">
-              {/* Лінія для об'єму */}
-              <div
-                  className="absolute z-10"
-                  style={{
-                    width: "13px",
-                    height: "864px",
-                    left: "13px",
-                    background: "rgba(26, 21, 21, 0.05)",
-                    boxShadow: "inset -1px 0px 2px rgba(0, 0, 0, 0.25), inset 2px 0px 2px rgba(0, 0, 0, 0.25)",
-                  }}
-              ></div>
+    <div className="relative w-full h-screen overflow-hidden bg-[#EBDCCB] flex items-center">
+      {/* Закрита обкладинка */}
+      {!isOpened && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[864px]">
+          {/* Лінія для об'єму */}
+          <div
+            className="absolute z-10"
+            style={{
+              width: "13px",
+              height: "864px",
+              left: "13px",
+              background: "rgba(26, 21, 21, 0.05)",
+              boxShadow: "inset -1px 0px 2px rgba(0, 0, 0, 0.25), inset 2px 0px 2px rgba(0, 0, 0, 0.25)",
+            }}
+          ></div>
 
-              {/* Обкладинка */}
-              <div
-                  className={`flex relative justify-center items-center w-full h-full text-center transition-transform duration-700 ease-in-out`}
-                  style={{
-                    backgroundColor: book.coverColor,
-                    boxShadow:
-                        "6px 0px 12px 4px rgba(0, 0, 0, 0.3), inset -4px 0px 4px rgba(0, 0, 0, 0.25), 0px 12px 12px rgba(0, 0, 0, 0.25), inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
-                    borderRadius: "0px 20px 20px 0px",
-                  }}
-              >
+          {/* Обкладинка */}
+          <div
+            className={`flex relative justify-center items-center w-full h-full text-center transition-transform duration-700 ease-in-out`}
+            style={{
+              backgroundColor: book.coverColor,
+              boxShadow:
+                "6px 0px 12px 4px rgba(0, 0, 0, 0.3), inset -4px 0px 4px rgba(0, 0, 0, 0.25), 0px 12px 12px rgba(0, 0, 0, 0.25), inset 4px 0px 4px rgba(0, 0, 0, 0.25)",
+              borderRadius: "0px 20px 20px 0px",
+            }}
+          >
             <span
-                style={{
-                  fontFamily: "'Americana BT', serif",
-                  fontStyle: "normal",
-                  fontWeight: "400",
-                  fontSize: "80px",
-                  lineHeight: "92px",
-                  color: book.textColor,
-                }}
+              style={{
+                fontFamily: "'Americana BT', serif",
+                fontStyle: "normal",
+                fontWeight: "400",
+                fontSize: "80px",
+                lineHeight: "92px",
+                color: book.textColor,
+              }}
             >
               {book.title}
             </span>
 
-                {/* Кнопка для відкриття */}
-                <button
-                    onClick={() => {
-                      setIsOpened(true);
-                    }}
-                    className="absolute flex right-[0px] bottom-[0px] w-[100px] h-[100px] z-10"
-                >
-                  <div
-                      className="w-full h-full duration-300 opacity-0 hover:opacity-20 rounded-br-[38px] rounded-tl-[200px] cursor-pointer"
-                      style={{ backgroundColor: book.textColor }}
-                  ></div>
-                </button>
+            {/* Кнопка для відкриття */}
+            <button
+              onClick={() => {
+                setIsOpened(true);
+              }}
+              className="absolute flex right-[0px] bottom-[0px] w-[100px] h-[100px] z-10"
+            >
+              <div
+                className="w-full h-full duration-300 opacity-0 hover:opacity-20 rounded-br-[38px] rounded-tl-[200px] cursor-pointer"
+                style={{ backgroundColor: book.textColor }}
+              ></div>
+            </button>
 
-                {/* Стрілка */}
-                <svg
-                    width="158"
-                    height="228"
-                    viewBox="0 0 158 228"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="absolute flex right-[60px] bottom-[90px] w-[80px] h-auto z-10 pointer-events-none animate-pulse-arrow"
+            {/* Стрілка */}
+            <svg
+              width="158"
+              height="228"
+              viewBox="0 0 158 228"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute flex right-[60px] bottom-[90px] w-[80px] h-auto z-10 pointer-events-none animate-pulse-arrow"
+            >
+              <path
+                d="M88.6917 204.434C89.0667 205.869 87.1356 206.537 85.0933 204.965C75.0784 197.247 69.5279 192.44 64.6219 181.532C60.5588 172.494 58.8751 160.859 62.416 150.699C64.5712 144.513 57.417 143.473 53.1622 117.854C47.9042 86.2136 58.8694 62.2858 60.607 45.3386C62.458 27.2836 56.1738 15.3178 54.8494 11.3503C53.2754 6.63031 50.6118 6.04964 50.2542 1.80983C50.1309 0.354555 51.3738 -0.115157 52.6886 0.644668C56.4057 2.7949 61.5179 11.3412 63.4156 16.7873C70.1041 36 68.806 46.6413 63.8513 67.42C57.2905 94.9394 58.6604 115.559 63.2947 132.375C64.0961 135.281 65.1986 138.132 66.1805 141.005C66.9141 143.148 69.1185 134.849 78.7617 132.093C92.3531 128.207 103.299 135.743 105.266 144.868C109.076 162.519 86.4327 171.801 70.6611 157.197C70.0008 156.587 69.3444 155.975 68.6848 155.363C67.6641 156.05 67.8806 157.175 67.7367 158.122C66.8909 163.654 67.4603 169.186 68.8828 174.722C72.839 190.059 88.2293 202.663 88.6917 204.434ZM93.0036 159.357C105.77 155.354 101 138.046 89.9086 136.884C80.8774 135.935 75.3968 140.789 71.2129 147.789C70.6592 148.714 70.8127 149.554 71.455 150.396C73.8625 153.563 76.5396 156.477 80.3735 158.35C84.5807 160.405 88.8159 161.061 93.0036 159.357Z"
+                fill={book.textColor}
+              />
+              <path
+                d="M102.845 196.103C104.185 200.854 103.139 195.485 108.058 220.32C109.34 226.787 103.341 227.558 96.5803 225.13C88.4107 222.195 79.5754 220.039 76.3254 216.343C75.6953 215.626 75.9102 214.652 76.7396 214.174C77.7422 213.599 78.7127 213.232 81.795 213.987C96.768 217.652 101.224 220.636 101.093 218.729C100.938 216.501 98.1118 203.382 97.9353 197.377C97.8132 193.274 100.505 193.298 101.813 194.623C102.225 195.039 102.485 195.575 102.845 196.103Z"
+                fill={book.textColor}
+              />
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* Відкритий щоденник + інструменти */}
+      {isOpened && (
+        <>
+          {/* Key toolbar - appears only when a calendar is on the current spread */}
+          {hasCalendarOnCurrentSpread() && (
+            <div className="fixed top-[calc(100dvh-928px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
+              <div className="relative">
+                <button
+                  ref={keyToolButtonRef}
+                  onClick={() => setShowKeyToolMenu(!showKeyToolMenu)}
+                  className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer ${
+                    showKeyToolMenu ? "bg-[#93C9CF]" : "hover:bg-[#AED0D4]"
+                  }`}
+                  style={{ width: "46px", height: "46px", padding: "10px" }}
                 >
-                  <path
-                      d="M88.6917 204.434C89.0667 205.869 87.1356 206.537 85.0933 204.965C75.0784 197.247 69.5279 192.44 64.6219 181.532C60.5588 172.494 58.8751 160.859 62.416 150.699C64.5712 144.513 57.417 143.473 53.1622 117.854C47.9042 86.2136 58.8694 62.2858 60.607 45.3386C62.458 27.2836 56.1738 15.3178 54.8494 11.3503C53.2754 6.63031 50.6118 6.04964 50.2542 1.80983C50.1309 0.354555 51.3738 -0.115157 52.6886 0.644668C56.4057 2.7949 61.5179 11.3412 63.4156 16.7873C70.1041 36 68.806 46.6413 63.8513 67.42C57.2905 94.9394 58.6604 115.559 63.2947 132.375C64.0961 135.281 65.1986 138.132 66.1805 141.005C66.9141 143.148 69.1185 134.849 78.7617 132.093C92.3531 128.207 103.299 135.743 105.266 144.868C109.076 162.519 86.4327 171.801 70.6611 157.197C70.0008 156.587 69.3444 155.975 68.6848 155.363C67.6641 156.05 67.8806 157.175 67.7367 158.122C66.8909 163.654 67.4603 169.186 68.8828 174.722C72.839 190.059 88.2293 202.663 88.6917 204.434ZM93.0036 159.357C105.77 155.354 101 138.046 89.9086 136.884C80.8774 135.935 75.3968 140.789 71.2129 147.789C70.6592 148.714 70.8127 149.554 71.455 150.396C73.8625 153.563 76.5396 156.477 80.3735 158.35C84.5807 160.405 88.8159 161.061 93.0036 159.357Z"
-                      fill={book.textColor}
-                  />
-                  <path
-                      d="M102.845 196.103C104.185 200.854 103.139 195.485 108.058 220.32C109.34 226.787 103.341 227.558 96.5803 225.13C88.4107 222.195 79.5754 220.039 76.3254 216.343C75.6953 215.626 75.9102 214.652 76.7396 214.174C77.7422 213.599 78.7127 213.232 81.795 213.987C96.768 217.652 101.224 220.636 101.093 218.729C100.938 216.501 98.1118 203.382 97.9353 197.377C97.8132 193.274 100.505 193.298 101.813 194.623C102.225 195.039 102.485 195.575 102.845 196.103Z"
-                      fill={book.textColor}
-                  />
-                </svg>
+                  <img src="/images/img_key_tool.svg" alt="key" style={{ width: "100%", height: "100%" }} />
+                </button>
+                <ToolMenu
+                  items={
+                    keys.length === 0
+                      ? [{ text: "No keys available", onClick: () => {} }]
+                      : keys.map((key) => ({
+                          text: key.name,
+                          // We'll use a custom attribute to pass the image URL
+                          // The ToolMenu component will use the standard icon property
+                          icon: key.imageUrl,
+                          onClick: () => startKeyPlacement(key),
+                        }))
+                  }
+                  isOpen={showKeyToolMenu}
+                  onClose={() => setShowKeyToolMenu(false)}
+                  triggerRef={keyToolButtonRef}
+                />
               </div>
             </div>
-        )}
+          )}
 
-        {/* Відкритий щоденник + інструменти */}
-        {isOpened && (
-            <>
-              {/* Key toolbar - appears only when a calendar is on the current spread */}
-              {hasCalendarOnCurrentSpread() && (
-                <div className="fixed top-[calc(100dvh-928px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
-                  <div className="relative">
-                    <button
-                      ref={keyToolButtonRef}
-                      onClick={() => setShowKeyToolMenu(!showKeyToolMenu)}
-                      className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer ${showKeyToolMenu ? "bg-[#93C9CF]" : "hover:bg-[#AED0D4]"}`}
-                      style={{ width: "46px", height: "46px", padding: "10px" }}
-                    >
-                      <img src="/images/img_key_tool.svg" alt="key" style={{ width: "100%", height: "100%" }} />
-                    </button>
-                    <ToolMenu
-                      items={keys.length === 0 
-                        ? [{ text: "No keys available", onClick: () => {} }] 
-                        : keys.map(key => ({
-                            text: key.name,
-                            // We'll use a custom attribute to pass the image URL
-                            // The ToolMenu component will use the standard icon property
-                            icon: key.imageUrl,
-                            onClick: () => startKeyPlacement(key)
-                          }))}
-                      isOpen={showKeyToolMenu}
-                      onClose={() => setShowKeyToolMenu(false)}
-                      triggerRef={keyToolButtonRef}
-                    />
-                  </div>
-                </div>
-              )}
+          {/* Панель інструментів */}
+          <div className="fixed top-[calc(100dvh-800px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
+            {tools.map((tool) => {
+              // Для move tool використовуємо обрану іконку
+              const icon = tool.name === "move" ? `img_${selectedMoveTool}_tool.svg` : tool.icon;
 
-              {/* Панель інструментів */}
-              <div className="fixed top-[calc(100dvh-800px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
-                {tools.map((tool) => {
-                  // Для move tool використовуємо обрану іконку
-                  const icon = tool.name === "move" ? `img_${selectedMoveTool}_tool.svg` : tool.icon;
+              return (
+                <div key={tool.name} className="relative">
+                  <button
+                    ref={(el) => (buttonRefs.current[tool.name] = el)}
+                    onClick={() => {
+                      setActiveTool(tool.name);
 
-                  return (
-                      <div key={tool.name} className="relative">
-                        <button
-                            ref={(el) => (buttonRefs.current[tool.name] = el)}
-                            onClick={() => {
-                              setActiveTool(tool.name);
+                      // Handle cursor changes based on tool
+                      if (tool.name === "move") {
+                        if (selectedMoveTool === "hand") {
+                          document.body.style.cursor = "grab";
+                        } else {
+                          document.body.style.cursor = "default";
+                        }
+                      } else if (tool.name === "text") {
+                        setTextMode(true);
+                        document.body.style.cursor = "url('/images/img_plus_tool.svg'), text";
+                      } else if (tool.name === "draw") {
+                        // Set cursor based on current brush type
+                        switch (brushType) {
+                          case "eraser":
+                            document.body.style.cursor = "url('/images/img_eraser_cursor.svg'), auto";
+                            break;
+                          case "default":
+                            document.body.style.cursor = "url('/images/img_pen_cursor.svg'), auto";
+                            break;
+                          case "pencil":
+                            document.body.style.cursor = "url('/images/img_pencil_cursor.svg'), auto";
+                            break;
+                          case "drip":
+                            document.body.style.cursor = "url('/images/img_graphic_pen_cursor.svg'), auto";
+                            break;
+                          case "caligraphy":
+                            document.body.style.cursor = "url('/images/img_marker_cursor.svg'), auto";
+                            break;
+                          case "swirl":
+                            document.body.style.cursor = "url('/images/img_brush_pen_cursor.svg'), auto";
+                            break;
+                          case "foam":
+                            document.body.style.cursor = "url('/images/img_air_brush_cursor.svg'), auto";
+                            break;
+                          case "watercolor":
+                            document.body.style.cursor = "url('/images/img_watercolor_cursor.svg'), auto";
+                            break;
+                          default:
+                            document.body.style.cursor = "url('/images/img_pen_cursor.svg'), auto";
+                        }
+                      } else if (tool.name === "form") {
+                        // Form tool selected, but no specific form type yet
+                        // Cursor will be set when a specific form is selected
+                        document.body.style.cursor = "default";
+                      } else {
+                        // Default cursor for other tools
+                        document.body.style.cursor = "default";
+                      }
 
-                              // Handle cursor changes based on tool
-                              if (tool.name === "move") {
-                                if (selectedMoveTool === "hand") {
-                                  document.body.style.cursor = "grab";
-                                } else {
-                                  document.body.style.cursor = "default";
-                                }
-                              } else if (tool.name === "text") {
-                                setTextMode(true);
-                                document.body.style.cursor = "url('/images/img_plus_tool.svg'), text";
-                              } else if (tool.name === "draw") {
-                                // Set cursor based on current brush type
-                                switch (brushType) {
-                                  case "eraser":
-                                    document.body.style.cursor = "url('/images/img_eraser_cursor.svg'), auto";
-                                    break;
-                                  case "default":
-                                    document.body.style.cursor = "url('/images/img_pen_cursor.svg'), auto";
-                                    break;
-                                  case "pencil":
-                                    document.body.style.cursor = "url('/images/img_pencil_cursor.svg'), auto";
-                                    break;
-                                  case "drip":
-                                    document.body.style.cursor = "url('/images/img_graphic_pen_cursor.svg'), auto";
-                                    break;
-                                  case "caligraphy":
-                                    document.body.style.cursor = "url('/images/img_marker_cursor.svg'), auto";
-                                    break;
-                                  case "swirl":
-                                    document.body.style.cursor = "url('/images/img_brush_pen_cursor.svg'), auto";
-                                    break;
-                                  case "foam":
-                                    document.body.style.cursor = "url('/images/img_air_brush_cursor.svg'), auto";
-                                    break;
-                                  case "watercolor":
-                                    document.body.style.cursor = "url('/images/img_watercolor_cursor.svg'), auto";
-                                    break;
-                                  default:
-                                    document.body.style.cursor = "url('/images/img_pen_cursor.svg'), auto";
-                                }
-                              } else if (tool.name === "form") {
-                                // Form tool selected, but no specific form type yet
-                                // Cursor will be set when a specific form is selected
-                                document.body.style.cursor = "default";
-                              } else {
-                                // Default cursor for other tools
-                                document.body.style.cursor = "default";
-                              }
+                      // Handle text mode
+                      if (tool.name !== "text") {
+                        setTextMode(false);
+                      }
 
-                              // Handle text mode
-                              if (tool.name !== "text") {
-                                setTextMode(false);
-                              }
-
-                              // Handle tool menu
-                              if (toolMenus[tool.name]) {
-                                setActiveToolMenu(activeToolMenu === tool.name ? null : tool.name);
-                              } else {
-                                setActiveToolMenu(null);
-                              }
-                            }}
-                            className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer        
-                        ${activeTool === tool.name ? "bg-[#93C9CF]" : "hover:bg-[#AED0D4]"}`}
-                            style={{ width: "46px", height: "46px", padding: "10px" }}
-                        >
-                          <img src={`/images/${icon}`} alt={tool.name} style={{ width: "100%", height: "100%" }} />
-                        </button>
-                        <ToolMenu
-                            items={toolMenus[tool.name] || []}
-                            isOpen={activeToolMenu === tool.name}
-                            onClose={() => setActiveToolMenu(null)}
-                            triggerRef={{ current: buttonRefs.current[tool.name] }}
-                            isAdvanced={["draw", "form"].includes(tool.name)}
-                            recentColors={recentColors}
-                            currentColor={currentColor}
-                            onColorChange={(color) => {
-                              setCurrentColor(color);
-                              setRecentColors((prev) => [color, ...prev.filter((c) => c !== color)].slice(0, 6));
-                            }}
-                        />
-                      </div>
-                  );
-                })}
-              </div>
-
-              {/* Bookmarks at the top of the browser */}
-              <div className="fixed top-0 left-0 right-0 z-50 flex justify-center gap-2 p-2">
-                {bookmarks.map((bookmark) => (
-                  <div
-                    key={bookmark.id}
-                    className="cursor-pointer flex flex-col items-center"
-                    onClick={() => goToSpread(bookmark.spread)}
-                  >
-                    <div
-                      className="w-[80px] h-[30px] flex items-center justify-center text-white font-medium text-sm rounded-b-lg"
-                      style={{ backgroundColor: bookmark.color }}
-                    >
-                      {bookmark.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Підпис розвороту (spread) */}
-              <div
-                  className="fixed left-[0px] bottom-[0px] z-50 flex justify-center items-center"
-                  style={{
-                    padding: "18px 24px",
-                    background: "#C3DEE1",
-                    borderRadius: "10px 10px 0px 0px",
-                    fontFamily: "Montserrat",
-                    fontSize: 20,
-                    lineHeight: "24px",
-                    color: "#2A2A2A",
-                  }}
-              >
-                Spread {currentSpread + 1}/{book.pageCount}
-              </div>
-
-              {/* Пагінація з іконками */}
-              <div className="fixed bottom-[20px] left-1/2 -translate-x-1/2 z-50 flex gap-[32px]">
-                <button
-                    onClick={goToPrevSpread}
-                    disabled={currentSpread === 0}
-                    className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <img src="/images/img_prev_shelf.svg" alt="Previous" className="w-[24px] h-[24px]" />
-                </button>
-
-                <button
-                    onClick={goToNextSpread}
-                    disabled={currentSpread === book.pageCount - 1}
-                    className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <img src="/images/img_next_shelf.svg" alt="Next" className="w-[24px] h-[24px]" />
-                </button>
-              </div>
-
-              {/* Контейнер редактора */}
-              <div className="w-screen h-screen overflow-hidden bg-[#ebdccb]" ref={editorLeftRef}>
-                {/* Wrapper з padding */}
-                <div
-                    className="relative"
-                    style={{
-                      overflow: "hidden",
-                      boxSizing: "border-box",
-                      minWidth: `${1280 * scale + 120}px`,
-                      minHeight: `${864 * scale + 120}px`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      // Handle tool menu
+                      if (toolMenus[tool.name]) {
+                        setActiveToolMenu(activeToolMenu === tool.name ? null : tool.name);
+                      } else {
+                        setActiveToolMenu(null);
+                      }
                     }}
+                    className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer        
+                        ${activeTool === tool.name ? "bg-[#93C9CF]" : "hover:bg-[#AED0D4]"}`}
+                    style={{ width: "46px", height: "46px", padding: "10px" }}
+                  >
+                    <img src={`/images/${icon}`} alt={tool.name} style={{ width: "100%", height: "100%" }} />
+                  </button>
+                  <ToolMenu
+                    items={toolMenus[tool.name] || []}
+                    isOpen={activeToolMenu === tool.name}
+                    onClose={() => setActiveToolMenu(null)}
+                    triggerRef={{ current: buttonRefs.current[tool.name] }}
+                    isAdvanced={["draw", "form"].includes(tool.name)}
+                    recentColors={recentColors}
+                    currentColor={currentColor}
+                    onColorChange={(color) => {
+                      setCurrentColor(color);
+                      setRecentColors((prev) => [color, ...prev.filter((c) => c !== color)].slice(0, 6));
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bookmarks at the top of the browser */}
+          <div className="fixed top-0 left-0 right-0 z-50 flex justify-center gap-2 p-2">
+            {bookmarks.map((bookmark) => (
+              <div
+                key={bookmark.id}
+                className="cursor-pointer flex flex-col items-center"
+                onClick={() => goToSpread(bookmark.spread)}
+              >
+                <div
+                  className="w-[80px] h-[30px] flex items-center justify-center text-white font-medium text-sm rounded-b-lg"
+                  style={{ backgroundColor: bookmark.color }}
                 >
-                  <HTMLFlipBook
-                      ref={flipBook}
-                      width={640}
-                      height={864}
-                      size="stretch"
-                      minWidth={640}
-                      maxWidth={640}
-                      minHeight={864}
-                      maxHeight={864}
-                      maxShadowOpacity={0.5}
-                      showCover={false}
-                      mobileScrollSupport={false}
-                      clickEventForward={true}
-                      useMouseEvents={false}
-                      onFlip={handlePageChange}
-                      className="shadow-lg flip-book-container relative"
-                      style={{
-                        borderRadius: "20px",
-                        overflow: "hidden",
-                        boxShadow: "-1px 4px 12px 4px rgba(0, 0, 0, 0.3), 4px 0px 12px 4px rgba(0, 0, 0, 0.3)", // Стіл / обʼєм
-                        transform: `scale(${scale})`,
-                        transformOrigin: "center center",
-                        transition: "transform 0.2s ease-out",
-                      }}
-                      startPage={0}
-                  >
-                    {renderPages()}
-                  </HTMLFlipBook>
+                  {bookmark.name}
                 </div>
-                {/* TextMenu */}
-                {showTextSettings && activeTextElement && (
-                    <div
-                        ref={textSettingsRef}
-                        className="fixed z-50 right-[115px] top-[calc(100dvh-710px)] text-settings"
-                    >
-                      <TextMenu
-                          textElement={textElements.find((el) => el.id === activeTextElement)}
-                          onTextElementChange={(updatedElement) => {
-                            setTextElements(
-                                textElements.map((el) => (el.id === activeTextElement ? updatedElement : el))
-                            );
-                          }}
-                      />
-                    </div>
-                )}
-
-                {/* FormMenu */}
-                {showFormSettings && activeFormElement && (
-                    <div
-                        ref={formSettingsRef}
-                        className="fixed z-50 right-[115px] top-[calc(100dvh-710px)] form-settings"
-                    >
-                      <FormMenu
-                          formElement={formElements.find((el) => el.id === activeFormElement)}
-                          onFormElementChange={(updatedElement) => {
-                            setFormElements(
-                                formElements.map((el) => (el.id === activeFormElement ? updatedElement : el))
-                            );
-
-                            // Update the form parameters for new forms
-                            setFillTransparency(updatedElement.fillTransparency);
-                            setStrokeColor(updatedElement.strokeColor);
-                            setStrokeTransparency(updatedElement.strokeTransparency);
-                            setCornerRadius(updatedElement.cornerRadius);
-                            setRotation(updatedElement.rotation);
-                            setStrokeWidth(updatedElement.strokeWidth);
-                          }}
-                      />
-                    </div>
-                )}
               </div>
+            ))}
+          </div>
 
-              {/* Bookmark Modal */}
-              {showBookmarkModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowBookmarkModal(false)}></div>
+          {/* Підпис розвороту (spread) */}
+          <div
+            className="fixed left-[0px] bottom-[0px] z-50 flex justify-center items-center"
+            style={{
+              padding: "18px 24px",
+              background: "#C3DEE1",
+              borderRadius: "10px 10px 0px 0px",
+              fontFamily: "Montserrat",
+              fontSize: 20,
+              lineHeight: "24px",
+              color: "#2A2A2A",
+            }}
+          >
+            Spread {currentSpread + 1}/{book.pageCount}
+          </div>
 
-                  {/* Modal content */}
-                  <div 
-                    ref={bookmarkModalRef}
-                    className="bg-white rounded-lg p-6 w-[400px] shadow-xl relative z-10"
+          {/* Пагінація з іконками */}
+          <div className="fixed bottom-[20px] left-1/2 -translate-x-1/2 z-50 flex gap-[32px]">
+            <button
+              onClick={goToPrevSpread}
+              disabled={currentSpread === 0}
+              className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <img src="/images/img_prev_shelf.svg" alt="Previous" className="w-[24px] h-[24px]" />
+            </button>
+
+            <button
+              onClick={goToNextSpread}
+              disabled={currentSpread === book.pageCount - 1}
+              className="w-[48px] h-[48px] flex items-center justify-center bg-[#C3DEE1] rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <img src="/images/img_next_shelf.svg" alt="Next" className="w-[24px] h-[24px]" />
+            </button>
+          </div>
+
+          {/* Контейнер редактора */}
+          <div className="w-screen h-screen overflow-hidden bg-[#ebdccb]" ref={editorLeftRef}>
+            {/* Wrapper з padding */}
+            <div
+              className="relative"
+              style={{
+                overflow: "hidden",
+                boxSizing: "border-box",
+                minWidth: `${1280 * scale + 120}px`,
+                minHeight: `${864 * scale + 120}px`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <HTMLFlipBook
+                ref={flipBook}
+                width={640}
+                height={864}
+                size="stretch"
+                minWidth={640}
+                maxWidth={640}
+                minHeight={864}
+                maxHeight={864}
+                maxShadowOpacity={0.5}
+                showCover={false}
+                mobileScrollSupport={false}
+                clickEventForward={true}
+                useMouseEvents={false}
+                onFlip={handlePageChange}
+                className="shadow-lg flip-book-container relative"
+                style={{
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                  boxShadow: "-1px 4px 12px 4px rgba(0, 0, 0, 0.3), 4px 0px 12px 4px rgba(0, 0, 0, 0.3)", // Стіл / обʼєм
+                  transform: `scale(${scale})`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.2s ease-out",
+                }}
+                startPage={0}
+              >
+                {renderPages()}
+              </HTMLFlipBook>
+            </div>
+            {/* TextMenu */}
+            {showTextSettings && activeTextElement && (
+              <div
+                ref={textSettingsRef}
+                className="fixed z-50 right-[115px] top-[calc(100dvh-710px)] text-settings"
+              >
+                <TextMenu
+                  textElement={textElements.find((el) => el.id === activeTextElement)}
+                  onTextElementChange={(updatedElement) => {
+                    setTextElements(
+                      textElements.map((el) => (el.id === activeTextElement ? updatedElement : el))
+                    );
+                  }}
+                />
+              </div>
+            )}
+
+            {/* FormMenu */}
+            {showFormSettings && activeFormElement && (
+              <div
+                ref={formSettingsRef}
+                className="fixed z-50 right-[115px] top-[calc(100dvh-710px)] form-settings"
+              >
+                <FormMenu
+                  formElement={formElements.find((el) => el.id === activeFormElement)}
+                  onFormElementChange={(updatedElement) => {
+                    setFormElements(
+                      formElements.map((el) => (el.id === activeFormElement ? updatedElement : el))
+                    );
+
+                    // Update the form parameters for new forms
+                    setFillTransparency(updatedElement.fillTransparency);
+                    setStrokeColor(updatedElement.strokeColor);
+                    setStrokeTransparency(updatedElement.strokeTransparency);
+                    setCornerRadius(updatedElement.cornerRadius);
+                    setRotation(updatedElement.rotation);
+                    setStrokeWidth(updatedElement.strokeWidth);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Bookmark Modal */}
+          {showBookmarkModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowBookmarkModal(false)}
+              ></div>
+
+              {/* Modal content */}
+              <div
+                ref={bookmarkModalRef}
+                className="bg-white rounded-lg p-6 w-[400px] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">Create Bookmark</h2>
+
+                {/* Error message */}
+                {bookmarkError && (
+                  <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{bookmarkError}</div>
+                )}
+
+                {/* Bookmark name */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Bookmark name</label>
+                  <input
+                    type="text"
+                    value={bookmarkForm.name}
+                    onChange={(e) => setBookmarkForm({ ...bookmarkForm, name: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    placeholder="Enter bookmark name"
+                  />
+                </div>
+
+                {/* Spread selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Select a spread</label>
+                  <select
+                    value={bookmarkForm.spread}
+                    onChange={(e) => setBookmarkForm({ ...bookmarkForm, spread: parseInt(e.target.value) })}
+                    className="w-full p-2 border rounded"
                   >
-                    <h2 className="text-2xl font-bold mb-4">Create Bookmark</h2>
+                    {Array.from({ length: book.pageCount }, (_, i) => (
+                      <option key={i} value={i}>
+                        Spread {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                    {/* Error message */}
-                    {bookmarkError && (
-                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                        {bookmarkError}
-                      </div>
-                    )}
-
-                    {/* Bookmark name */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Bookmark name</label>
-                      <input 
-                        type="text" 
-                        value={bookmarkForm.name}
-                        onChange={(e) => setBookmarkForm({...bookmarkForm, name: e.target.value})}
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter bookmark name"
-                      />
-                    </div>
-
-                    {/* Spread selection */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Select a spread</label>
-                      <select 
-                        value={bookmarkForm.spread}
-                        onChange={(e) => setBookmarkForm({...bookmarkForm, spread: parseInt(e.target.value)})}
-                        className="w-full p-2 border rounded"
-                      >
-                        {Array.from({length: book.pageCount}, (_, i) => (
-                          <option key={i} value={i}>Spread {i + 1}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Color selection */}
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium mb-1">Select a color</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {["#93C9CF", "#EFB8C8", "#84A285", "#782746", "#2A2A2A", "#85544D"].map(color => (
-                          <div
-                            key={color}
-                            className={`w-8 h-8 rounded-full cursor-pointer border-2 ${bookmarkForm.color === color ? 'border-black' : 'border-transparent'}`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => setBookmarkForm({...bookmarkForm, color})}
-                          ></div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowBookmarkModal(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={createBookmark}
-                      >
-                        Create
-                      </button>
-                    </div>
+                {/* Color selection */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">Select a color</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {["#93C9CF", "#EFB8C8", "#84A285", "#782746", "#2A2A2A", "#85544D"].map((color) => (
+                      <div
+                        key={color}
+                        className={`w-8 h-8 rounded-full cursor-pointer border-2 ${
+                          bookmarkForm.color === color ? "border-black" : "border-transparent"
+                        }`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setBookmarkForm({ ...bookmarkForm, color })}
+                      ></div>
+                    ))}
                   </div>
                 </div>
-              )}
 
-              {/* Calendar Templates Modal */}
-              {showCalendarModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCalendarModal(false)}></div>
-
-                  {/* Modal content */}
-                  <div 
-                    ref={calendarModalRef}
-                    className="bg-white rounded-lg p-6 w-[800px] max-h-[80vh] shadow-xl relative z-10"
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => setShowBookmarkModal(false)}
                   >
-                    <h2 className="text-2xl font-bold mb-4">Calendar Templates</h2>
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    onClick={createBookmark}
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                    {/* Templates grid */}
-                    <div className="overflow-y-auto max-h-[60vh] mb-4">
-                      <div className="grid grid-cols-5 gap-4">
-                        {calendarTemplates.map((template) => (
-                          <div 
-                            key={template.id}
-                            className="flex flex-col items-center cursor-pointer"
-                            onDoubleClick={() => handleSelectCalendarTemplate(template)}
-                          >
-                            <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
-                              <img 
-                                src={template.url} 
-                                alt={template.name} 
-                                className="max-w-full max-h-full"
-                              />
-                            </div>
-                            <span className="mt-1 text-sm">{template.name}</span>
-                          </div>
-                        ))}
+          {/* Calendar Templates Modal */}
+          {showCalendarModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowCalendarModal(false)}
+              ></div>
 
-                        {/* Add template button */}
-                        <div 
-                          className="flex flex-col items-center cursor-pointer"
-                          onClick={handleAddCalendarTemplate}
+              {/* Modal content */}
+              <div
+                ref={calendarModalRef}
+                className="bg-white rounded-lg p-6 w-[800px] max-h-[80vh] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">Calendar Templates</h2>
+
+                {/* Templates grid */}
+                <div className="overflow-y-auto max-h-[60vh] mb-4">
+                  <div className="grid grid-cols-5 gap-4">
+                    {calendarTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className="flex flex-col items-center cursor-pointer"
+                        onDoubleClick={() => handleSelectCalendarTemplate(template)}
+                      >
+                        <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
+                          <img src={template.url} alt={template.name} className="max-w-full max-h-full" />
+                        </div>
+                        <span className="mt-1 text-sm">{template.name}</span>
+                      </div>
+                    ))}
+
+                    {/* Add template button */}
+                    <div
+                      className="flex flex-col items-center cursor-pointer"
+                      onClick={handleAddCalendarTemplate}
+                    >
+                      <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-12 w-12 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
                         >
-                          <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                          </div>
-                          <span className="mt-1 text-sm">Add template</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowCalendarModal(false)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Calendar Preview Modal */}
-              {showCalendarPreviewModal && selectedCalendarTemplate && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCalendarPreviewModal(false)}></div>
-
-                  {/* Modal content */}
-                  <div 
-                    ref={calendarPreviewModalRef}
-                    className="bg-white rounded-lg p-6 w-[800px] shadow-xl relative z-10"
-                  >
-                    <h2 className="text-2xl font-bold mb-4">{selectedCalendarTemplate.name}</h2>
-
-                    {/* Large preview */}
-                    <div className="flex justify-center mb-6">
-                      <img 
-                        src={selectedCalendarTemplate.url} 
-                        alt={selectedCalendarTemplate.name} 
-                        className="max-w-full max-h-[60vh]"
-                      />
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowCalendarPreviewModal(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={addCalendarToJournal}
-                      >
-                        Create
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Key System Modal */}
-              {showKeySystemModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowKeySystemModal(false)}></div>
-
-                  {/* Modal content */}
-                  <div 
-                    ref={keySystemModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] max-h-[80vh] shadow-xl relative z-10"
-                  >
-                    <h2 className="text-2xl font-bold mb-4">Your key system</h2>
-
-                    {/* Keys display area */}
-                    <div className="overflow-y-auto max-h-[60vh] mb-4">
-                      {keys.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No keys have been added to the system
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-2">
-                          {keys.map((key) => (
-                            <div 
-                              key={key.id}
-                              className="flex items-center p-2 border rounded"
-                            >
-                              <div className="w-[60px] h-[60px] mr-3 overflow-hidden flex items-center justify-center">
-                                <img 
-                                  src={key.imageUrl} 
-                                  alt={key.name} 
-                                  className="w-[20px] h-[20px] transform scale-[3]"
-                                  style={{ transformOrigin: 'center' }}
-                                />
-                              </div>
-                              <span>{key.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-between gap-2">
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={() => {
-                          // Reset form and errors
-                          setKeyForm({ name: "", brushType: "default", color: "#000000" });
-                          setKeyError("");
-                          // Reset drawing canvas and brush state
-                          setKeyDrawingCanvas(null);
-                          keyBrushStateRef.current = {};
-                          // Initialize the color ref
-                          currentKeyColorRef.current = "#000000";
-                          // Reset SVG path data
-                          setSvgPathData("");
-                          // Show setup modal
-                          setShowKeySetupModal(true);
-                          setShowKeySystemModal(false);
-                        }}
-                      >
-                        Add new
-                      </button>
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowKeySystemModal(false)}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Key Setup Modal */}
-              {showKeySetupModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowKeySetupModal(false)}></div>
-
-                  {/* Modal content */}
-                  <div 
-                    ref={keySetupModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
-                  >
-                    <h2 className="text-2xl font-bold mb-4">Set up your key</h2>
-
-                    {/* Error message */}
-                    {keyError && (
-                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                        {keyError}
-                      </div>
-                    )}
-
-                    {/* Key name input */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Key name</label>
-                      <input 
-                        type="text" 
-                        value={keyForm.name}
-                        onChange={(e) => setKeyForm({...keyForm, name: e.target.value})}
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter key name"
-                      />
-                    </div>
-
-
-                    {/* Color picker */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Select a color</label>
-                      <div className="flex flex-col gap-2">
-                        {/* RGB Color Picker */}
-                        <div className="flex items-center gap-2">
-                          <input 
-                            type="color" 
-                            value={keyForm.color}
-                            onChange={(e) => {
-                              const newColor = e.target.value;
-                              currentKeyColorRef.current = newColor;
-                              setKeyForm({...keyForm, color: newColor});
-                            }}
-                            className="w-10 h-10 cursor-pointer"
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
                           />
-                          <span className="text-sm">{keyForm.color}</span>
-                        </div>
-
+                        </svg>
                       </div>
+                      <span className="mt-1 text-sm">Add template</span>
                     </div>
+                  </div>
+                </div>
 
-                    {/* Drawing canvas */}
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium mb-1">Draw the symbol</label>
-                      <div className="relative">
-                        {/* Canvas container */}
-                        <div 
-                          className="border rounded w-full h-[250px] flex items-center justify-center bg-white relative overflow-hidden"
-                          ref={(el) => {
-                            if (el && !keyDrawingCanvas) {
-                              // Create a canvas element
-                              const canvas = document.createElement('canvas');
-                              // Set canvas size to match container size
-                              canvas.width = el.clientWidth;
-                              canvas.height = el.clientHeight;
-                              canvas.style.border = 'none';
-                              canvas.style.width = '100%';
-                              canvas.style.height = '100%';
-                              canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => setShowCalendarModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                              // Clear the canvas
-                              const ctx = canvas.getContext('2d');
-                              ctx.fillStyle = '#ffffff';
-                              ctx.fillRect(0, 0, canvas.width, canvas.height);
+          {/* Calendar Preview Modal */}
+          {showCalendarPreviewModal && selectedCalendarTemplate && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowCalendarPreviewModal(false)}
+              ></div>
 
-                              // Append the canvas to the container
-                              el.innerHTML = '';
-                              el.appendChild(canvas);
+              {/* Modal content */}
+              <div
+                ref={calendarPreviewModalRef}
+                className="bg-white rounded-lg p-6 w-[800px] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">{selectedCalendarTemplate.name}</h2>
 
-                              // Store the canvas reference
-                              setKeyDrawingCanvas(canvas);
+                {/* Large preview */}
+                <div className="flex justify-center mb-6">
+                  <img
+                    src={selectedCalendarTemplate.url}
+                    alt={selectedCalendarTemplate.name}
+                    className="max-w-full max-h-[60vh]"
+                  />
+                </div>
 
-                              // Add event listeners for drawing
-                              let isDrawing = false;
-                              let lastX = 0;
-                              let lastY = 0;
-                              let lastTime = Date.now();
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => setShowCalendarPreviewModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    onClick={addCalendarToJournal}
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                              // Function to update cursor based on brush type
-                              const updateCursor = () => {
-                                canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+          {/* Key System Modal */}
+          {showKeySystemModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowKeySystemModal(false)}
+              ></div>
+
+              {/* Modal content */}
+              <div
+                ref={keySystemModalRef}
+                className="bg-white rounded-lg p-6 w-[600px] max-h-[80vh] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">Your key system</h2>
+
+                {/* Keys display area */}
+                <div className="overflow-y-auto max-h-[60vh] mb-4">
+                  {keys.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No keys have been added to the system
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2">
+                      {keys.map((key) => (
+                        <div key={key.id} className="flex items-center p-2 border rounded">
+                          <div className="w-[60px] h-[60px] mr-3 overflow-hidden flex items-center justify-center">
+                            <img
+                              src={key.imageUrl}
+                              alt={key.name}
+                              className="w-[20px] h-[20px] transform scale-[3]"
+                              style={{ transformOrigin: "center" }}
+                            />
+                          </div>
+                          <span>{key.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-between gap-2">
+                  <button
+                    className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    onClick={() => {
+                      // Reset form and errors
+                      setKeyForm({ name: "", brushType: "default", color: "#000000" });
+                      setKeyError("");
+                      // Reset drawing canvas and brush state
+                      setKeyDrawingCanvas(null);
+                      keyBrushStateRef.current = {};
+                      // Initialize the color ref
+                      currentKeyColorRef.current = "#000000";
+                      // Reset SVG path data
+                      setSvgPathData("");
+                      // Show setup modal
+                      setShowKeySetupModal(true);
+                      setShowKeySystemModal(false);
+                    }}
+                  >
+                    Add new
+                  </button>
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => setShowKeySystemModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Key Setup Modal */}
+          {showKeySetupModal && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowKeySetupModal(false)}
+              ></div>
+
+              {/* Modal content */}
+              <div
+                ref={keySetupModalRef}
+                className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">Set up your key</h2>
+
+                {/* Error message */}
+                {keyError && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{keyError}</div>}
+
+                {/* Key name input */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Key name</label>
+                  <input
+                    type="text"
+                    value={keyForm.name}
+                    onChange={(e) => setKeyForm({ ...keyForm, name: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    placeholder="Enter key name"
+                  />
+                </div>
+
+                {/* Color picker */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Select a color</label>
+                  <div className="flex flex-col gap-2">
+                    {/* RGB Color Picker */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={keyForm.color}
+                        onChange={(e) => {
+                          const newColor = e.target.value;
+                          currentKeyColorRef.current = newColor;
+                          setKeyForm({ ...keyForm, color: newColor });
+                        }}
+                        className="w-10 h-10 cursor-pointer"
+                      />
+                      <span className="text-sm">{keyForm.color}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Drawing canvas */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">Draw the symbol</label>
+                  <div className="relative">
+                    {/* Canvas container */}
+                    <div
+                      className="border rounded w-full h-[250px] flex items-center justify-center bg-white relative overflow-hidden"
+                      ref={(el) => {
+                        if (el && !keyDrawingCanvas) {
+                          // Create a canvas element
+                          const canvas = document.createElement("canvas");
+                          // Set canvas size to match container size
+                          canvas.width = el.clientWidth;
+                          canvas.height = el.clientHeight;
+                          canvas.style.border = "none";
+                          canvas.style.width = "100%";
+                          canvas.style.height = "100%";
+                          canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+
+                          // Clear the canvas
+                          const ctx = canvas.getContext("2d");
+                          ctx.fillStyle = "#ffffff";
+                          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                          // Append the canvas to the container
+                          el.innerHTML = "";
+                          el.appendChild(canvas);
+
+                          // Store the canvas reference
+                          setKeyDrawingCanvas(canvas);
+
+                          // Add event listeners for drawing
+                          let isDrawing = false;
+                          let lastX = 0;
+                          let lastY = 0;
+                          let lastTime = Date.now();
+
+                          // Function to update cursor based on brush type
+                          const updateCursor = () => {
+                            canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+                          };
+
+                          canvas.addEventListener("mousedown", (e) => {
+                            isDrawing = true;
+                            const rect = canvas.getBoundingClientRect();
+                            lastX = e.clientX - rect.left;
+                            lastY = e.clientY - rect.top;
+
+                            // Initialize or reset brush state for the current brush type
+                            const brushType = "default";
+                            if (brushType) {
+                              // Keep some properties like lastPoints for smooth transitions between strokes
+                              const existingState = keyBrushStateRef.current[brushType] || {};
+                              keyBrushStateRef.current[brushType] = {
+                                // Keep lastPoints if they exist, otherwise initialize to empty array
+                                lastPoints: existingState.lastPoints || [],
+                                // Reset other properties
+                                lastSpeed: 0,
+                                lastWidth: 3, // Slightly larger brush size for better visibility
+                                lastPressure: 0.5,
+                                lastGrainOffset: existingState.lastGrainOffset || 0,
                               };
+                            }
 
-                              canvas.addEventListener('mousedown', (e) => {
-                                isDrawing = true;
-                                const rect = canvas.getBoundingClientRect();
-                                lastX = e.clientX - rect.left;
-                                lastY = e.clientY - rect.top;
+                            // Start a new SVG path
+                            setSvgPathData(`M ${lastX} ${lastY}`);
+                          });
 
-                                // Initialize or reset brush state for the current brush type
-                                const brushType = "default";
-                                if (brushType) {
-                                  // Keep some properties like lastPoints for smooth transitions between strokes
-                                  const existingState = keyBrushStateRef.current[brushType] || {};
-                                  keyBrushStateRef.current[brushType] = {
-                                    // Keep lastPoints if they exist, otherwise initialize to empty array
-                                    lastPoints: existingState.lastPoints || [],
-                                    // Reset other properties
-                                    lastSpeed: 0,
-                                    lastWidth: 3, // Slightly larger brush size for better visibility
-                                    lastPressure: 0.5,
-                                    lastGrainOffset: existingState.lastGrainOffset || 0,
-                                  };
-                                }
+                          canvas.addEventListener("mousemove", (e) => {
+                            if (!isDrawing) return;
 
-                                // Start a new SVG path
-                                setSvgPathData(`M ${lastX} ${lastY}`);
-                              });
+                            const rect = canvas.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const y = e.clientY - rect.top;
 
-                              canvas.addEventListener('mousemove', (e) => {
-                                if (!isDrawing) return;
+                            const brushType = "default";
+                            const brushHandler = brushHandlers[brushType] || brushHandlers.default;
 
+                            // Get the current brush state or initialize an empty object
+                            const currentBrushState = keyBrushStateRef.current[brushType] || {};
+
+                            // Call the brush handler with the current state
+                            const newBrushState = brushHandler(ctx, {
+                              start: { x: lastX, y: lastY },
+                              end: { x, y },
+                              color: currentKeyColorRef.current,
+                              size: 3, // Slightly larger brush size for better visibility
+                              lastTime: lastTime,
+                              ...currentBrushState, // Spread the current brush state
+                            });
+
+                            // Update the brush state if the handler returned a new state
+                            if (newBrushState) {
+                              keyBrushStateRef.current[brushType] = newBrushState;
+                            }
+
+                            // Add a line segment to the SVG path
+                            setSvgPathData((prevPath) => `${prevPath} L ${x} ${y}`);
+
+                            lastX = x;
+                            lastY = y;
+                            lastTime = Date.now();
+                          });
+
+                          canvas.addEventListener("mouseup", (e) => {
+                            if (isDrawing) {
+                              const brushType = "default";
+                              if (brushType) {
                                 const rect = canvas.getBoundingClientRect();
                                 const x = e.clientX - rect.left;
                                 const y = e.clientY - rect.top;
 
-                                const brushType = "default";
                                 const brushHandler = brushHandlers[brushType] || brushHandlers.default;
-
-                                // Get the current brush state or initialize an empty object
                                 const currentBrushState = keyBrushStateRef.current[brushType] || {};
 
-                                // Call the brush handler with the current state
+                                // Call the brush handler with isEndOfStroke flag
                                 const newBrushState = brushHandler(ctx, {
                                   start: { x: lastX, y: lastY },
                                   end: { x, y },
                                   color: currentKeyColorRef.current,
                                   size: 3, // Slightly larger brush size for better visibility
                                   lastTime: lastTime,
-                                  ...currentBrushState, // Spread the current brush state
+                                  isEndOfStroke: true, // Flag to indicate end of stroke
+                                  ...currentBrushState,
                                 });
 
-                                // Update the brush state if the handler returned a new state
+                                // Update the brush state
                                 if (newBrushState) {
                                   keyBrushStateRef.current[brushType] = newBrushState;
                                 }
-
-                                // Add a line segment to the SVG path
-                                setSvgPathData(prevPath => `${prevPath} L ${x} ${y}`);
-
-                                lastX = x;
-                                lastY = y;
-                                lastTime = Date.now();
-                              });
-
-                              canvas.addEventListener('mouseup', (e) => {
-                                if (isDrawing) {
-                                  const brushType = "default";
-                                  if (brushType) {
-                                    const rect = canvas.getBoundingClientRect();
-                                    const x = e.clientX - rect.left;
-                                    const y = e.clientY - rect.top;
-
-                                    const brushHandler = brushHandlers[brushType] || brushHandlers.default;
-                                    const currentBrushState = keyBrushStateRef.current[brushType] || {};
-
-                                    // Call the brush handler with isEndOfStroke flag
-                                    const newBrushState = brushHandler(ctx, {
-                                      start: { x: lastX, y: lastY },
-                                      end: { x, y },
-                                      color: currentKeyColorRef.current,
-                                      size: 3, // Slightly larger brush size for better visibility
-                                      lastTime: lastTime,
-                                      isEndOfStroke: true, // Flag to indicate end of stroke
-                                      ...currentBrushState,
-                                    });
-
-                                    // Update the brush state
-                                    if (newBrushState) {
-                                      keyBrushStateRef.current[brushType] = newBrushState;
-                                    }
-                                  }
-                                }
-                                isDrawing = false;
-                              });
-
-                              canvas.addEventListener('mouseleave', () => {
-                                isDrawing = false;
-                              });
-
-                              // Update cursor when brush type changes
-                              const observer = new MutationObserver(() => {
-                                updateCursor();
-                              });
-                              observer.observe(el, { attributes: true, childList: true, subtree: true });
-                            }
-                          }}
-                        ></div>
-
-                        {/* Canvas controls */}
-                        <div className="absolute top-2 right-2 flex gap-1">
-                          <button 
-                            className="bg-white p-1 rounded border hover:bg-gray-100"
-                            onClick={() => {
-                              if (keyDrawingCanvas) {
-                                const ctx = keyDrawingCanvas.getContext('2d');
-                                ctx.fillStyle = '#ffffff';
-                                ctx.fillRect(0, 0, keyDrawingCanvas.width, keyDrawingCanvas.height);
-                                // Reset SVG path data
-                                setSvgPathData("");
                               }
-                            }}
-                            title="Clear canvas"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                            }
+                            isDrawing = false;
+                          });
 
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                          canvas.addEventListener("mouseleave", () => {
+                            isDrawing = false;
+                          });
+
+                          // Update cursor when brush type changes
+                          const observer = new MutationObserver(() => {
+                            updateCursor();
+                          });
+                          observer.observe(el, { attributes: true, childList: true, subtree: true });
+                        }
+                      }}
+                    ></div>
+
+                    {/* Canvas controls */}
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <button
+                        className="bg-white p-1 rounded border hover:bg-gray-100"
                         onClick={() => {
-                          // Reset drawing canvas and brush state
-                          setKeyDrawingCanvas(null);
-                          keyBrushStateRef.current = {};
-                          // Reset SVG path data
-                          setSvgPathData("");
-
-                          setShowKeySetupModal(false);
-                          setShowKeySystemModal(true);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={() => {
-                          // Validate form
-                          if (!keyForm.name.trim()) {
-                            setKeyError("Please fill in all the fields");
-                            return;
-                          }
-
-                          // Check for duplicate key name
-                          if (keys.some(key => key.name === keyForm.name.trim())) {
-                            setKeyError("A key with this name already exists");
-                            return;
-                          }
-
-                          // Create an SVG from the path data
                           if (keyDrawingCanvas) {
-                            // Get the canvas dimensions
-                            const canvasWidth = keyDrawingCanvas.width;
-                            const canvasHeight = keyDrawingCanvas.height;
+                            const ctx = keyDrawingCanvas.getContext("2d");
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillRect(0, 0, keyDrawingCanvas.width, keyDrawingCanvas.height);
+                            // Reset SVG path data
+                            setSvgPathData("");
+                          }
+                        }}
+                        title="Clear canvas"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                            // Create SVG content with the path data
-                            const svgContent = `
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => {
+                      // Reset drawing canvas and brush state
+                      setKeyDrawingCanvas(null);
+                      keyBrushStateRef.current = {};
+                      // Reset SVG path data
+                      setSvgPathData("");
+
+                      setShowKeySetupModal(false);
+                      setShowKeySystemModal(true);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    onClick={() => {
+                      // Validate form
+                      if (!keyForm.name.trim()) {
+                        setKeyError("Please fill in all the fields");
+                        return;
+                      }
+
+                      // Check for duplicate key name
+                      if (keys.some((key) => key.name === keyForm.name.trim())) {
+                        setKeyError("A key with this name already exists");
+                        return;
+                      }
+
+                      // Create an SVG from the path data
+                      if (keyDrawingCanvas) {
+                        // Get the canvas dimensions
+                        const canvasWidth = keyDrawingCanvas.width;
+                        const canvasHeight = keyDrawingCanvas.height;
+
+                        // Create SVG content with the path data
+                        const svgContent = `
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
                                 <path d="${svgPathData}" fill="none" stroke="${keyForm.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
                               </svg>
                             `;
 
-                            // Create data URL
-                            const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+                        // Create data URL
+                        const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+                          svgContent
+                        )}`;
 
-                            // Create a new key
-                            const newKey = {
-                              id: Date.now(),
-                              name: keyForm.name.trim(),
-                              imageUrl: svgDataUrl,
-                              brushType: "default",
-                              color: keyForm.color
-                            };
+                        // Create a new key
+                        const newKey = {
+                          id: Date.now(),
+                          name: keyForm.name.trim(),
+                          imageUrl: svgDataUrl,
+                          brushType: "default",
+                          color: keyForm.color,
+                        };
 
-                            // Add to keys
-                            setKeys([...keys, newKey]);
+                        // Add to keys
+                        setKeys([...keys, newKey]);
 
-                            // Reset drawing canvas and brush state
-                            setKeyDrawingCanvas(null);
-                            keyBrushStateRef.current = {};
-                            // Reset SVG path data
-                            setSvgPathData("");
+                        // Reset drawing canvas and brush state
+                        setKeyDrawingCanvas(null);
+                        keyBrushStateRef.current = {};
+                        // Reset SVG path data
+                        setSvgPathData("");
 
-                            // Close modal and show key system modal
-                            setShowKeySetupModal(false);
-                            setShowKeySystemModal(true);
-                          }
-                        }}
-                      >
-                        Create
-                      </button>
-                    </div>
-                  </div>
+                        // Close modal and show key system modal
+                        setShowKeySetupModal(false);
+                        setShowKeySystemModal(true);
+                      }
+                    }}
+                  >
+                    Create
+                  </button>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-              {/* Event System Modal */}
-              {showEventSystemModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEventSystemModal(false)}></div>
+          {/* Event System Modal */}
+          {showEventSystemModal && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowEventSystemModal(false)}
+              ></div>
 
-                  {/* Style for marquee animation */}
-                  <style>
-                    {`
+              {/* Style for marquee animation */}
+              <style>
+                {`
                       @keyframes marquee {
                         0% { transform: translateX(0%); }
                         100% { transform: translateX(-100%); }
@@ -2849,249 +2981,279 @@ const Journal = () => {
                         animation: marquee 30s linear infinite;
                       }
                     `}
-                  </style>
+              </style>
 
-                  {/* Modal content */}
-                  <div 
-                    ref={eventSystemModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
-                  >
-                    <h2 className="text-2xl font-bold mb-4">Your event system</h2>
+              {/* Modal content */}
+              <div
+                ref={eventSystemModalRef}
+                className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">Your event system</h2>
 
-                    {/* Events area with scrolling */}
-                    <div className="mb-6 max-h-[400px] overflow-y-auto">
-                      {events.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No events have been added to the system
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {events.map((event, index) => (
-                            <div key={index} className="p-3 border rounded bg-gray-50">
-                              <div className="flex items-center">
-                                <div className="font-medium mr-2">
-                                  {event.isAnnual 
-                                    ? `${formatDay(event.day)}.${getMonthNumber(event.month)} (Annual)` 
-                                    : `${formatDay(event.day)}.${getMonthNumber(event.month)}.${event.year}`}
-                                </div>
-                                <div className="marquee-container">
-                                  <div 
-                                    className="marquee-text" 
-                                    id={`event-desc-${index}`}
-                                    ref={(el) => {
-                                      if (el) {
-                                        // Check if text overflows container
-                                        const isOverflowing = el.scrollWidth > el.parentElement.clientWidth;
-                                        // Apply animation class only if text overflows
-                                        if (isOverflowing) {
-                                          el.classList.add('animate');
-                                        } else {
-                                          el.classList.remove('animate');
-                                        }
-                                      }
-                                    }}
-                                  >
-                                    {event.description}
-                                  </div>
-                                </div>
+                {/* Events area with scrolling */}
+                <div className="mb-6 max-h-[400px] overflow-y-auto">
+                  {events.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No events have been added to the system
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {events.map((event, index) => (
+                        <div key={index} className="p-3 border rounded bg-gray-50">
+                          <div className="flex items-center">
+                            <div className="font-medium mr-2">
+                              {event.isAnnual
+                                ? `${formatDay(event.day)}.${getMonthNumber(event.month)} (Annual)`
+                                : `${formatDay(event.day)}.${getMonthNumber(event.month)}.${event.year}`}
+                            </div>
+                            <div className="marquee-container">
+                              <div
+                                className="marquee-text"
+                                id={`event-desc-${index}`}
+                                ref={(el) => {
+                                  if (el) {
+                                    // Check if text overflows container
+                                    const isOverflowing = el.scrollWidth > el.parentElement.clientWidth;
+                                    // Apply animation class only if text overflows
+                                    if (isOverflowing) {
+                                      el.classList.add("animate");
+                                    } else {
+                                      el.classList.remove("animate");
+                                    }
+                                  }
+                                }}
+                              >
+                                {event.description}
                               </div>
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-between gap-2">
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={() => {
-                          // Reset form and errors
-                          setEventForm({
-                            day: '',
-                            month: '',
-                            year: '',
-                            description: '',
-                            isAnnual: false,
-                            sendReminders: false
-                          });
-                          setEventError("");
-                          // Show event setup modal
-                          setShowEventSetupModal(true);
-                          setShowEventSystemModal(false);
-                        }}
-                      >
-                        Add new
-                      </button>
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowEventSystemModal(false)}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
 
-              {/* Event Setup Modal */}
-              {showEventSetupModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEventSetupModal(false)}></div>
-
-                  {/* Modal content */}
-                  <div 
-                    ref={eventSetupModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+                {/* Buttons */}
+                <div className="flex justify-between gap-2">
+                  <button
+                    className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    onClick={() => {
+                      // Reset form and errors
+                      setEventForm({
+                        day: "",
+                        month: "",
+                        year: "",
+                        description: "",
+                        isAnnual: false,
+                        sendReminders: false,
+                      });
+                      setEventError("");
+                      // Show event setup modal
+                      setShowEventSetupModal(true);
+                      setShowEventSystemModal(false);
+                    }}
                   >
-                    <h2 className="text-2xl font-bold mb-4">Customize your event</h2>
+                    Add new
+                  </button>
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => setShowEventSystemModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                    {/* Error message */}
-                    {eventError && (
-                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                        {eventError}
-                      </div>
-                    )}
+          {/* Event Setup Modal */}
+          {showEventSetupModal && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center">
+              {/* Darkened background */}
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setShowEventSetupModal(false)}
+              ></div>
 
-                    {/* Event date fields */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Event date</label>
-                      <div className="flex items-center gap-3">
-                        <select 
-                          value={eventForm.day}
-                          onChange={(e) => setEventForm({...eventForm, day: e.target.value})}
-                          className="w-20 p-2 border rounded"
-                        >
-                          <option value="">Day</option>
-                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                            <option key={day} value={day}>{day}</option>
-                          ))}
-                        </select>
-                        <select 
-                          value={eventForm.month}
-                          onChange={(e) => setEventForm({...eventForm, month: e.target.value})}
-                          className="w-24 p-2 border rounded"
-                        >
-                          <option value="">Month</option>
-                          {['January', 'February', 'March', 'April', 'May', 'June', 'July', 
-                            'August', 'September', 'October', 'November', 'December'].map(month => (
-                            <option key={month} value={month}>{month}</option>
-                          ))}
-                        </select>
-                        <select 
-                          value={eventForm.year}
-                          onChange={(e) => setEventForm({...eventForm, year: e.target.value})}
-                          className={`w-20 p-2 border rounded ${eventForm.isAnnual ? 'bg-gray-100' : ''}`}
-                          disabled={eventForm.isAnnual}
-                        >
-                          <option value="">Year</option>
-                          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
-                        <div className="flex items-center ml-4">
-                          <input 
-                            type="checkbox" 
-                            id="annualEvent"
-                            checked={eventForm.isAnnual}
-                            onChange={(e) => {
-                              const isChecked = e.target.checked;
-                              setEventForm({
-                                ...eventForm, 
-                                isAnnual: isChecked,
-                                // Clear the year field if the checkbox is checked
-                                year: isChecked ? '' : eventForm.year
-                              });
-                            }}
-                            className="mr-2"
-                          />
-                          <label htmlFor="annualEvent" className="text-sm">An annual event</label>
-                        </div>
-                      </div>
-                    </div>
+              {/* Modal content */}
+              <div
+                ref={eventSetupModalRef}
+                className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+              >
+                <h2 className="text-2xl font-bold mb-4">Customize your event</h2>
 
-                    {/* Event description */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Description</label>
-                      <textarea 
-                        value={eventForm.description}
-                        onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter event description"
-                        rows={3}
+                {/* Error message */}
+                {eventError && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{eventError}</div>}
+
+                {/* Event date fields */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Event date</label>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={eventForm.day}
+                      onChange={(e) => setEventForm({ ...eventForm, day: e.target.value })}
+                      className="w-20 p-2 border rounded"
+                    >
+                      <option value="">Day</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <option key={day} value={day}>
+                          {day}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={eventForm.month}
+                      onChange={(e) => setEventForm({ ...eventForm, month: e.target.value })}
+                      className="w-24 p-2 border rounded"
+                    >
+                      <option value="">Month</option>
+                      {[
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December",
+                      ].map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={eventForm.year}
+                      onChange={(e) => setEventForm({ ...eventForm, year: e.target.value })}
+                      className={`w-20 p-2 border rounded ${eventForm.isAnnual ? "bg-gray-100" : ""}`}
+                      disabled={eventForm.isAnnual}
+                    >
+                      <option value="">Year</option>
+                      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex items-center ml-4">
+                      <input
+                        type="checkbox"
+                        id="annualEvent"
+                        checked={eventForm.isAnnual}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setEventForm({
+                            ...eventForm,
+                            isAnnual: isChecked,
+                            // Clear the year field if the checkbox is checked
+                            year: isChecked ? "" : eventForm.year,
+                          });
+                        }}
+                        className="mr-2"
                       />
-                    </div>
-
-                    {/* Email reminder checkbox */}
-                    <div className="mb-6">
-                      <div className="flex items-center">
-                        <input 
-                          type="checkbox" 
-                          id="sendReminders"
-                          checked={eventForm.sendReminders}
-                          onChange={(e) => setEventForm({...eventForm, sendReminders: e.target.checked})}
-                          className="mr-2"
-                        />
-                        <label htmlFor="sendReminders" className="text-sm">Send reminders by email</label>
-                      </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => {
-                          // Close setup modal and show event system modal
-                          setShowEventSetupModal(false);
-                          setShowEventSystemModal(true);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={() => {
-                          // Validate form
-                          if (!eventForm.day || !eventForm.month || (!eventForm.year && !eventForm.isAnnual) || !eventForm.description) {
-                            setEventError("Please fill in all fields");
-                            return;
-                          }
-
-                          // Create new event
-                          const newEvent = {
-                            day: eventForm.day,
-                            month: eventForm.month,
-                            year: eventForm.isAnnual ? '' : eventForm.year,
-                            description: eventForm.description,
-                            isAnnual: eventForm.isAnnual,
-                            sendReminders: eventForm.sendReminders
-                          };
-
-                          // Add to events list
-                          setEvents([...events, newEvent]);
-
-                          // If sendReminders is checked, schedule email reminder
-                          if (eventForm.sendReminders) {
-                            // In a real implementation, this would integrate with SendGrid
-                            // to schedule an email reminder at 00:00 on the event date
-                            console.log(`Email reminder scheduled for ${formatDay(newEvent.day)}.${getMonthNumber(newEvent.month)}.${newEvent.year || '(Annual)'}`);
-                          }
-
-                          // Close setup modal and show event system modal
-                          setShowEventSetupModal(false);
-                          setShowEventSystemModal(true);
-                        }}
-                      >
-                        Create
-                      </button>
+                      <label htmlFor="annualEvent" className="text-sm">
+                        An annual event
+                      </label>
                     </div>
                   </div>
                 </div>
-              )}
-            </>
-        )}
-      </div>
+
+                {/* Event description */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={eventForm.description}
+                    onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                    className="w-full p-2 border rounded"
+                    placeholder="Enter event description"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Email reminder checkbox */}
+                <div className="mb-6">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="sendReminders"
+                      checked={eventForm.sendReminders}
+                      onChange={(e) => setEventForm({ ...eventForm, sendReminders: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <label htmlFor="sendReminders" className="text-sm">
+                      Send reminders by email
+                    </label>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                    onClick={() => {
+                      // Close setup modal and show event system modal
+                      setShowEventSetupModal(false);
+                      setShowEventSystemModal(true);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    onClick={() => {
+                      // Validate form
+                      if (
+                        !eventForm.day ||
+                        !eventForm.month ||
+                        (!eventForm.year && !eventForm.isAnnual) ||
+                        !eventForm.description
+                      ) {
+                        setEventError("Please fill in all fields");
+                        return;
+                      }
+
+                      // Create new event
+                      const newEvent = {
+                        day: eventForm.day,
+                        month: eventForm.month,
+                        year: eventForm.isAnnual ? "" : eventForm.year,
+                        description: eventForm.description,
+                        isAnnual: eventForm.isAnnual,
+                        sendReminders: eventForm.sendReminders,
+                      };
+
+                      // Add to events list
+                      setEvents([...events, newEvent]);
+
+                      // If sendReminders is checked, schedule email reminder
+                      if (eventForm.sendReminders) {
+                        // In a real implementation, this would integrate with SendGrid
+                        // to schedule an email reminder at 00:00 on the event date
+                        console.log(
+                          `Email reminder scheduled for ${formatDay(newEvent.day)}.${getMonthNumber(
+                            newEvent.month
+                          )}.${newEvent.year || "(Annual)"}`
+                        );
+                      }
+
+                      // Close setup modal and show event system modal
+                      setShowEventSetupModal(false);
+                      setShowEventSystemModal(true);
+                    }}
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 };
 
