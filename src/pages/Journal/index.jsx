@@ -53,6 +53,7 @@ const Journal = () => {
   const book = location.state?.book;
   const flipBook = useRef(null);
   const buttonRefs = useRef({});
+  const keyToolButtonRef = useRef(null);
 
   // Canvas - separate refs for left and right pages
   const canvasLeftRef = useRef(null);
@@ -198,6 +199,9 @@ const Journal = () => {
   const [keyDrawingCanvas, setKeyDrawingCanvas] = useState(null);
   const keyBrushStateRef = useRef({});
   const currentKeyColorRef = useRef("#000000");
+  const [showKeyToolMenu, setShowKeyToolMenu] = useState(false);
+  const [isKeyPlacementMode, setIsKeyPlacementMode] = useState(false);
+  const [keyPlacementData, setKeyPlacementData] = useState(null);
   const [svgPathData, setSvgPathData] = useState("");
 
   const textSettingsRef = useClickAway(() => setShowTextSettings(false));
@@ -619,6 +623,28 @@ const Journal = () => {
           selectedImageFile={{ fileUrl: calendarPlacementData.template.url }}
         />
       );
+    } 
+    // Special handling for key placement
+    else if (formType === "image" && isKeyPlacementMode && keyPlacementData) {
+      // Render the key preview
+      const root = ReactDOM.createRoot(tempFormElement);
+      root.render(
+        <TempFormElement
+          formType="image"
+          left={left}
+          top={top}
+          width={width}
+          height={height}
+          fillColor={currentColor}
+          fillTransparency={100}
+          strokeColor="#000000"
+          strokeTransparency={100}
+          cornerRadius={0}
+          rotation={0}
+          strokeWidth={1}
+          selectedImageFile={{ fileUrl: keyPlacementData.key.imageUrl }}
+        />
+      );
     } else {
       // Render the standard form element preview
       const root = ReactDOM.createRoot(tempFormElement);
@@ -688,6 +714,17 @@ const Journal = () => {
       if (formType === "calendar" && isCalendarPlacementMode && calendarPlacementData) {
         // Finalize calendar placement
         finalizeCalendarPlacement(pageIndex, left, top, width, height);
+
+        // Clean up
+        tempFormElementContainer.remove();
+        setIsDragging(false);
+        return;
+      }
+
+      // Special handling for key placement
+      if (formType === "image" && isKeyPlacementMode && keyPlacementData) {
+        // Finalize key placement
+        finalizeKeyPlacement(pageIndex, left, top, width, height);
 
         // Clean up
         tempFormElementContainer.remove();
@@ -1428,6 +1465,7 @@ const Journal = () => {
       rotation: 0,
       strokeWidth: 1,
       pageIndex: pageIndex,
+      isCalendar: true, // Mark this as a calendar element
     };
 
     // Add to form elements
@@ -1441,6 +1479,74 @@ const Journal = () => {
 
     // Reset selected template
     setSelectedCalendarTemplate(null);
+
+    // Switch to move tool
+    setActiveTool("move");
+    document.body.style.cursor = "default";
+  };
+
+  // Function to check if there's a calendar on the current spread
+  const hasCalendarOnCurrentSpread = () => {
+    // A spread consists of two pages (left and right)
+    const leftPageIndex = currentSpread * 2;
+    const rightPageIndex = currentSpread * 2 + 1;
+
+    // Check if any form element is a calendar and is on the current spread
+    return formElements.some(
+      element => element.isCalendar && 
+      (element.pageIndex === leftPageIndex || element.pageIndex === rightPageIndex)
+    );
+  };
+
+  // Function to start key placement mode
+  const startKeyPlacement = (key) => {
+    // Set up key placement data
+    setKeyPlacementData({
+      key: key
+    });
+
+    // Enter key placement mode
+    setIsKeyPlacementMode(true);
+    setShowKeyToolMenu(false);
+
+    // Set form type to image (keys are placed as images)
+    setFormType("image");
+
+    // Activate form canvas for placement
+    setIsFormActive(true);
+  };
+
+  // Function to finalize key placement and add it to the journal
+  const finalizeKeyPlacement = (pageIndex, x, y, width, height) => {
+    if (!keyPlacementData || !keyPlacementData.key) return;
+
+    // Create a new form element for the key
+    const newFormElement = {
+      id: Date.now(),
+      type: "image",
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      fileUrl: keyPlacementData.key.imageUrl,
+      fillTransparency: 100,
+      strokeColor: "#000000",
+      strokeTransparency: 100,
+      cornerRadius: 0,
+      rotation: 0,
+      strokeWidth: 1,
+      pageIndex: pageIndex,
+      isKey: true, // Mark this as a key element
+    };
+
+    // Add to form elements
+    setFormElements([...formElements, newFormElement]);
+
+    // Exit key placement mode
+    setIsKeyPlacementMode(false);
+    setKeyPlacementData(null);
+    setIsFormActive(false);
+    setFormType(null);
 
     // Switch to move tool
     setActiveTool("move");
@@ -1812,6 +1918,36 @@ const Journal = () => {
         {/* Відкритий щоденник + інструменти */}
         {isOpened && (
             <>
+              {/* Key toolbar - appears only when a calendar is on the current spread */}
+              {hasCalendarOnCurrentSpread() && (
+                <div className="fixed top-[calc(100dvh-928px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
+                  <div className="relative">
+                    <button
+                      ref={keyToolButtonRef}
+                      onClick={() => setShowKeyToolMenu(!showKeyToolMenu)}
+                      className={`flex justify-center items-center rounded-[12px] transition-all duration-200 cursor-pointer ${showKeyToolMenu ? "bg-[#93C9CF]" : "hover:bg-[#AED0D4]"}`}
+                      style={{ width: "46px", height: "46px", padding: "10px" }}
+                    >
+                      <img src="/images/img_key_tool.svg" alt="key" style={{ width: "100%", height: "100%" }} />
+                    </button>
+                    <ToolMenu
+                      items={keys.length === 0 
+                        ? [{ text: "No keys available", onClick: () => {} }] 
+                        : keys.map(key => ({
+                            text: key.name,
+                            // We'll use a custom attribute to pass the image URL
+                            // The ToolMenu component will use the standard icon property
+                            icon: key.imageUrl,
+                            onClick: () => startKeyPlacement(key)
+                          }))}
+                      isOpen={showKeyToolMenu}
+                      onClose={() => setShowKeyToolMenu(false)}
+                      triggerRef={keyToolButtonRef}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Панель інструментів */}
               <div className="fixed top-[calc(100dvh-800px)] right-[40px] z-50 flex flex-col items-center py-[28px] px-[8px] gap-[18px] bg-[#C3DEE1] rounded-[16px] shadow-[ -4px_4px_10px_rgba(0,0,0,0.25)]">
                 {tools.map((tool) => {
@@ -2258,11 +2394,14 @@ const Journal = () => {
                               key={key.id}
                               className="flex items-center p-2 border rounded"
                             >
-                              <img 
-                                src={key.imageUrl} 
-                                alt={key.name} 
-                                className="w-12 h-12 mr-3"
-                              />
+                              <div className="w-[60px] h-[60px] mr-3 overflow-hidden flex items-center justify-center">
+                                <img 
+                                  src={key.imageUrl} 
+                                  alt={key.name} 
+                                  className="w-[20px] h-[20px] transform scale-[3]"
+                                  style={{ transformOrigin: 'center' }}
+                                />
+                              </div>
                               <span>{key.name}</span>
                             </div>
                           ))}

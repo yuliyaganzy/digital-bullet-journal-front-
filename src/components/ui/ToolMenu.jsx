@@ -85,11 +85,14 @@ const ToolMenu = ({
                             >
                                 <span>{item.text}</span>
                                 {item.icon && (
-                                    <img
-                                        src={`/images/${item.icon}`}
-                                        alt={item.text}
-                                        className="w-[24px] h-[24px]"
-                                    />
+                                    <div className={item.icon.startsWith('http') || item.icon.startsWith('data:') ? "w-[30px] h-[30px] overflow-hidden flex items-center justify-center" : "w-[24px] h-[24px] overflow-hidden flex items-center justify-center"}>
+                                        <img
+                                            src={item.icon.startsWith('http') || item.icon.startsWith('data:') ? item.icon : `/images/${item.icon}`}
+                                            alt={item.text}
+                                            className={item.icon.startsWith('http') || item.icon.startsWith('data:') ? "w-[24px] h-[24px] transform scale-[3]" : "w-[24px] h-[24px]"}
+                                            style={item.icon.startsWith('http') || item.icon.startsWith('data:') ? { transformOrigin: 'center' } : {}}
+                                        />
+                                    </div>
                                 )}
                             </div>
 
