@@ -1,7 +1,18 @@
 import React, { useRef, useEffect } from "react";
 import { brushHandlers } from "./brushes"; // Import brush handlers
 
-const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, className, style, isDrawingActive = false }, forwardedRef) => {
+const Canvas = React.forwardRef(({ 
+  color, 
+  brushSize, 
+  width, 
+  height, 
+  brushType, 
+  className, 
+  style, 
+  isDrawingActive = false,
+  opacity = 100,
+  rotation = 0
+}, forwardedRef) => {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const lastPositionRef = useRef({ x: 0, y: 0 });
@@ -63,6 +74,24 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
     context.lineCap = "round";
     context.lineJoin = "round";
 
+    // Apply opacity
+    context.globalAlpha = opacity / 100;
+
+    // Apply rotation if needed
+    if (rotation !== 0) {
+      // Save the current context state
+      context.save();
+
+      // Translate to the center of the canvas
+      context.translate(canvas.width / 2, canvas.height / 2);
+
+      // Rotate the context
+      context.rotate((rotation * Math.PI) / 180);
+
+      // Translate back
+      context.translate(-canvas.width / 2, -canvas.height / 2);
+    }
+
     const currentPosition = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
 
     const brushHandler = brushHandlers[brushType] || brushHandlers.default;
@@ -76,6 +105,7 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
       end: currentPosition,
       color,
       size: brushSize,
+      opacity: opacity / 100, // Pass opacity to brush handler
       lastTime: lastTimeRef.current,
       ...currentBrushState, // Spread the current brush state
     });
@@ -83,6 +113,11 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
     // Update the brush state if the handler returned a new state
     if (newBrushState) {
       brushStateRef.current[brushType] = newBrushState;
+    }
+
+    // Restore the context state if rotation was applied
+    if (rotation !== 0) {
+      context.restore();
     }
 
     lastPositionRef.current = currentPosition;
@@ -101,6 +136,24 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
       const context = canvas.getContext("2d");
       const currentPosition = { x: e.nativeEvent?.offsetX || lastPositionRef.current.x, y: e.nativeEvent?.offsetY || lastPositionRef.current.y };
 
+      // Apply opacity
+      context.globalAlpha = opacity / 100;
+
+      // Apply rotation if needed
+      if (rotation !== 0) {
+        // Save the current context state
+        context.save();
+
+        // Translate to the center of the canvas
+        context.translate(canvas.width / 2, canvas.height / 2);
+
+        // Rotate the context
+        context.rotate((rotation * Math.PI) / 180);
+
+        // Translate back
+        context.translate(-canvas.width / 2, -canvas.height / 2);
+      }
+
       const brushHandler = brushHandlers[brushType] || brushHandlers.default;
       const currentBrushState = brushStateRef.current[brushType] || {};
 
@@ -110,6 +163,7 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
         end: currentPosition,
         color,
         size: brushSize,
+        opacity: opacity / 100, // Pass opacity to brush handler
         lastTime: lastTimeRef.current,
         isEndOfStroke: true, // Flag to indicate end of stroke
         ...currentBrushState,
@@ -118,6 +172,11 @@ const Canvas = React.forwardRef(({ color, brushSize, width, height, brushType, c
       // Update the brush state
       if (newBrushState) {
         brushStateRef.current[brushType] = newBrushState;
+      }
+
+      // Restore the context state if rotation was applied
+      if (rotation !== 0) {
+        context.restore();
       }
     }
 

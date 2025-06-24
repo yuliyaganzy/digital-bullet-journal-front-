@@ -12,10 +12,10 @@ const AppRoutes = () => {
   return (
     <Router>
       <Routes>
-        {/*<Route path="/" element={<SelectionUpIn />} /> {/* начальная страница
+        <Route path="/" element={<SelectionUpIn />} /> {/* начальная страница */}
         <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/signin" element={<SignInPage />} />*/}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/homepage" element={<HomePage />} />
         <Route path="/Journal/:id" element={<Journal />} />
       </Routes>
     </Router>

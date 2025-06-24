@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import {
-  TbSettings,
-  TbPalette,
-  TbRotate,
-  TbBorderRadius,
-  TbBorderStyle,
-  TbPlus,
-} from "react-icons/tb";
+import CustomRangeSlider from "../ui/CustomRangeSlider";
 
 const FormMenu = ({ formElement, onFormElementChange }) => {
   // Check if the form element is a calendar or key object
   const isCalendarOrKey = formElement.isCalendar || formElement.isKey;
-  const [activeTab, setActiveTab] = useState(null);
   const [customColors, setCustomColors] = useState(() => {
     const saved = localStorage.getItem("customColors");
     return saved ? JSON.parse(saved) : [];
@@ -20,6 +12,12 @@ const FormMenu = ({ formElement, onFormElementChange }) => {
 
   const [tempColor, setTempColor] = useState("");
   const [tempStrokeColor, setTempStrokeColor] = useState("");
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [isStrokeColorPickerOpen, setIsStrokeColorPickerOpen] = useState(false);
+  const draftColorRef = useRef(formElement.fillColor || "#000000");
+  const draftStrokeColorRef = useRef(formElement.strokeColor || "#000000");
+  const colorInputRef = useRef(null);
+  const strokeColorInputRef = useRef(null);
 
   const defaultColors = [
     "#FFFFFF",
@@ -43,258 +41,280 @@ const FormMenu = ({ formElement, onFormElementChange }) => {
     localStorage.setItem("customColors", JSON.stringify(customColors));
   }, [customColors]);
 
+  const handleColorIconClick = () => {
+    setIsColorPickerOpen(!isColorPickerOpen);
+    if (!isColorPickerOpen && colorInputRef.current) {
+      colorInputRef.current.click();
+    }
+  };
+
+  const handleStrokeColorIconClick = () => {
+    setIsStrokeColorPickerOpen(!isStrokeColorPickerOpen);
+    if (!isStrokeColorPickerOpen && strokeColorInputRef.current) {
+      strokeColorInputRef.current.click();
+    }
+  };
+
   const handleTempColorChange = (color) => {
     setTempColor(color);
+    draftColorRef.current = color;
   };
 
   const handleColorChange = (color) => {
     onFormElementChange({ ...formElement, fillColor: color });
+    // Add to custom colors if not already included
+    if (!defaultColors.includes(color) && !customColors.includes(color)) {
+      setCustomColors((prev) => [...new Set([color, ...prev])].slice(0, 8));
+    }
   };
 
   const handleTempStrokeColorChange = (color) => {
     setTempStrokeColor(color);
+    draftStrokeColorRef.current = color;
   };
 
   const handleStrokeColorChange = (color) => {
     onFormElementChange({ ...formElement, strokeColor: color });
+    // Add to custom colors if not already included
+    if (!defaultColors.includes(color) && !customColors.includes(color)) {
+      setCustomColors((prev) => [...new Set([color, ...prev])].slice(0, 8));
+    }
   };
 
-  const handleColorBlur = () => {
-    if (tempColor && !defaultColors.includes(tempColor) && !customColors.includes(tempColor)) {
-      setCustomColors((prev) => [...new Set([tempColor, ...prev])].slice(0, 8));
-    }
-    setTempColor("");
-  };
+  // Combined rendering function for all settings in one block
 
-  const handleStrokeColorBlur = () => {
-    if (tempStrokeColor && !defaultColors.includes(tempStrokeColor) && !customColors.includes(tempStrokeColor)) {
-      setCustomColors((prev) => [...new Set([tempStrokeColor, ...prev])].slice(0, 8));
-    }
-    setTempStrokeColor("");
-  };
+  // If it's a calendar or key object, show a simplified interface
+  // Render different content based on whether it's a calendar or key object
+  if (isCalendarOrKey) {
+    return null;
+  }
 
-  const renderFillTab = () => {
-    // Don't show fill options for line and arrow
-    if (formElement.type === "line" || formElement.type === "arrow") {
-      return (
-        <div className="p-6">
-          <div className="text-center text-gray-500">
-            Fill options are not available for this shape type.
-          </div>
-        </div>
-      );
-    }
-
-    // For image/video, only show transparency option
-    if (formElement.type === "image") {
-      return (
-        <div className="p-6">
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="block text-sm">Image/Video Transparency</label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={formElement.fillTransparency || 100}
-                  onChange={(e) => onFormElementChange({ ...formElement, fillTransparency: parseInt(e.target.value) })}
-                  className="flex-1"
-                />
-                <span className="text-sm w-12 text-right">{formElement.fillTransparency || 100}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
+  // Render all settings in one block
+  const renderAllSettings = () => {
+    // For line and arrow, fill options are disabled
+    const isLineOrArrow = formElement.type === "line" || formElement.type === "arrow";
+    // For ellipse, corner radius is disabled
+    const isEllipse = formElement.type === "ellipse";
+    // For image, only show opacity
+    const isImage = formElement.type === "image";
 
     return (
-      <div className="p-6">
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <label className="block text-sm">Fill Color</label>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-[8px]">
-                {[...defaultColors, ...customColors].slice(0, 5).map((color, index) => (
-                  <button
-                    key={`${color}-${index}`}
-                    onClick={() => handleColorChange(color)}
-                    className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-600 transition-colors"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-              <div className="relative">
-                <button className="w-8 h-8 rounded-full border-2 border-dashed border-gray-400 hover:border-gray-600 flex items-center justify-center">
-                  <TbPlus size={20} />
-                </button>
-                <input
-                  type="color"
-                  value={tempColor || formElement.fillColor}
-                  onChange={(e) => handleTempColorChange(e.target.value)}
-                  onMouseOut={handleColorBlur}
-                  className="absolute top-0 left-0 w-8 h-8 opacity-0 cursor-pointer"
+      <div className="">
+        {/* Fill Color */}
+        {!isImage && (
+          <div className={`flex items-center ${isLineOrArrow ? "opacity-50 pointer-events-none" : ""}`}>
+            <span className="w-[80px] text-left mr-1 font-[300] text-[20px]">Color:</span>
+            <div className="flex gap-[8px]">
+              {[...defaultColors, ...customColors].slice(0, 5).map((color, index) => (
+                <div
+                  key={`${color}-${index}`}
+                  onClick={() => {
+                    if (!isLineOrArrow) {
+                      setTempColor(color);
+                      handleColorChange(color);
+                    }
+                  }}
+                  className="w-[24px] h-[24px] rounded-full cursor-pointer border-[0.2px] border-[#2a2a2a]"
+                  style={{ backgroundColor: color }}
                 />
+              ))}
+            </div>
+
+            {/* Color picker button */}
+            <div className="relative ml-8">
+              <input
+                type="color"
+                ref={colorInputRef}
+                value={tempColor || formElement.fillColor}
+                onChange={(e) => handleTempColorChange(e.target.value)}
+                className="absolute top-0 left-0 w-[24px] h-[24px] opacity-0 cursor-pointer"
+              />
+              <div
+                className="w-[24px] h-[24px] cursor-pointer relative"
+                onClick={handleColorIconClick}
+              >
+                <svg width="26" height="26" viewBox="0 0 18 18" fill={tempColor || formElement.fillColor} xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.99469 1C12.8133 4.16444 18.9626 7.75733 16.3888 12.9084C15.16 15.3671 12.1915 17 9.00002 17C5.80858 17 2.84008 15.3671 1.61129 12.9084C-0.961485 7.76178 5.18139 4.16533 8.99469 1Z" stroke="#2A2A2A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
             </div>
           </div>
+        )}
 
-          <div className="space-y-3">
-            <label className="block text-sm">Fill Transparency</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={formElement.fillTransparency || 100}
-                onChange={(e) => onFormElementChange({ ...formElement, fillTransparency: parseInt(e.target.value) })}
-                className="flex-1"
-              />
-              <span className="text-sm w-12 text-right">{formElement.fillTransparency || 100}%</span>
+        {/* Apply/Cancel buttons for color picker */}
+        {isColorPickerOpen && !isLineOrArrow && (
+          <div className="py-[4px]">
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                className="bg-[#e0e0e0] text-[#2a2a2a] px-3 py-1 rounded-md text-sm font-[300]"
+                onClick={() => {
+                  setTempColor(formElement.fillColor);
+                  setIsColorPickerOpen(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-[#93C9CF] text-[#2a2a2a] px-3 py-1 rounded-md text-sm font-[300]"
+                onClick={() => {
+                  const selected = draftColorRef.current;
+                  handleColorChange(selected);
+                  setIsColorPickerOpen(false);
+                }}
+              >
+                Apply
+              </button>
             </div>
+          </div>
+        )}
+
+        {/* Fill Opacity */}
+        <div className={`flex items-center mt-[12px] ${isLineOrArrow ? "opacity-50 pointer-events-none" : ""}`}>
+          <span className="w-[70px] text-left mr-4 font-[300] text-[20px]">Opacity:</span>
+          <div className="flex-1">
+            <CustomRangeSlider 
+              value={formElement.fillTransparency || 100}
+              onChange={(value) => isLineOrArrow ? null : onFormElementChange({ ...formElement, fillTransparency: value })}
+              onFinalChange={(value) => isLineOrArrow ? null : onFormElementChange({ ...formElement, fillTransparency: value })}
+              min={0}
+              max={100}
+              unit="%"
+            />
+          </div>
+        </div>
+
+        {/* Stroke Color */}
+        <div className="flex items-center mt-[12px]">
+          <span className="w-[70px] text-left mr-4 font-[300] text-[20px]">Stroke:</span>
+          <div className="flex gap-[8px]">
+            {[...defaultColors, ...customColors].slice(0, 5).map((color, index) => (
+              <div
+                key={`stroke-${color}-${index}`}
+                onClick={() => {
+                  setTempStrokeColor(color);
+                  handleStrokeColorChange(color);
+                }}
+                className="w-[24px] h-[24px] rounded-full cursor-pointer border-[0.2px] border-[#2a2a2a]"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+
+          {/* Stroke Color picker button */}
+          <div className="relative ml-8">
+            <input
+              type="color"
+              ref={strokeColorInputRef}
+              value={tempStrokeColor || formElement.strokeColor}
+              onChange={(e) => handleTempStrokeColorChange(e.target.value)}
+              className="absolute top-0 left-0 w-[24px] h-[24px] opacity-0 cursor-pointer"
+            />
+            <div
+              className="w-[24px] h-[24px] cursor-pointer relative"
+              onClick={handleStrokeColorIconClick}
+            >
+              <svg width="26" height="26" viewBox="0 0 18 18" fill={tempStrokeColor || formElement.strokeColor} xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.99469 1C12.8133 4.16444 18.9626 7.75733 16.3888 12.9084C15.16 15.3671 12.1915 17 9.00002 17C5.80858 17 2.84008 15.3671 1.61129 12.9084C-0.961485 7.76178 5.18139 4.16533 8.99469 1Z" stroke="#2A2A2A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Apply/Cancel buttons for stroke color picker */}
+        {isStrokeColorPickerOpen && (
+          <div className="py-[4px]">
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                className="bg-[#e0e0e0] text-[#2a2a2a] px-3 py-1 rounded-md text-sm font-[300]"
+                onClick={() => {
+                  setTempStrokeColor(formElement.strokeColor);
+                  setIsStrokeColorPickerOpen(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-[#93C9CF] text-[#2a2a2a] px-3 py-1 rounded-md text-sm font-[300]"
+                onClick={() => {
+                  const selected = draftStrokeColorRef.current;
+                  handleStrokeColorChange(selected);
+                  setIsStrokeColorPickerOpen(false);
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Stroke Opacity */}
+        <div className="flex items-center mt-[12px]">
+          <span className="w-[70px] text-left mr-4 font-[300] text-[20px]">Opacity:</span>
+          <div className="flex-1">
+            <CustomRangeSlider 
+              value={formElement.strokeTransparency || 100}
+              onChange={(value) => onFormElementChange({ ...formElement, strokeTransparency: value })}
+              onFinalChange={(value) => onFormElementChange({ ...formElement, strokeTransparency: value })}
+              min={0}
+              max={100}
+              unit="%"
+            />
+          </div>
+        </div>
+
+        {/* Stroke Width */}
+        <div className="flex items-center mt-[12px]">
+          <span className="w-[70px] text-left mr-3 font-[300] text-[20px]">Width:</span>
+          <div className="flex-1">
+            <CustomRangeSlider 
+              value={formElement.strokeWidth || 1}
+              onChange={(value) => onFormElementChange({ ...formElement, strokeWidth: value })}
+              onFinalChange={(value) => onFormElementChange({ ...formElement, strokeWidth: value })}
+              min={1}
+              max={100}
+              unit="px"
+            />
+          </div>
+        </div>
+
+        {/* Corner Radius - disabled for ellipse */}
+        <div className={`flex items-center mt-[12px] ${isEllipse ? "opacity-50 pointer-events-none" : ""}`}>
+          <span className="w-[70px] text-left mr-4 font-[300] text-[20px]">Radius:</span>
+          <div className="flex-1">
+            <CustomRangeSlider 
+              value={isEllipse ? 0 : (formElement.cornerRadius || 0)}
+              onChange={(value) => isEllipse ? null : onFormElementChange({ ...formElement, cornerRadius: value })}
+              onFinalChange={(value) => isEllipse ? null : onFormElementChange({ ...formElement, cornerRadius: value })}
+              min={0}
+              max={100}
+              unit="px"
+            />
+          </div>
+        </div>
+
+        {/* Rotation */}
+        <div className="flex items-center mt-[12px]">
+          <span className="w-[70px] text-left mr-4 font-[300] text-[20px]">Rotation:</span>
+          <div className="flex-1">
+            <CustomRangeSlider 
+              value={formElement.rotation || 0}
+              onChange={(value) => onFormElementChange({ ...formElement, rotation: value })}
+              onFinalChange={(value) => onFormElementChange({ ...formElement, rotation: value })}
+              min={0}
+              max={360}
+              unit="°"
+            />
           </div>
         </div>
       </div>
     );
   };
 
-  const renderStrokeTab = () => (
-    <div className="p-6">
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <label className="block text-sm">Stroke Color</label>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-[8px]">
-              {[...defaultColors, ...customColors].slice(0, 5).map((color, index) => (
-                <button
-                  key={`${color}-${index}`}
-                  onClick={() => handleStrokeColorChange(color)}
-                  className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-600 transition-colors"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-            <div className="relative">
-              <button className="w-8 h-8 rounded-full border-2 border-dashed border-gray-400 hover:border-gray-600 flex items-center justify-center">
-                <TbPlus size={20} />
-              </button>
-              <input
-                type="color"
-                value={tempStrokeColor || formElement.strokeColor}
-                onChange={(e) => handleTempStrokeColorChange(e.target.value)}
-                onMouseOut={handleStrokeColorBlur}
-                className="absolute top-0 left-0 w-8 h-8 opacity-0 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <label className="block text-sm">Stroke Transparency</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={formElement.strokeTransparency || 100}
-              onChange={(e) => onFormElementChange({ ...formElement, strokeTransparency: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm w-12 text-right">{formElement.strokeTransparency || 100}%</span>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <label className="block text-sm">Stroke Width</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={formElement.strokeWidth || 1}
-              onChange={(e) => onFormElementChange({ ...formElement, strokeWidth: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm w-12 text-right">{formElement.strokeWidth || 1}px</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderShapeTab = () => (
-    <div className="p-6">
-      <div className="space-y-6">
-        {formElement.type !== "ellipse" && (
-          <div className="space-y-3">
-            <label className="block text-sm">Corner Radius</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="50"
-                value={formElement.cornerRadius || 0}
-                onChange={(e) => onFormElementChange({ ...formElement, cornerRadius: parseInt(e.target.value) })}
-                className="flex-1"
-              />
-              <span className="text-sm w-12 text-right">{formElement.cornerRadius || 0}px</span>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <label className="block text-sm">Rotation</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="0"
-              max="360"
-              value={formElement.rotation || 0}
-              onChange={(e) => onFormElementChange({ ...formElement, rotation: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm w-12 text-right">{formElement.rotation || 0}°</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // If it's a calendar or key object, show a simplified interface
-  // Render different content based on whether it's a calendar or key object
-  if (isCalendarOrKey) {
-    return
-  }
-
   return (
-    <div className="bg-[#C3DEE1] rounded-2xl shadow-lg w-[320px] overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center p-2 border-b border-[#2A2A2A] gap-1">
-        <button
-          onClick={() => setActiveTab(activeTab === "fill" ? null : "fill")}
-          className={`p-2 rounded-lg hover:bg-[#93C9CF] ${activeTab === "fill" ? "bg-[#93C9CF]" : ""}`}
-        >
-          <TbPalette size={24} />
-        </button>
-        <button
-          onClick={() => setActiveTab(activeTab === "stroke" ? null : "stroke")}
-          className={`p-2 rounded-lg hover:bg-[#93C9CF] ${activeTab === "stroke" ? "bg-[#93C9CF]" : ""}`}
-        >
-          <TbBorderStyle size={24} />
-        </button>
-        <button
-          onClick={() => setActiveTab(activeTab === "shape" ? null : "shape")}
-          className={`p-2 rounded-lg hover:bg-[#93C9CF] ${activeTab === "shape" ? "bg-[#93C9CF]" : ""}`}
-        >
-          <TbSettings size={24} />
-        </button>
+    <div className="bg-[#C3DEE1] rounded-2xl shadow-lg w-[360px]">
+      <div className="p-[20px]">
+        {renderAllSettings()}
       </div>
-
-      {/* Content */}
-      {activeTab === "fill" && renderFillTab()}
-      {activeTab === "stroke" && renderStrokeTab()}
-      {activeTab === "shape" && renderShapeTab()}
     </div>
   );
 };

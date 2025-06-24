@@ -1,16 +1,16 @@
-export const watercolorBrush = (ctx, { start, end, color, size }) => {
+export const watercolorBrush = (ctx, { start, end, color, size, opacity = 1 }) => {
     ctx.save();
     ctx.lineCap = 'round';
-  
+
     // Base stroke with slight transparency
     ctx.strokeStyle = color;
     ctx.lineWidth = size;
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.5 * opacity;
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
     ctx.stroke();
-  
+
     // Feather edges to mimic watercolor bleed
     const steps = 10;
     const dx = end.x - start.x;
@@ -18,7 +18,7 @@ export const watercolorBrush = (ctx, { start, end, color, size }) => {
     for (let i = 0; i < steps; i++) {
       ctx.beginPath();
       ctx.lineWidth = size * (0.5 + Math.random() * 0.5);
-      ctx.globalAlpha = 0.1 + Math.random() * 0.3;
+      ctx.globalAlpha = (0.1 + Math.random() * 0.3) * opacity;
       ctx.moveTo(
         start.x + (dx * i) / steps,
         start.y + (dy * i) / steps
@@ -29,6 +29,6 @@ export const watercolorBrush = (ctx, { start, end, color, size }) => {
       );
       ctx.stroke();
     }
-  
+
     ctx.restore();
   };

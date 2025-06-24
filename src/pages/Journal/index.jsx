@@ -8,9 +8,10 @@ import TextMenu from "@/components/TextMenu";
 import FormMenu from "@/components/FormMenu";
 import FormElement from "@/components/FormElement";
 import TempFormElement from "@/components/TempFormElement";
+import KeySetupModal from "@/components/KeySetupModal";
 import { useClickAway } from "@/hooks/useClickAway";
 import * as ReactDOM from "react-dom/client";
-import { brushHandlers } from "@/components/brushes";
+// import { brushHandlers } from "@/components/brushes";
 
 // Helper function to convert month name to number (01-12)
 const getMonthNumber = (monthName) => {
@@ -61,7 +62,7 @@ const Journal = () => {
   // Form Canvas - separate refs for left and right pages
   const formCanvasLeftRef = useRef(null);
   const formCanvasRightRef = useRef(null);
-  const [brushSize] = useState(10); // Using state but not updating it for now
+  const [brushSize, setBrushSize] = useState(10); // Brush thickness
   const [brushType, setBrushType] = useState("default"); // State for brush type
   const [isDrawingActive, setIsDrawingActive] = useState(false); // State to control drawing
   const [isFormActive, setIsFormActive] = useState(false); // State to control form tools
@@ -107,6 +108,7 @@ const Journal = () => {
   const [strokeWidth, setStrokeWidth] = useState(1); // px
   const [formElements, setFormElements] = useState([]);
   const [activeFormElement, setActiveFormElement] = useState(null);
+  const [selectedFormElements, setSelectedFormElements] = useState([]);
   const [isFormMode, setIsFormMode] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null); // Store selected image/video file
 
@@ -121,6 +123,7 @@ const Journal = () => {
   const [textMode, setTextMode] = useState(false);
   const [textElements, setTextElements] = useState([]);
   const [activeTextElement, setActiveTextElement] = useState(null);
+  const [selectedTextElements, setSelectedTextElements] = useState([]);
   const [showTextSettings, setShowTextSettings] = useState(false);
 
   // Form element handlers
@@ -144,30 +147,30 @@ const Journal = () => {
 
   // Calendar states
   const [calendarTemplates, setCalendarTemplates] = useState([
-    { 
-      id: 1, 
-      name: "Template 1", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 1%3C/text%3E%3C/svg%3E" 
+    {
+      id: 1,
+      name: "Template 1",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 1%3C/text%3E%3C/svg%3E"
     },
-    { 
-      id: 2, 
-      name: "Template 2", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 2%3C/text%3E%3C/svg%3E" 
+    {
+      id: 2,
+      name: "Template 2",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 2%3C/text%3E%3C/svg%3E"
     },
-    { 
-      id: 3, 
-      name: "Template 3", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23d0d0d0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 3%3C/text%3E%3C/svg%3E" 
+    {
+      id: 3,
+      name: "Template 3",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23d0d0d0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 3%3C/text%3E%3C/svg%3E"
     },
-    { 
-      id: 4, 
-      name: "Template 4", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23c0c0c0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 4%3C/text%3E%3C/svg%3E" 
+    {
+      id: 4,
+      name: "Template 4",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23c0c0c0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 4%3C/text%3E%3C/svg%3E"
     },
-    { 
-      id: 5, 
-      name: "Template 5", 
-      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23b0b0b0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 5%3C/text%3E%3C/svg%3E" 
+    {
+      id: 5,
+      name: "Template 5",
+      url: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23b0b0b0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' text-anchor='middle' dominant-baseline='middle'%3ECalendar 5%3C/text%3E%3C/svg%3E"
     },
   ]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -210,7 +213,7 @@ const Journal = () => {
   const calendarModalRef = useClickAway(() => setShowCalendarModal(false));
   const calendarPreviewModalRef = useClickAway(() => setShowCalendarPreviewModal(false));
   const keySystemModalRef = useClickAway(() => setShowKeySystemModal(false));
-  const keySetupModalRef = useClickAway(() => setShowKeySetupModal(false));
+  // const keySetupModalRef = useClickAway(() => setShowKeySetupModal(false)); // Not needed with KeySetupModal component
   const eventSystemModalRef = useClickAway(() => setShowEventSystemModal(false));
   const eventSetupModalRef = useClickAway(() => setShowEventSetupModal(false));
   const tools = [
@@ -243,22 +246,22 @@ const Journal = () => {
       },
     ],
     calendar: [
-      { 
-        icon: "img_plus_tool.svg", 
+      {
+        icon: "img_plus_tool.svg",
         text: "Create calendar",
         onClick: () => {
           setShowCalendarModal(true);
         }
       },
-      { 
-        icon: "img_key_tool.svg", 
+      {
+        icon: "img_key_tool.svg",
         text: "Add keys",
         onClick: () => {
           setShowKeySystemModal(true);
         }
       },
-      { 
-        icon: "img_event_tool.svg", 
+      {
+        icon: "img_event_tool.svg",
         text: "Create event",
         onClick: () => {
           // Reset form and errors
@@ -276,8 +279,8 @@ const Journal = () => {
         }
       },
     ],
-    bookmark: [{ 
-      icon: "img_plus_tool.svg", 
+    bookmark: [{
+      icon: "img_plus_tool.svg",
       text: "Add bookmark",
       onClick: () => {
         // Reset form and errors
@@ -289,7 +292,7 @@ const Journal = () => {
     }],
     draw: [
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Eraser",
         onClick: () => {
           setBrushType("eraser");
@@ -297,7 +300,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Pen",
         onClick: () => {
           setBrushType("default");
@@ -305,7 +308,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Pencil",
         onClick: () => {
           setBrushType("pencil");
@@ -313,7 +316,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Graphic pen",
         onClick: () => {
           setBrushType("drip");
@@ -321,7 +324,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Marker",
         onClick: () => {
           setBrushType("caligraphy");
@@ -329,7 +332,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Brush pen",
         onClick: () => {
           setBrushType("swirl");
@@ -337,7 +340,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Air Brush",
         onClick: () => {
           setBrushType("foam");
@@ -345,7 +348,7 @@ const Journal = () => {
         }
       },
       {
-        icon: "img_plus_tool.svg",
+        icon: "",
         text: "Watercolor",
         onClick: () => {
           setBrushType("watercolor");
@@ -623,7 +626,7 @@ const Journal = () => {
           selectedImageFile={{ fileUrl: calendarPlacementData.template.url }}
         />
       );
-    } 
+    }
     // Special handling for key placement
     else if (formType === "image" && isKeyPlacementMode && keyPlacementData) {
       // Render the key preview
@@ -812,7 +815,7 @@ const Journal = () => {
     setIsDragging(false);
   };
 
-  // Додавання тексту
+  // Text addition
   useEffect(() => {
     const handlePageClick = (e) => {
       const isEditorClick =
@@ -827,7 +830,7 @@ const Journal = () => {
           !e.target.closest(".text-element") &&
           !e.target.closest(".text-settings")
       ) {
-        // We'll calculate position relative to the page instead of using global coordinates
+        // Calculate position relative to the page instead of using global coordinates
 
         // Determine which page was clicked based on position
         const bookElement = document.querySelector(".flip-book-container");
@@ -839,7 +842,6 @@ const Journal = () => {
         const pageIndex = currentSpread * 2 + (isLeftPage ? 0 : 1);
 
         // Get the page element to calculate position relative to the page
-        // Use the data-page-index attribute to ensure we get the correct page
         const pageElement = document.querySelector(`.page[data-page-index="${pageIndex}"]`);
 
         if (!pageElement) return;
@@ -881,13 +883,7 @@ const Journal = () => {
         // Set cursor to text for editing
         document.body.style.cursor = "text";
 
-        // After text insertion is complete, set cursor back to default for move tool
-        setTimeout(() => {
-          document.body.style.cursor = "default";
-        }, 100);
-
         // Focus the text element to enable immediate editing
-        // Use a longer timeout to ensure the DOM has fully updated
         setTimeout(() => {
           const textElement = document.querySelector(`.text-element[data-id='${newTextElement.id}']`);
           if (textElement) {
@@ -916,45 +912,81 @@ const Journal = () => {
     }
 
     return () => {
-      document.removeEventListener("click", handlePageClick);
+      if (textMode) {
+        document.removeEventListener("click", handlePageClick);
+      }
     };
   }, [textMode, textElements, currentColor, scale, currentSpread]);
 
   useEffect(() => {
     const handleClickPage = (e) => {
       // Check if click is outside text elements, text settings, form elements, and form settings
-      if (!e.target.closest(".text-element") && 
-          !e.target.closest(".text-settings") && 
-          !e.target.closest(".form-element") && 
+      if (!e.target.closest(".text-element") &&
+          !e.target.closest(".text-settings") &&
+          !e.target.closest(".form-element") &&
           !e.target.closest(".form-settings")) {
+
+        // If we were editing text, exit editing mode first
+        if (isEditing) {
+          setIsEditing(false);
+          document.body.style.cursor = "default";
+        }
+
         // Deselect text elements
         setShowTextSettings(false);
         setActiveTextElement(null);
+        setSelectedTextElements([]);
 
         // Deselect form elements
         setShowFormSettings(false);
         setActiveFormElement(null);
+        setSelectedFormElements([]);
       }
     };
 
     document.addEventListener("click", handleClickPage);
-    return () => document.removeEventListener("click", handleClickPage);
-  }, [textMode]);
+    return () => {
+      document.removeEventListener("click", handleClickPage);
+    };
+  }, [isEditing]);
 
-  // Переміщення і розтягування тексту
+  // Text element selection, movement and resizing
   const handleMouseDownOnText = (e, element) => {
-    // Deselect any active form element
-    setActiveFormElement(null);
-    setShowFormSettings(false);
+    // If shift key is not pressed, deselect other elements
+    if (!e.shiftKey) {
+      // Deselect any active form element
+      setActiveFormElement(null);
+      setSelectedFormElements([]);
+      setShowFormSettings(false);
+
+      // Set this element as active and clear previous selection
+      setActiveTextElement(element.id);
+      setSelectedTextElements([element.id]);
+      setShowTextSettings(true);
+    } else {
+      // If shift key is pressed, add to selection without deselecting others
+      setSelectedTextElements(prev => {
+        const isSelected = prev.includes(element.id);
+        if (isSelected) {
+          // If already in selection, keep it (we don't remove on mousedown)
+          return prev;
+        } else {
+          // If not in selection, add it
+          return [...prev, element.id];
+        }
+      });
+
+      // Set as active element if none is active
+      if (!activeTextElement) {
+        setActiveTextElement(element.id);
+        setShowTextSettings(true);
+      }
+    }
 
     // Check if this element is already selected
     const isAlreadySelected = activeTextElement === element.id;
 
-    // Устанавливаем активный элемент
-    setActiveTextElement(element.id);
-    setShowTextSettings(true);
-
-    // Если это начало перетаскивания
+    // If clicking on resize handle
     if (e.target.classList.contains("resize-handle")) {
       setIsResizing(true);
       setResizeStartSize({
@@ -962,8 +994,9 @@ const Journal = () => {
         height: element.height,
       });
       setDragStartPos({ x: e.clientX, y: e.clientY });
-    } else if (isAlreadySelected) {
-      // If the element is already selected, enter editing mode
+    } 
+    // If element is already selected and not in editing mode, enter editing mode
+    else if (isAlreadySelected && !isEditing) {
       setIsEditing(true);
       document.body.style.cursor = "text";
 
@@ -986,12 +1019,14 @@ const Journal = () => {
           console.warn("Text element not found in DOM for focus");
         }
       }, 10);
-    } else {
-      // Запоминаем позицию для возможного перетаскивания
+    } 
+    // If element is not already selected or we're in move mode, prepare for dragging
+    else if (!isEditing) {
       setIsDraggingText(true);
-      setDragStartPos({ x: e.clientX, y: e.clientY });
+      setDragStartPos({x: e.clientX, y: e.clientY});
       document.body.style.cursor = "move";
     }
+
     e.stopPropagation();
   };
 
@@ -1293,8 +1328,12 @@ const Journal = () => {
     const handleMouseUp = () => {
       if (isDraggingText) {
         setIsDraggingText(false);
-        // Reset cursor to default after dragging
-        document.body.style.cursor = "default";
+        // Set cursor based on active tool after dragging
+        if (activeTool === "move") {
+          document.body.style.cursor = "move";
+        } else {
+          document.body.style.cursor = "default";
+        }
       }
       if (isDraggingForm) {
         setIsDraggingForm(false);
@@ -1318,7 +1357,7 @@ const Journal = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDraggingText, isResizing, isDraggingForm, isResizingForm, dragStartPos, activeTextElement, activeFormElement, textElements, formElements, scale, resizeStartSize, resizeFormStartSize]);
+  }, [isDraggingText, isResizing, isDraggingForm, isResizingForm, dragStartPos, activeTextElement, activeFormElement, textElements, formElements, scale, resizeStartSize, resizeFormStartSize, activeTool]);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -1336,19 +1375,34 @@ const Journal = () => {
     return () => window.removeEventListener("wheel", handleWheel);
   }, []);
 
-  // Remove active text element on Delete key
+  // Handle Delete key for selected elements
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Delete" && activeTextElement) {
-        setTextElements((prev) => prev.filter((el) => el.id !== activeTextElement));
-        setActiveTextElement(null);
-        setShowTextSettings(false);
+      // Only delete elements if not in editing mode
+      if (e.key === "Delete" && !isEditing) {
+        // Handle text elements deletion
+        if (selectedTextElements.length > 0) {
+          setTextElements((prev) => prev.filter((el) => !selectedTextElements.includes(el.id)));
+          setActiveTextElement(null);
+          setSelectedTextElements([]);
+          setShowTextSettings(false);
+          document.body.style.cursor = "default";
+        }
+
+        // Handle form elements deletion
+        if (selectedFormElements.length > 0) {
+          setFormElements((prev) => prev.filter((el) => !selectedFormElements.includes(el.id)));
+          setActiveFormElement(null);
+          setSelectedFormElements([]);
+          setShowFormSettings(false);
+          document.body.style.cursor = "default";
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [activeTextElement]);
+  }, [selectedTextElements, selectedFormElements, isEditing]);
 
   if (!book) {
     return <div className="p-10 text-xl text-red-500">Book not found or no data passed.</div>;
@@ -1376,10 +1430,17 @@ const Journal = () => {
   // Function to go to a specific spread (for bookmarks)
   const goToSpread = (spreadNumber) => {
     if (flipBook.current && spreadNumber >= 0 && spreadNumber < book.pageCount) {
+      // Calculate the target page (each spread consists of 2 pages)
       const targetPage = spreadNumber * 2;
-      flipBook.current.pageFlip().flip(targetPage);
+
+      // Use a timeout to ensure the flip happens properly with animation
+      setTimeout(() => {
+        // Use flip method for animated page turning
+        flipBook.current.pageFlip().flip(targetPage);
+      }, 50);
     }
   };
+
 
   // Function to create a bookmark
   const createBookmark = () => {
@@ -1390,7 +1451,7 @@ const Journal = () => {
     }
 
     // Check if bookmark already exists for this spread
-    if (bookmarks.some(bookmark => bookmark.spread === bookmarkForm.spread)) {
+    if (bookmarks.some((bookmark) => bookmark.spread === bookmarkForm.spread)) {
       setBookmarkError("There is already a bookmark on this spread");
       return;
     }
@@ -1424,7 +1485,7 @@ const Journal = () => {
       const file = e.target.files[0];
       if (file) {
         // Check if the file is an SVG
-        if (!file.name.toLowerCase().endsWith('.svg')) {
+        if (!file.name.toLowerCase().endsWith(".svg")) {
           alert("Please select an SVG file");
           document.body.removeChild(fileInput);
           return;
@@ -1435,7 +1496,7 @@ const Journal = () => {
           id: Date.now(),
           name: `Template ${calendarTemplates.length + 1}`,
           url: URL.createObjectURL(file),
-          file: file
+          file: file,
         };
 
         // Add to templates
@@ -1473,7 +1534,7 @@ const Journal = () => {
     // Set up calendar placement data
     setCalendarPlacementData({
       template: selectedCalendarTemplate,
-      pageIndex: currentPageIndex
+      pageIndex: currentPageIndex,
     });
 
     // Enter calendar placement mode
@@ -1541,8 +1602,8 @@ const Journal = () => {
 
     // Check if any form element is a calendar and is on the current spread
     return formElements.some(
-      element => element.isCalendar && 
-      (element.pageIndex === leftPageIndex || element.pageIndex === rightPageIndex)
+        (element) =>
+            element.isCalendar && (element.pageIndex === leftPageIndex || element.pageIndex === rightPageIndex)
     );
   };
 
@@ -1550,7 +1611,7 @@ const Journal = () => {
   const startKeyPlacement = (key) => {
     // Set up key placement data
     setKeyPlacementData({
-      key: key
+      key: key,
     });
 
     // Enter key placement mode
@@ -1613,10 +1674,10 @@ const Journal = () => {
 
       // Filter text elements for this specific page
       // Make sure we're using the correct pageIndex that doesn't change with pagination
-      const pageTextElements = textElements.filter(element => element.pageIndex === i);
+      const pageTextElements = textElements.filter((element) => element.pageIndex === i);
 
       // Filter form elements for this specific page
-      const pageFormElements = formElements.filter(element => element.pageIndex === i);
+      const pageFormElements = formElements.filter((element) => element.pageIndex === i);
 
       pages.push(
           <div key={`page-${i}`} className={`page h-full w-full bg-[#f9f9f9] ${pageClassName} `} data-page-index={i}>
@@ -1635,6 +1696,8 @@ const Journal = () => {
                   height={864}
                   brushType={brushType} // Pass brush type to Canvas
                   isDrawingActive={isDrawingActive} // Pass isDrawingActive prop
+                  opacity={fillTransparency} // Pass opacity parameter
+                  rotation={rotation} // Pass rotation parameter
                   style={{
                     position: "absolute",
                     zIndex: 5,
@@ -1681,7 +1744,7 @@ const Journal = () => {
                 <FormElement
                   key={`form-${element.id}`}
                   element={element}
-                  isActive={activeFormElement === element.id}
+                  isActive={activeFormElement === element.id || selectedFormElements.includes(element.id)}
                   onClick={(e) => handleFormElementClick(e, element)}
                   onMouseDown={(e) => handleMouseDownOnForm(e, element)}
                 />
@@ -1707,7 +1770,7 @@ const Journal = () => {
                         textTransform: element.textTransform,
                         textDecoration: element.textDecoration,
                         textAlign: element.textAlign,
-                        border: activeTextElement === element.id ? "1px dashed #2A2A2A" : "none",
+                        border: activeTextElement === element.id || selectedTextElements.includes(element.id) ? "1px dashed #2A2A2A" : "none",
                         minWidth: "50px",
                         minHeight: "20px",
                         width: `${element.width}px`,
@@ -1757,65 +1820,108 @@ const Journal = () => {
   };
 
   // Handle text element click
-  const handleTextElementClick = (e, element) => {
-    // Если было движение мыши - это перетаскивание, не активируем редактирование
-    if (isDraggingText) {
-      setIsDraggingText(false);
-      return;
-    }
+const handleTextElementClick = (e, element) => {
+  // If there was mouse movement, this is dragging, don't activate editing
+  if (isDraggingText) {
+    setIsDraggingText(false);
+    return;
+  }
 
-    e.stopPropagation();
+  e.stopPropagation();
+
+  // Check if shift key is pressed for multi-selection
+  if (e.shiftKey) {
+    // If shift key is pressed, add or remove from selection
+    setSelectedTextElements(prev => {
+      const isSelected = prev.includes(element.id);
+      if (isSelected) {
+        // If already in selection, remove it
+        return prev.filter(id => id !== element.id);
+      } else {
+        // If not in selection, add it
+        return [...prev, element.id];
+      }
+    });
+
+    // Keep the active element as is
+    if (!activeTextElement) {
+      setActiveTextElement(element.id);
+      setShowTextSettings(true);
+    }
+  } else {
+    // If shift key is not pressed, clear selection and select only this element
+    setSelectedTextElements([element.id]);
+
     // Deselect any active form element
     setActiveFormElement(null);
+    setSelectedFormElements([]);
     setShowFormSettings(false);
+
+    // Check if this element is already selected
+    const isAlreadySelected = activeTextElement === element.id;
+
     // Select the text element
     setActiveTextElement(element.id);
     setShowTextSettings(true);
-    setIsEditing(true);
-    document.body.style.cursor = "text";
 
-    // Фокусируем элемент и устанавливаем курсор
-    setTimeout(() => {
-      const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
-      if (textElement) {
-        textElement.focus();
-        try {
-          const range = document.createRange();
-          const selection = window.getSelection();
-          range.selectNodeContents(textElement);
-          range.collapse(false); // Курсор в конец текста
-          selection.removeAllRanges();
-          selection.addRange(range);
-        } catch (error) {
-          console.error("Error setting cursor position:", error);
+    // Only enter editing mode if the element is already selected
+    if (isAlreadySelected) {
+      setIsEditing(true);
+      document.body.style.cursor = "text";
+
+      // Focus the element
+      setTimeout(() => {
+        const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
+        if (textElement) {
+          textElement.focus();
+
+          // Place cursor at the end of the text
+          try {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(textElement);
+            range.collapse(false); // false means collapse to end
+            selection.removeAllRanges();
+            selection.addRange(range);
+          } catch (error) {
+            console.error("Error setting cursor position:", error);
+          }
+        } else {
+          console.warn("Text element not found in DOM for focus");
         }
-      } else {
-        console.warn("Text element not found in DOM for focus");
-      }
-    }, 10);
-  };
+      }, 10);
+    }
+  }
+};
 
-  // Handle text element double click
+  // Handle text element double click - always enter edit mode directly
   const handleTextElementDoubleClick = (e, element) => {
     e.stopPropagation();
+
     // Deselect any active form element
     setActiveFormElement(null);
     setShowFormSettings(false);
+
     // Select the text element
     setActiveTextElement(element.id);
     setShowTextSettings(true);
+
+    // Always enter editing mode on double-click
     setIsEditing(true);
     document.body.style.cursor = "text";
 
+    // Focus the element
     setTimeout(() => {
       const textElement = document.querySelector(`.text-element[data-id='${element.id}']`);
       if (textElement) {
         textElement.focus();
+
+        // Place cursor at the end of the text
         try {
           const selection = window.getSelection();
           const range = document.createRange();
           range.selectNodeContents(textElement);
-          range.collapse(false);
+          range.collapse(false); // Cursor at the end of text
           selection.removeAllRanges();
           selection.addRange(range);
         } catch (error) {
@@ -1836,24 +1942,76 @@ const Journal = () => {
     }
 
     e.stopPropagation();
-    // Deselect any active text element
-    setActiveTextElement(null);
-    setShowTextSettings(false);
-    // Select the form element
-    setActiveFormElement(element.id);
-    setShowFormSettings(true);
-    // Ensure activeTool is set to move
-    setActiveTool("move");
+
+    // Check if shift key is pressed for multi-selection
+    if (e.shiftKey) {
+      // If shift key is pressed, add or remove from selection
+      setSelectedFormElements(prev => {
+        const isSelected = prev.includes(element.id);
+        if (isSelected) {
+          // If already in selection, remove it
+          return prev.filter(id => id !== element.id);
+        } else {
+          // If not in selection, add it
+          return [...prev, element.id];
+        }
+      });
+
+      // Keep the active element as is
+      if (!activeFormElement) {
+        setActiveFormElement(element.id);
+        setShowFormSettings(true);
+      }
+    } else {
+      // If shift key is not pressed, clear selection and select only this element
+      setSelectedFormElements([element.id]);
+
+      // Deselect any active text element
+      setActiveTextElement(null);
+      setSelectedTextElements([]);
+      setShowTextSettings(false);
+
+      // Select the form element
+      setActiveFormElement(element.id);
+      setShowFormSettings(true);
+
+      // Ensure activeTool is set to move
+      setActiveTool("move");
+    }
   };
 
   // Handle mouse down on form element
   const handleMouseDownOnForm = (e, element) => {
-    // Deselect any active text element
-    setActiveTextElement(null);
-    setShowTextSettings(false);
-    // Set active element
-    setActiveFormElement(element.id);
-    setShowFormSettings(true);
+    // If shift key is not pressed, deselect other elements
+    if (!e.shiftKey) {
+      // Deselect any active text element
+      setActiveTextElement(null);
+      setSelectedTextElements([]);
+      setShowTextSettings(false);
+
+      // Set active element and clear previous selection
+      setActiveFormElement(element.id);
+      setSelectedFormElements([element.id]);
+      setShowFormSettings(true);
+    } else {
+      // If shift key is pressed, add to selection without deselecting others
+      setSelectedFormElements(prev => {
+        const isSelected = prev.includes(element.id);
+        if (isSelected) {
+          // If already in selection, keep it (we don't remove on mousedown)
+          return prev;
+        } else {
+          // If not in selection, add it
+          return [...prev, element.id];
+        }
+      });
+
+      // Set as active element if none is active
+      if (!activeFormElement) {
+        setActiveFormElement(element.id);
+        setShowFormSettings(true);
+      }
+    }
 
     // If this is the start of resizing
     if (e.target.classList.contains("resize-handle")) {
@@ -2007,8 +2165,8 @@ const Journal = () => {
                       <img src="/images/img_key_tool.svg" alt="key" style={{ width: "100%", height: "100%" }} />
                     </button>
                     <ToolMenu
-                      items={keys.length === 0 
-                        ? [{ text: "No keys available", onClick: () => {} }] 
+                      items={keys.length === 0
+                        ? [{ text: "No keys available", onClick: () => {} }]
                         : keys.map(key => ({
                             text: key.name,
                             // We'll use a custom attribute to pass the image URL
@@ -2102,20 +2260,34 @@ const Journal = () => {
                         ${activeTool === tool.name ? "bg-[#93C9CF]" : "hover:bg-[#AED0D4]"}`}
                             style={{ width: "46px", height: "46px", padding: "10px" }}
                         >
-                          <img src={`/images/${icon}`} alt={tool.name} style={{ width: "100%", height: "100%" }} />
+                          <img 
+                            src={`/images/${icon}`} 
+                            alt={tool.name} 
+                            style={{ 
+                              width: "100%", 
+                              height: "100%",
+                              filter: tool.name === "draw" && activeTool === "draw" ? `drop-shadow(0 0 0 ${currentColor})` : "none"
+                            }} 
+                          />
                         </button>
                         <ToolMenu
                             items={toolMenus[tool.name] || []}
                             isOpen={activeToolMenu === tool.name}
                             onClose={() => setActiveToolMenu(null)}
                             triggerRef={{ current: buttonRefs.current[tool.name] }}
-                            isAdvanced={["draw", "form"].includes(tool.name)}
+                            isAdvanced={tool.name === "draw"}
                             recentColors={recentColors}
                             currentColor={currentColor}
                             onColorChange={(color) => {
                               setCurrentColor(color);
                               setRecentColors((prev) => [color, ...prev.filter((c) => c !== color)].slice(0, 6));
                             }}
+                            opacity={fillTransparency}
+                            onOpacityChange={(value) => setFillTransparency(value)}
+                            rotation={rotation}
+                            onRotationChange={(value) => setRotation(value)}
+                            thickness={brushSize}
+                            onThicknessChange={(value) => setBrushSize(value)}
                         />
                       </div>
                   );
@@ -2123,16 +2295,23 @@ const Journal = () => {
               </div>
 
               {/* Bookmarks at the top of the browser */}
-              <div className="fixed top-0 left-0 right-0 z-50 flex justify-center gap-2 p-2">
+              <div className="fixed top-0 left-0 right-0 z-50 flex justify-start gap-2">
                 {bookmarks.map((bookmark) => (
                   <div
                     key={bookmark.id}
-                    className="cursor-pointer flex flex-col items-center"
+                    className="cursor-pointer flex flex-col"
                     onClick={() => goToSpread(bookmark.spread)}
                   >
                     <div
-                      className="w-[80px] h-[30px] flex items-center justify-center text-white font-medium text-sm rounded-b-lg"
-                      style={{ backgroundColor: bookmark.color }}
+                      className="flex items-center justify-center rounded-b-lg"
+                      style={{
+                        padding: "18px 24px",
+                        background: bookmark.color,
+                        fontFamily: "Montserrat",
+                        fontSize: 20,
+                        lineHeight: "24px",
+                        color: "#2A2A2A",
+                      }}
                     >
                       {bookmark.name}
                     </div>
@@ -2176,7 +2355,7 @@ const Journal = () => {
               </div>
 
               {/* Контейнер редактора */}
-              <div className="w-screen h-screen overflow-hidden bg-[#ebdccb]" ref={editorLeftRef}>
+              <div className={`w-screen h-screen ${scale > 1 ? 'overflow-auto' : 'overflow-hidden'} bg-[#ebdccb]`} ref={editorLeftRef}>
                 {/* Wrapper з padding */}
                 <div
                     className="relative"
@@ -2266,73 +2445,77 @@ const Journal = () => {
               {showBookmarkModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center">
                   {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowBookmarkModal(false)}></div>
+                  <div className="absolute inset-0 bg-[#2A2A2A] opacity-73" onClick={() => setShowBookmarkModal(false)}></div>
 
                   {/* Modal content */}
                   <div 
                     ref={bookmarkModalRef}
-                    className="bg-white rounded-lg p-6 w-[400px] shadow-xl relative z-10"
+                    className="bg-[#F9F9F9] rounded-lg relative z-10 w-[470px]"
                   >
-                    <h2 className="text-2xl font-bold mb-4">Create Bookmark</h2>
+                    {/* Centered heading with proper spacing */}
+                    <h2 className="text-center mt-[40px] font-[400] text-[32px] font-['American_BT'] text-[#2A2A2A]">Create bookmark</h2>
 
                     {/* Error message */}
                     {bookmarkError && (
-                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded mx-[40px]">
                         {bookmarkError}
                       </div>
                     )}
 
-                    {/* Bookmark name */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Bookmark name</label>
-                      <input 
-                        type="text" 
-                        value={bookmarkForm.name}
-                        onChange={(e) => setBookmarkForm({...bookmarkForm, name: e.target.value})}
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter bookmark name"
-                      />
-                    </div>
+                    {/* Form fields */}
+                    <div className="px-[40px] mt-[40px]">
+                      {/* Bookmark name */}
+                      <div className="flex items-center mb-[12px]">
+                        <span className="font-[300] text-[20px]">Bookmark name:</span>
+                        <input 
+                          type="text" 
+                          value={bookmarkForm.name}
+                          onChange={(e) => setBookmarkForm({...bookmarkForm, name: e.target.value})}
+                          className="ml-[12px] border-b border-[#2A2A2A] bg-transparent font-[300] text-[20px] outline-none focus:outline-none focus:ring-0"
+                        />
+                      </div>
 
-                    {/* Spread selection */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Select a spread</label>
-                      <select 
-                        value={bookmarkForm.spread}
-                        onChange={(e) => setBookmarkForm({...bookmarkForm, spread: parseInt(e.target.value)})}
-                        className="w-full p-2 border rounded"
-                      >
-                        {Array.from({length: book.pageCount}, (_, i) => (
-                          <option key={i} value={i}>Spread {i + 1}</option>
-                        ))}
-                      </select>
-                    </div>
+                      {/* Spread selection */}
+                      <div className="flex items-center mb-[12px]">
+                        <span className="font-[300] text-[20px]">Select a page:</span>
+                        <select 
+                          value={bookmarkForm.spread}
+                          onChange={(e) => setBookmarkForm({...bookmarkForm, spread: parseInt(e.target.value)})}
+                          className="ml-[38px] w-17/31 border-b border-[#2A2A2A] bg-transparent font-[300] text-[20px] outline-none focus:outline-none focus:ring-0"
+                        >
+                          {Array.from({length: book.pageCount}, (_, i) => (
+                            <option key={i} value={i}>Spread {i + 1}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                    {/* Color selection */}
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium mb-1">Select a color</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {["#93C9CF", "#EFB8C8", "#84A285", "#782746", "#2A2A2A", "#85544D"].map(color => (
-                          <div
-                            key={color}
-                            className={`w-8 h-8 rounded-full cursor-pointer border-2 ${bookmarkForm.color === color ? 'border-black' : 'border-transparent'}`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => setBookmarkForm({...bookmarkForm, color})}
-                          ></div>
-                        ))}
+                      {/* Color selection */}
+                      <div className="flex items-center">
+                        <span className="font-[300] text-[20px]">Select a color:</span>
+                        <div className="ml-[35px] relative">
+                          <svg width="26" height="26" viewBox="0 0 18 18" fill={bookmarkForm.color} xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8.99469 1C12.8133 4.16444 18.9626 7.75733 16.3888 12.9084C15.16 15.3671 12.1915 17 9.00002 17C5.80858 17 2.84008 15.3671 1.61129 12.9084C-0.961485 7.76178 5.18139 4.16533 8.99469 1Z" stroke="#2A2A2A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <input 
+                            type="color" 
+                            value={bookmarkForm.color}
+                            onChange={(e) => setBookmarkForm({...bookmarkForm, color: e.target.value})}
+                            className="absolute top-0 left-0 w-6 h-6 opacity-0 cursor-pointer"
+                          />
+                        </div>
                       </div>
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-center gap-[28px] mt-[40px] mb-[40px]">
                       <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => setShowBookmarkModal(false)}
                       >
                         Cancel
                       </button>
                       <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={createBookmark}
                       >
                         Create
@@ -2346,54 +2529,74 @@ const Journal = () => {
               {showCalendarModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center">
                   {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCalendarModal(false)}></div>
+                  <div className="absolute inset-0 bg-[#2A2A2A] opacity-73" onClick={() => setShowCalendarModal(false)}></div>
+
+                  {/* Custom scrollbar styles */}
+                  <style>
+                    {`
+                      .custom-scrollbar::-webkit-scrollbar {
+                        width: 3px;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background-color: #93C9CF;
+                        border-radius: 3px;
+                      }
+                      .custom-scrollbar {
+                        scrollbar-width: thin;
+                        scrollbar-color: #93C9CF transparent;
+                      }
+                    `}
+                  </style>
 
                   {/* Modal content */}
                   <div 
                     ref={calendarModalRef}
-                    className="bg-white rounded-lg p-6 w-[800px] max-h-[80vh] shadow-xl relative z-10"
+                    className="bg-[#F9F9F9] rounded-[10px] px-[20px] pt-[20px] pb-[100px] w-[1010px] max-h-[652px] relative z-10"
                   >
-                    <h2 className="text-2xl font-bold mb-4">Calendar Templates</h2>
-
                     {/* Templates grid */}
-                    <div className="overflow-y-auto max-h-[60vh] mb-4">
-                      <div className="grid grid-cols-5 gap-4">
-                        {calendarTemplates.map((template) => (
-                          <div 
-                            key={template.id}
-                            className="flex flex-col items-center cursor-pointer"
-                            onDoubleClick={() => handleSelectCalendarTemplate(template)}
-                          >
-                            <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
-                              <img 
-                                src={template.url} 
-                                alt={template.name} 
-                                className="max-w-full max-h-full"
-                              />
+                    <div className="max-h-[525px] mb-[20px]">
+                      <div className="border border-[#2A2A2A] py-[20px] h-[500px]">
+                        <div className="grid grid-cols-5 gap-x-[30px] gap-y-[16px] px-[20px] max-h-[460px] overflow-y-auto custom-scrollbar content-start">
+                          {calendarTemplates.map((template) => (
+                            <div 
+                              key={template.id}
+                              className="flex flex-col items-center cursor-pointer"
+                              onDoubleClick={() => handleSelectCalendarTemplate(template)}
+                            >
+                              <div className="w-[170px] h-[119px] p-[4px] border-[1px] border-[#2A2A2A] rounded-[3px] flex items-center justify-center">
+                                <img 
+                                  src={template.url} 
+                                  alt={template.name} 
+                                  className="max-w-full max-h-full"
+                                />
+                              </div>
+                              <span className="mt-[4px] font-[300] text-[20px]">{template.name}</span>
                             </div>
-                            <span className="mt-1 text-sm">{template.name}</span>
-                          </div>
-                        ))}
+                          ))}
 
-                        {/* Add template button */}
-                        <div 
-                          className="flex flex-col items-center cursor-pointer"
-                          onClick={handleAddCalendarTemplate}
-                        >
-                          <div className="w-32 h-32 border rounded-lg p-2 flex items-center justify-center hover:border-blue-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
+                          {/* Add template button */}
+                          <div 
+                            className="flex flex-col items-center cursor-pointer"
+                            onClick={handleAddCalendarTemplate}
+                          >
+                            <div className="w-[170px] h-[119px] border-[1px] border-[#2A2A2A] rounded-[3px] flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                            </div>
+                            <span className="mt-[4px] font-[300] text-[20px]">Add template</span>
                           </div>
-                          <span className="mt-1 text-sm">Add template</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end mr-[20px]">
                       <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => setShowCalendarModal(false)}
                       >
                         Cancel
@@ -2407,34 +2610,34 @@ const Journal = () => {
               {showCalendarPreviewModal && selectedCalendarTemplate && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center">
                   {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCalendarPreviewModal(false)}></div>
+                  <div className="absolute inset-0 bg-[#2A2A2A] opacity-73" onClick={() => setShowCalendarPreviewModal(false)}></div>
 
                   {/* Modal content */}
                   <div 
                     ref={calendarPreviewModalRef}
-                    className="bg-white rounded-lg p-6 w-[800px] shadow-xl relative z-10"
+                    className="bg-[#F9F9F9] rounded-lg relative z-10"
                   >
-                    <h2 className="text-2xl font-bold mb-4">{selectedCalendarTemplate.name}</h2>
-
-                    {/* Large preview */}
-                    <div className="flex justify-center mb-6">
-                      <img 
-                        src={selectedCalendarTemplate.url} 
-                        alt={selectedCalendarTemplate.name} 
-                        className="max-w-full max-h-[60vh]"
-                      />
+                    {/* Large preview with border */}
+                    <div className="border border-[#2A2A2A] rounded-[10px] mx-[40px] mt-[40px]">
+                      <div className="p-[20px] flex justify-center">
+                        <img 
+                          src={selectedCalendarTemplate.url} 
+                          alt={selectedCalendarTemplate.name} 
+                          className="max-w-full max-h-[60vh]"
+                        />
+                      </div>
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-center gap-[28px] mt-[40px] mb-[40px]">
                       <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => setShowCalendarPreviewModal(false)}
                       >
                         Cancel
                       </button>
                       <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={addCalendarToJournal}
                       >
                         Create
@@ -2448,47 +2651,80 @@ const Journal = () => {
               {showKeySystemModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center">
                   {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowKeySystemModal(false)}></div>
+                  <div className="absolute inset-0 bg-[#2A2A2A] opacity-73" onClick={() => setShowKeySystemModal(false)}></div>
+
+                  {/* Custom scrollbar styles */}
+                  <style>
+                    {`
+                      .custom-scrollbar::-webkit-scrollbar {
+                        width: 3px;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background-color: #93C9CF;
+                        border-radius: 3px;
+                      }
+                      .custom-scrollbar {
+                        scrollbar-width: thin;
+                        scrollbar-color: #93C9CF transparent;
+                      }
+                    `}
+                  </style>
 
                   {/* Modal content */}
                   <div 
                     ref={keySystemModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] max-h-[80vh] shadow-xl relative z-10"
+                    className="bg-[#F9F9F9] rounded-lg w-[480px] relative z-10"
                   >
-                    <h2 className="text-2xl font-bold mb-4">Your key system</h2>
+                    {/* Centered heading with proper spacing */}
+                    <h2 className="text-center mt-[40px] text-[32px] font-[400] font-['American_BT'] text-[#2A2A2A]">Your key system</h2>
 
-                    {/* Keys display area */}
-                    <div className="overflow-y-auto max-h-[60vh] mb-4">
-                      {keys.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No keys have been added to the system
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-2">
-                          {keys.map((key) => (
-                            <div 
-                              key={key.id}
-                              className="flex items-center p-2 border rounded"
-                            >
-                              <div className="w-[60px] h-[60px] mr-3 overflow-hidden flex items-center justify-center">
-                                <img 
-                                  src={key.imageUrl} 
-                                  alt={key.name} 
-                                  className="w-[20px] h-[20px] transform scale-[3]"
-                                  style={{ transformOrigin: 'center' }}
-                                />
-                              </div>
-                              <span>{key.name}</span>
+                    {/* Keys display area with border */}
+                    <div className="mx-[40px] mt-[40px] mb-[40px]">
+                      <div className="border-1 border-[#2A2A2A] rounded-[10px] h-[393px] max-h-[393px] overflow-y-auto custom-scrollbar">
+                        <div className="px-[40px] py-[16px] ">
+                          {keys.length === 0 ? (
+                            <div className="text-center font-[300] text-[20px]">
+                              No keys have been added to the system
                             </div>
-                          ))}
+                          ) : (
+                            <div className="flex flex-col">
+                              {keys.map((key) => (
+                                <div key={key.id}>
+                                  <div className="flex items-center">
+                                    <div className="w-[60px] h-[24px] mr-3 overflow-hidden flex items-center justify-center">
+                                      <img 
+                                        src={key.imageUrl} 
+                                        alt={key.name} 
+                                        className="w-[20px] h-[20px] transform scale-[3]"
+                                        style={{ transformOrigin: 'center' }}
+                                      />
+                                    </div>
+                                    <span className="font-[300] text-[20px]">{key.name}</span>
+                                  </div>
+                                  <div className="my-[8px]">
+                                    <hr className="border-0.5 border-[#2A2A2A] rounded-full" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex justify-between gap-2">
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                    <div className="flex justify-center gap-[28px] mb-[40px]">
+                      <button
+                          className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
+                          onClick={() => setShowKeySystemModal(false)}
+                      >
+                        Close
+                      </button>
+                      <button
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => {
                           // Reset form and errors
                           setKeyForm({ name: "", brushType: "default", color: "#000000" });
@@ -2507,331 +2743,122 @@ const Journal = () => {
                       >
                         Add new
                       </button>
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowKeySystemModal(false)}
-                      >
-                        Close
-                      </button>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Key Setup Modal */}
-              {showKeySetupModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center">
-                  {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowKeySetupModal(false)}></div>
+              <KeySetupModal
+                isOpen={showKeySetupModal}
+                onClose={() => {
+                  // Reset drawing canvas and brush state
+                  setKeyDrawingCanvas(null);
+                  keyBrushStateRef.current = {};
+                  // Reset SVG path data
+                  setSvgPathData("");
 
-                  {/* Modal content */}
-                  <div 
-                    ref={keySetupModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
-                  >
-                    <h2 className="text-2xl font-bold mb-4">Set up your key</h2>
+                  setShowKeySetupModal(false);
+                  setShowKeySystemModal(true);
+                }}
+                keyForm={keyForm}
+                setKeyForm={setKeyForm}
+                keyError={keyError}
+                keyDrawingCanvas={keyDrawingCanvas}
+                setKeyDrawingCanvas={setKeyDrawingCanvas}
+                keyBrushStateRef={keyBrushStateRef}
+                currentKeyColorRef={currentKeyColorRef}
+                setSvgPathData={setSvgPathData}
+                onCreateKey={() => {
+                  // Validate form
+                  if (!keyForm.name.trim()) {
+                    setKeyError("Please fill in all the fields");
+                    return;
+                  }
 
-                    {/* Error message */}
-                    {keyError && (
-                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                        {keyError}
-                      </div>
-                    )}
+                  // Check for duplicate key name
+                  if (keys.some(key => key.name === keyForm.name.trim())) {
+                    setKeyError("A key with this name already exists");
+                    return;
+                  }
 
-                    {/* Key name input */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Key name</label>
-                      <input 
-                        type="text" 
-                        value={keyForm.name}
-                        onChange={(e) => setKeyForm({...keyForm, name: e.target.value})}
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter key name"
-                      />
-                    </div>
+                  // Create an SVG from the path data
+                  if (keyDrawingCanvas) {
+                    // Get the canvas dimensions
+                    const canvasWidth = keyDrawingCanvas.width;
+                    const canvasHeight = keyDrawingCanvas.height;
 
+                    // Create SVG content with multiple paths, one for each stroke with its own color
+                    let pathElements = '';
 
-                    {/* Color picker */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Select a color</label>
-                      <div className="flex flex-col gap-2">
-                        {/* RGB Color Picker */}
-                        <div className="flex items-center gap-2">
-                          <input 
-                            type="color" 
-                            value={keyForm.color}
-                            onChange={(e) => {
-                              const newColor = e.target.value;
-                              currentKeyColorRef.current = newColor;
-                              setKeyForm({...keyForm, color: newColor});
-                            }}
-                            className="w-10 h-10 cursor-pointer"
-                          />
-                          <span className="text-sm">{keyForm.color}</span>
-                        </div>
+                    // If we have stored strokes with colors, use them
+                    if (keyDrawingCanvas.allStrokes && keyDrawingCanvas.allStrokes.length > 0) {
+                      // Create a path element for each stroke with its own color
+                      keyDrawingCanvas.allStrokes.forEach(stroke => {
+                        pathElements += `<path d="${stroke.pathData}" fill="none" stroke="${stroke.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+                      });
+                    } else {
+                      // Fallback to the old method if no strokes are stored
+                      pathElements = `<path d="${svgPathData}" fill="none" stroke="${keyForm.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+                    }
 
-                      </div>
-                    </div>
+                    const svgContent = `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
+                        ${pathElements}
+                      </svg>
+                    `;
 
-                    {/* Drawing canvas */}
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium mb-1">Draw the symbol</label>
-                      <div className="relative">
-                        {/* Canvas container */}
-                        <div 
-                          className="border rounded w-full h-[250px] flex items-center justify-center bg-white relative overflow-hidden"
-                          ref={(el) => {
-                            if (el && !keyDrawingCanvas) {
-                              // Create a canvas element
-                              const canvas = document.createElement('canvas');
-                              // Set canvas size to match container size
-                              canvas.width = el.clientWidth;
-                              canvas.height = el.clientHeight;
-                              canvas.style.border = 'none';
-                              canvas.style.width = '100%';
-                              canvas.style.height = '100%';
-                              canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
+                    // Create data URL
+                    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
 
-                              // Clear the canvas
-                              const ctx = canvas.getContext('2d');
-                              ctx.fillStyle = '#ffffff';
-                              ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    // Create a new key
+                    const newKey = {
+                      id: Date.now(),
+                      name: keyForm.name.trim(),
+                      imageUrl: svgDataUrl,
+                      brushType: "default",
+                      color: keyForm.color
+                    };
 
-                              // Append the canvas to the container
-                              el.innerHTML = '';
-                              el.appendChild(canvas);
+                    // Add to keys
+                    setKeys([...keys, newKey]);
 
-                              // Store the canvas reference
-                              setKeyDrawingCanvas(canvas);
+                    // Reset drawing canvas and brush state
+                    setKeyDrawingCanvas(null);
+                    keyBrushStateRef.current = {};
+                    // Reset SVG path data
+                    setSvgPathData("");
 
-                              // Add event listeners for drawing
-                              let isDrawing = false;
-                              let lastX = 0;
-                              let lastY = 0;
-                              let lastTime = Date.now();
-
-                              // Function to update cursor based on brush type
-                              const updateCursor = () => {
-                                canvas.style.cursor = `url('/images/img_default_cursor.svg'), auto`;
-                              };
-
-                              canvas.addEventListener('mousedown', (e) => {
-                                isDrawing = true;
-                                const rect = canvas.getBoundingClientRect();
-                                lastX = e.clientX - rect.left;
-                                lastY = e.clientY - rect.top;
-
-                                // Initialize or reset brush state for the current brush type
-                                const brushType = "default";
-                                if (brushType) {
-                                  // Keep some properties like lastPoints for smooth transitions between strokes
-                                  const existingState = keyBrushStateRef.current[brushType] || {};
-                                  keyBrushStateRef.current[brushType] = {
-                                    // Keep lastPoints if they exist, otherwise initialize to empty array
-                                    lastPoints: existingState.lastPoints || [],
-                                    // Reset other properties
-                                    lastSpeed: 0,
-                                    lastWidth: 3, // Slightly larger brush size for better visibility
-                                    lastPressure: 0.5,
-                                    lastGrainOffset: existingState.lastGrainOffset || 0,
-                                  };
-                                }
-
-                                // Start a new SVG path
-                                setSvgPathData(`M ${lastX} ${lastY}`);
-                              });
-
-                              canvas.addEventListener('mousemove', (e) => {
-                                if (!isDrawing) return;
-
-                                const rect = canvas.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-
-                                const brushType = "default";
-                                const brushHandler = brushHandlers[brushType] || brushHandlers.default;
-
-                                // Get the current brush state or initialize an empty object
-                                const currentBrushState = keyBrushStateRef.current[brushType] || {};
-
-                                // Call the brush handler with the current state
-                                const newBrushState = brushHandler(ctx, {
-                                  start: { x: lastX, y: lastY },
-                                  end: { x, y },
-                                  color: currentKeyColorRef.current,
-                                  size: 3, // Slightly larger brush size for better visibility
-                                  lastTime: lastTime,
-                                  ...currentBrushState, // Spread the current brush state
-                                });
-
-                                // Update the brush state if the handler returned a new state
-                                if (newBrushState) {
-                                  keyBrushStateRef.current[brushType] = newBrushState;
-                                }
-
-                                // Add a line segment to the SVG path
-                                setSvgPathData(prevPath => `${prevPath} L ${x} ${y}`);
-
-                                lastX = x;
-                                lastY = y;
-                                lastTime = Date.now();
-                              });
-
-                              canvas.addEventListener('mouseup', (e) => {
-                                if (isDrawing) {
-                                  const brushType = "default";
-                                  if (brushType) {
-                                    const rect = canvas.getBoundingClientRect();
-                                    const x = e.clientX - rect.left;
-                                    const y = e.clientY - rect.top;
-
-                                    const brushHandler = brushHandlers[brushType] || brushHandlers.default;
-                                    const currentBrushState = keyBrushStateRef.current[brushType] || {};
-
-                                    // Call the brush handler with isEndOfStroke flag
-                                    const newBrushState = brushHandler(ctx, {
-                                      start: { x: lastX, y: lastY },
-                                      end: { x, y },
-                                      color: currentKeyColorRef.current,
-                                      size: 3, // Slightly larger brush size for better visibility
-                                      lastTime: lastTime,
-                                      isEndOfStroke: true, // Flag to indicate end of stroke
-                                      ...currentBrushState,
-                                    });
-
-                                    // Update the brush state
-                                    if (newBrushState) {
-                                      keyBrushStateRef.current[brushType] = newBrushState;
-                                    }
-                                  }
-                                }
-                                isDrawing = false;
-                              });
-
-                              canvas.addEventListener('mouseleave', () => {
-                                isDrawing = false;
-                              });
-
-                              // Update cursor when brush type changes
-                              const observer = new MutationObserver(() => {
-                                updateCursor();
-                              });
-                              observer.observe(el, { attributes: true, childList: true, subtree: true });
-                            }
-                          }}
-                        ></div>
-
-                        {/* Canvas controls */}
-                        <div className="absolute top-2 right-2 flex gap-1">
-                          <button 
-                            className="bg-white p-1 rounded border hover:bg-gray-100"
-                            onClick={() => {
-                              if (keyDrawingCanvas) {
-                                const ctx = keyDrawingCanvas.getContext('2d');
-                                ctx.fillStyle = '#ffffff';
-                                ctx.fillRect(0, 0, keyDrawingCanvas.width, keyDrawingCanvas.height);
-                                // Reset SVG path data
-                                setSvgPathData("");
-                              }
-                            }}
-                            title="Clear canvas"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => {
-                          // Reset drawing canvas and brush state
-                          setKeyDrawingCanvas(null);
-                          keyBrushStateRef.current = {};
-                          // Reset SVG path data
-                          setSvgPathData("");
-
-                          setShowKeySetupModal(false);
-                          setShowKeySystemModal(true);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
-                        onClick={() => {
-                          // Validate form
-                          if (!keyForm.name.trim()) {
-                            setKeyError("Please fill in all the fields");
-                            return;
-                          }
-
-                          // Check for duplicate key name
-                          if (keys.some(key => key.name === keyForm.name.trim())) {
-                            setKeyError("A key with this name already exists");
-                            return;
-                          }
-
-                          // Create an SVG from the path data
-                          if (keyDrawingCanvas) {
-                            // Get the canvas dimensions
-                            const canvasWidth = keyDrawingCanvas.width;
-                            const canvasHeight = keyDrawingCanvas.height;
-
-                            // Create SVG content with the path data
-                            const svgContent = `
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
-                                <path d="${svgPathData}" fill="none" stroke="${keyForm.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-                              </svg>
-                            `;
-
-                            // Create data URL
-                            const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
-
-                            // Create a new key
-                            const newKey = {
-                              id: Date.now(),
-                              name: keyForm.name.trim(),
-                              imageUrl: svgDataUrl,
-                              brushType: "default",
-                              color: keyForm.color
-                            };
-
-                            // Add to keys
-                            setKeys([...keys, newKey]);
-
-                            // Reset drawing canvas and brush state
-                            setKeyDrawingCanvas(null);
-                            keyBrushStateRef.current = {};
-                            // Reset SVG path data
-                            setSvgPathData("");
-
-                            // Close modal and show key system modal
-                            setShowKeySetupModal(false);
-                            setShowKeySystemModal(true);
-                          }
-                        }}
-                      >
-                        Create
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                    // Close modal and show key system modal
+                    setShowKeySetupModal(false);
+                    setShowKeySystemModal(true);
+                  }
+                }}
+              />
 
               {/* Event System Modal */}
               {showEventSystemModal && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center">
                   {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEventSystemModal(false)}></div>
+                  <div className="absolute inset-0 bg-[#2A2A2A] opacity-73" onClick={() => setShowEventSystemModal(false)}></div>
 
-                  {/* Style for marquee animation */}
+                  {/* Custom scrollbar styles */}
                   <style>
                     {`
+                      .custom-scrollbar::-webkit-scrollbar {
+                        width: 3px;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background-color: #93C9CF;
+                        border-radius: 3px;
+                      }
+                      .custom-scrollbar {
+                        scrollbar-width: thin;
+                        scrollbar-color: #93C9CF transparent;
+                      }
                       @keyframes marquee {
                         0% { transform: translateX(0%); }
                         100% { transform: translateX(-100%); }
@@ -2854,57 +2881,71 @@ const Journal = () => {
                   {/* Modal content */}
                   <div 
                     ref={eventSystemModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+                    className="bg-[#F9F9F9] rounded-lg w-[500px] relative z-10"
                   >
-                    <h2 className="text-2xl font-bold mb-4">Your event system</h2>
+                    {/* Centered heading with proper spacing */}
+                    <h2 className="text-center mt-[40px] text-[32px] font-[400] font-['American_BT'] text-[#2A2A2A]">Your event system</h2>
 
-                    {/* Events area with scrolling */}
-                    <div className="mb-6 max-h-[400px] overflow-y-auto">
-                      {events.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No events have been added to the system
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {events.map((event, index) => (
-                            <div key={index} className="p-3 border rounded bg-gray-50">
-                              <div className="flex items-center">
-                                <div className="font-medium mr-2">
-                                  {event.isAnnual 
-                                    ? `${formatDay(event.day)}.${getMonthNumber(event.month)} (Annual)` 
-                                    : `${formatDay(event.day)}.${getMonthNumber(event.month)}.${event.year}`}
-                                </div>
-                                <div className="marquee-container">
-                                  <div 
-                                    className="marquee-text" 
-                                    id={`event-desc-${index}`}
-                                    ref={(el) => {
-                                      if (el) {
-                                        // Check if text overflows container
-                                        const isOverflowing = el.scrollWidth > el.parentElement.clientWidth;
-                                        // Apply animation class only if text overflows
-                                        if (isOverflowing) {
-                                          el.classList.add('animate');
-                                        } else {
-                                          el.classList.remove('animate');
-                                        }
-                                      }
-                                    }}
-                                  >
-                                    {event.description}
+                    {/* Events display area with border */}
+                    <div className="mx-[40px] mt-[40px] mb-[40px]">
+                      <div className="border border-[#2A2A2A] rounded-[10px] h-[384px] max-h-[384px] overflow-y-auto custom-scrollbar">
+                        <div className="px-[30px] py-[16px]">
+                          {events.length === 0 ? (
+                            <div className="text-center font-[300] text-[20px]">
+                              No events have been added to the system
+                            </div>
+                          ) : (
+                            <div className="flex flex-col">
+                              {events.map((event, index) => (
+                                <div key={index}>
+                                  <div className="flex items-center">
+                                    <div className="font-[300] text-[18px] w-[190px]">
+                                      {event.isAnnual 
+                                        ? `${formatDay(event.day)}.${getMonthNumber(event.month)}(Annual)`
+                                        : `${formatDay(event.day)}.${getMonthNumber(event.month)}.${event.year}`}
+                                    </div>
+                                    <div className="marquee-container">
+                                      <div 
+                                        className="marquee-text font-[300] text-[20px]" 
+                                        id={`event-desc-${index}`}
+                                        ref={(el) => {
+                                          if (el) {
+                                            // Check if text overflows container
+                                            const isOverflowing = el.scrollWidth > el.parentElement.clientWidth;
+                                            // Apply animation class only if text overflows
+                                            if (isOverflowing) {
+                                              el.classList.add('animate');
+                                            } else {
+                                              el.classList.remove('animate');
+                                            }
+                                          }
+                                        }}
+                                      >
+                                        {event.description}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="my-[8px]">
+                                    <hr className="w-auto border-0.5 border-[#2A2A2A] rounded-full" />
                                   </div>
                                 </div>
-                              </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex justify-between gap-2">
+                    <div className="flex justify-center gap-[28px] mb-[40px]">
                       <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
+                        onClick={() => setShowEventSystemModal(false)}
+                      >
+                        Close
+                      </button>
+                      <button 
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => {
                           // Reset form and errors
                           setEventForm({
@@ -2923,12 +2964,6 @@ const Journal = () => {
                       >
                         Add new
                       </button>
-                      <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
-                        onClick={() => setShowEventSystemModal(false)}
-                      >
-                        Close
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -2938,59 +2973,71 @@ const Journal = () => {
               {showEventSetupModal && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center">
                   {/* Darkened background */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEventSetupModal(false)}></div>
+                  <div className="absolute inset-0 bg-[#2A2A2A] opacity-73" onClick={() => setShowEventSetupModal(false)}></div>
 
                   {/* Modal content */}
                   <div 
                     ref={eventSetupModalRef}
-                    className="bg-white rounded-lg p-6 w-[600px] shadow-xl relative z-10"
+                    className="bg-[#F9F9F9] rounded-lg relative z-10 w-[640px]"
                   >
-                    <h2 className="text-2xl font-bold mb-4">Customize your event</h2>
+                    {/* Centered heading with proper spacing */}
+                    <h2 className="text-center mt-[40px] font-[400] text-[32px] font-['American_BT'] text-[#2A2A2A]">Customize your event</h2>
 
                     {/* Error message */}
                     {eventError && (
-                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                      <div className="mb-4 p-2 bg-red-100 text-red-700 rounded mx-[40px]">
                         {eventError}
                       </div>
                     )}
 
-                    {/* Event date fields */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Event date</label>
-                      <div className="flex items-center gap-3">
-                        <select 
-                          value={eventForm.day}
-                          onChange={(e) => setEventForm({...eventForm, day: e.target.value})}
-                          className="w-20 p-2 border rounded"
-                        >
-                          <option value="">Day</option>
-                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                            <option key={day} value={day}>{day}</option>
-                          ))}
-                        </select>
-                        <select 
-                          value={eventForm.month}
-                          onChange={(e) => setEventForm({...eventForm, month: e.target.value})}
-                          className="w-24 p-2 border rounded"
-                        >
-                          <option value="">Month</option>
-                          {['January', 'February', 'March', 'April', 'May', 'June', 'July', 
-                            'August', 'September', 'October', 'November', 'December'].map(month => (
-                            <option key={month} value={month}>{month}</option>
-                          ))}
-                        </select>
-                        <select 
-                          value={eventForm.year}
-                          onChange={(e) => setEventForm({...eventForm, year: e.target.value})}
-                          className={`w-20 p-2 border rounded ${eventForm.isAnnual ? 'bg-gray-100' : ''}`}
-                          disabled={eventForm.isAnnual}
-                        >
-                          <option value="">Year</option>
-                          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
-                        <div className="flex items-center ml-4">
+                    {/* Event date fields with icon */}
+                    <div className="mx-[40px] mt-[40px]">
+                      <div className="flex items-center">
+                        <img 
+                          src="/images/img_event_tool.svg" 
+                          alt="Event" 
+                          className="w-[26px] h-[26px]"
+                        />
+                        <span className="ml-[12px] font-[300] text-[20px]">Event date</span>
+
+                        <div className="flex items-center ml-[20px]">
+                          <select 
+                            value={eventForm.day}
+                            onChange={(e) => setEventForm({...eventForm, day: e.target.value})}
+                            className="font-[200] text-[16px] border-b border-[#2A2A2A] bg-transparent"
+                          >
+                            <option value="">Day</option>
+                            {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                              <option key={day} value={day}>{day}</option>
+                            ))}
+                          </select>
+
+                          <select 
+                            value={eventForm.month}
+                            onChange={(e) => setEventForm({...eventForm, month: e.target.value})}
+                            className="ml-[12px] font-[200] text-[16px] border-b border-[#2A2A2A] bg-transparent"
+                          >
+                            <option value="">Month</option>
+                            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 
+                              'August', 'September', 'October', 'November', 'December'].map(month => (
+                              <option key={month} value={month}>{month}</option>
+                            ))}
+                          </select>
+
+                          <select 
+                            value={eventForm.year}
+                            onChange={(e) => setEventForm({...eventForm, year: e.target.value})}
+                            className={`ml-[12px] font-[200] text-[16px] border-b border-[#2A2A2A] bg-transparent ${eventForm.isAnnual ? 'opacity-50' : ''}`}
+                            disabled={eventForm.isAnnual}
+                          >
+                            <option value="">Year</option>
+                            {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                              <option key={year} value={year}>{year}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex items-center ml-[20px]">
                           <input 
                             type="checkbox" 
                             id="annualEvent"
@@ -3004,43 +3051,45 @@ const Journal = () => {
                                 year: isChecked ? '' : eventForm.year
                               });
                             }}
-                            className="mr-2"
+                            className="mr-[8px]"
                           />
-                          <label htmlFor="annualEvent" className="text-sm">An annual event</label>
+                          <label htmlFor="annualEvent" className="font-[300] text-[20px]">An annual event</label>
                         </div>
                       </div>
                     </div>
 
                     {/* Event description */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-1">Description</label>
-                      <textarea 
-                        value={eventForm.description}
-                        onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter event description"
-                        rows={3}
-                      />
+                    <div className="mx-[40px] mt-[24px]">
+                      <div className="flex items-start">
+                        <span className="font-[300] text-[20px]">Description:</span>
+                        <textarea 
+                          value={eventForm.description}
+                          onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                          className="ml-[20px] w-17/22 p-2 border rounded-[10px] border-[#2A2A2A] bg-transparent font-[300] text-[20px]"
+                          placeholder="Enter event description"
+                          rows={2}
+                        />
+                      </div>
                     </div>
 
                     {/* Email reminder checkbox */}
-                    <div className="mb-6">
+                    <div className="mx-[40px] mt-[24px]">
                       <div className="flex items-center">
                         <input 
                           type="checkbox" 
                           id="sendReminders"
                           checked={eventForm.sendReminders}
                           onChange={(e) => setEventForm({...eventForm, sendReminders: e.target.checked})}
-                          className="mr-2"
+                          className="mr-[8px]"
                         />
-                        <label htmlFor="sendReminders" className="text-sm">Send reminders by email</label>
+                        <label htmlFor="sendReminders" className="font-[300] text-[20px]">Send reminders by email</label>
                       </div>
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-[28px] mr-[40px] mb-[40px] mt-[40px]">
                       <button 
-                        className="px-4 py-2 border rounded hover:bg-gray-100"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => {
                           // Close setup modal and show event system modal
                           setShowEventSetupModal(false);
@@ -3050,7 +3099,7 @@ const Journal = () => {
                         Cancel
                       </button>
                       <button 
-                        className="px-4 py-2 bg-[#93C9CF] text-white rounded hover:bg-[#7AB5BC]"
+                        className="px-[24px] py-[8px] border-[3px] border-[#C3DEE1] rounded-[10px] font-[300] text-[20px] hover:bg-[#C3DEE1]"
                         onClick={() => {
                           // Validate form
                           if (!eventForm.day || !eventForm.month || (!eventForm.year && !eventForm.isAnnual) || !eventForm.description) {

@@ -5,6 +5,7 @@ export const pencilBrush = (
     end,
     color,
     size,
+    opacity = 1,
     lastTime,
     lastSpeed = 0,
     lastWidth = size,
@@ -90,7 +91,8 @@ export const pencilBrush = (
     // Adjust width slightly for each layer to create micro-variations
     const layerWidth = width * taperFactor * (1 - layer * 0.2);
 
-    ctx.globalAlpha = layerOpacity;
+    // Apply the opacity parameter from the Canvas component
+    ctx.globalAlpha = layerOpacity * opacity;
     ctx.lineWidth = layerWidth;
 
     // Create a slightly grainy color for graphite effect
@@ -135,7 +137,7 @@ export const pencilBrush = (
   // Add graphite texture and granular particles
   // Enhanced texture intensity calculation to be more visible at all speeds
   const textureIntensity = pressure * 0.8 * (1 + (1 - Math.min(1, speed)) * 0.5); // More pressure and slower speed = more visible texture
-  ctx.globalAlpha = 0.15 * textureIntensity;
+  ctx.globalAlpha = 0.15 * textureIntensity * opacity;
 
   // Add texture along the stroke path
   const grainSteps = Math.max(3, Math.floor(dist / 2));
@@ -159,7 +161,7 @@ export const pencilBrush = (
       const particleSize = Math.random() * width * 0.15 * pressure;
 
       // Random opacity for natural look
-      ctx.globalAlpha = Math.random() * 0.1 * textureIntensity;
+      ctx.globalAlpha = Math.random() * 0.1 * textureIntensity * opacity;
 
       ctx.beginPath();
       ctx.arc(x + offsetX, y + offsetY, particleSize, 0, Math.PI * 2);
@@ -171,7 +173,7 @@ export const pencilBrush = (
       const angle = Math.atan2(dy, dx) + (Math.PI / 2);
       const edgeLength = width * 0.3 * Math.random();
 
-      ctx.globalAlpha = 0.05 * textureIntensity;
+      ctx.globalAlpha = 0.05 * textureIntensity * opacity;
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(
@@ -195,7 +197,7 @@ export const pencilBrush = (
       const y = start.y + (end.y - start.y) * t;
 
       // Increased base opacity to make gaps more visible at lower speeds
-      ctx.globalAlpha = 0.15 * Math.min(1, speed * 0.5 + 0.2);
+      ctx.globalAlpha = 0.15 * Math.min(1, speed * 0.5 + 0.2) * opacity;
       ctx.beginPath();
       // Slightly increased gap size for better visibility
       ctx.arc(x, y, width * 0.15, 0, Math.PI * 2);
@@ -208,7 +210,7 @@ export const pencilBrush = (
   // Special handling for end of stroke
   if (isEndOfStroke) {
     // Add a final graphite dust puff
-    ctx.globalAlpha = 0.05;
+    ctx.globalAlpha = 0.05 * opacity;
     for (let i = 0; i < 5; i++) {
       const dustX = end.x + (Math.random() - 0.5) * width * 3;
       const dustY = end.y + (Math.random() - 0.5) * width * 3;
